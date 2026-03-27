@@ -1,5 +1,6 @@
 'use client'
 
+import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
@@ -42,7 +43,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     return pathname.startsWith(href)
   }
 
+  const queryClient = useQueryClient()
+
   const onLogout = () => {
+    queryClient.clear()
     logout()
   }
 
