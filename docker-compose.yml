@@ -1,0 +1,55 @@
+services:
+  dtrack-apiserver:
+    image: dependencytrack/apiserver:latest
+    container_name: dtrack-apiserver
+    deploy:
+      resources:
+        limits:
+          memory: 4608m
+        reservations:
+          memory: 3072m
+    ports:
+      - '8081:8080'
+    volumes:
+      - dtrack-data:/data
+    restart: unless-stopped
+    environment:
+      - ALPINE_DATABASE_MODE=external
+      - ALPINE_DATABASE_URL=jdbc:postgresql://dtrack-postgres:5432/dtrack
+      - ALPINE_DATABASE_DRIVER=org.postgresql.Driver
+      - ALPINE_DATABASE_USERNAME=dtrack
+      - ALPINE_DATABASE_PASSWORD=dtrack
+    depends_on:
+      dtrack-postgres:
+        condition: service_healthy
+
+  dtrack-frontend:
+    image: dependencytrack/frontend:latest
+    container_name: dtrack-frontend
+    ports:
+      - '3434:8080'
+    environment:
+      - API_BASE_URL=http://localhost:8081
+    restart: unless-stopped
+    depends_on:
+      - dtrack-apiserver
+
+  dtrack-postgres:
+    image: postgres:16-alpine
+    container_name: dtrack-postgres
+    environment:
+      - POSTGRES_DB=dtrack
+      - POSTGRES_USER=dtrack
+      - POSTGRES_PASSWORD=dtrack
+    volumes:
+      - dtrack-postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dtrack -d dtrack']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  dtrack-data:
+  dtrack-postgres-data:

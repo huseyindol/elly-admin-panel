@@ -1,0 +1,30 @@
+{
+  "recommendations": [
+    // Code formatting
+    "esbenp.prettier-vscode",
+    
+    // Linting
+    "dbaeumer.vscode-eslint",
+    
+    // React/Next.js
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-typescript-next",
+    
+    // Utility
+    "christian-kohler.path-intellisense",
+    "formulahendry.auto-rename-tag",
+    "ms-vscode.vscode-json",
+    
+    // Git
+    "eamodio.gitlens",
+    
+    // Theme & Icons
+    "pkief.material-icon-theme",
+    
+    // Database
+    "ms-vscode.vscode-mysql",
+    
+    // API Testing
+    "humao.rest-client"
+  ]
+}
