@@ -34,7 +34,7 @@ export default function NotFound() {
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="gap-2">
-            <Link href="/admin/dashboard">
+            <Link href="/dashboard">
               <Search className="h-4 w-4" />
               Admin Paneli
             </Link>

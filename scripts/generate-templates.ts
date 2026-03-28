@@ -16,10 +16,7 @@ const DYNAMIC_COMPONENTS_PATH = path.join(
   'src/components/dynamic',
 )
 
-const OUTPUT_PATH = path.join(
-  process.cwd(),
-  'src/app/(admin)/admin/_constants/templates.ts',
-)
+const OUTPUT_PATH = path.join(process.cwd(), 'src/app/_constants/templates.ts')
 
 type TemplateOption = {
   value: string

@@ -101,18 +101,33 @@ export async function proxy(request: NextRequest) {
   // expired olduysa refresh token ile yeni token ve refresh token olustur
   // yeni token ve refresh token'i cookies'a yaz
 
-  // Admin rotalarını koru
-  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
-  const isAdminLoginRoute = request.nextUrl.pathname === '/admin/login'
+  // Auth bilgilerini al
+  const accessToken = request.cookies.get(CookieEnum.ACCESS_TOKEN)
+  const expiredDate = request.cookies.get(CookieEnum.EXPIRED_DATE)
+  const isAuthenticated = !!(accessToken && expiredDate)
 
-  if (isAdminRoute && !isAdminLoginRoute) {
-    const accessToken = request.cookies.get(CookieEnum.ACCESS_TOKEN)
-    const expiredDate = request.cookies.get(CookieEnum.EXPIRED_DATE)
+  const isLoginRoute = request.nextUrl.pathname === '/login'
+  const isApiRoute2 = request.nextUrl.pathname.startsWith('/api/')
+  const isRootRoute = request.nextUrl.pathname === '/'
 
+  // Root (/) → login veya dashboard'a yönlendir
+  if (isRootRoute) {
+    const target = isAuthenticated ? '/dashboard' : '/login'
+    return NextResponse.redirect(new URL(target, request.url))
+  }
+
+  // Login sayfasında authenticated kullanıcıyı dashboard'a yönlendir
+  if (isLoginRoute && isAuthenticated) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // Korumalı rotalar (login ve api hariç tüm rotalar)
+  const isProtectedRoute = !isLoginRoute && !isApiRoute2
+
+  if (isProtectedRoute) {
     // accessToken veya expiredDate yoksa login'e yönlendir
-    if (!accessToken && !expiredDate) {
-      // console.log('PROXY - Admin route protected, redirecting to login')
-      return NextResponse.redirect(new URL('/admin/login', request.url))
+    if (!isAuthenticated) {
+      return NextResponse.redirect(new URL('/login', request.url))
     }
 
     // Token süresi dolmuşsa
@@ -126,7 +141,7 @@ export async function proxy(request: NextRequest) {
       if (!refreshResult) {
         // console.log('PROXY - Refresh failed, redirecting to login')
         const redirectResponse = NextResponse.redirect(
-          new URL('/admin/login', request.url),
+          new URL('/login', request.url),
         )
         // İstediğiniz cookie'yi burada set edebilirsiniz
         await removeCookies(redirectResponse)

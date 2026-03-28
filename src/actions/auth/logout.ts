@@ -25,5 +25,5 @@ export const logout = async () => {
     sameSite: 'strict',
     maxAge: 0,
   })
-  redirect('/admin/login')
+  redirect('/login')
 }
