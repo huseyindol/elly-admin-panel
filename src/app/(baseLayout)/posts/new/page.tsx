@@ -4,7 +4,12 @@ import { useAdminTheme } from '@/app/_hooks'
 import { useTemplates } from '@/app/_hooks/useTemplates'
 import { createPostService } from '@/app/_services/posts.services'
 import { generateSlug } from '@/app/_utils/stringUtils'
+import {
+  generateSeoFieldsAction,
+  generateSlugAction,
+} from '@/actions/generate-field'
 import AiArticlePanel from '@/components/posts/AiArticlePanel'
+import AiFieldButton from '@/components/ui/AiFieldButton'
 import RichTextEditor from '@/components/ui/RichTextEditor'
 import { CreatePostInput, CreatePostSchema } from '@/schemas/post.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -21,6 +26,8 @@ export default function NewPostPage() {
   const { isDarkMode } = useAdminTheme()
   const [showSeo, setShowSeo] = useState(false)
   const [useAi, setUseAi] = useState(false)
+  const [slugLoading, setSlugLoading] = useState(false)
+  const [seoLoading, setSeoLoading] = useState(false)
   const { templates: postTemplates } = useTemplates('posts')
 
   const {
@@ -45,6 +52,37 @@ export default function NewPostPage() {
   const title = watch('title')
   const handleGenerateSlug = () => {
     setValue('slug', generateSlug(title))
+  }
+
+  const handleAiSlug = async () => {
+    if (!title) return
+    setSlugLoading(true)
+    const res = await generateSlugAction(title)
+    if (res.success && res.slug) {
+      setValue('slug', res.slug, { shouldDirty: true })
+      toast.success('Slug oluşturuldu')
+    } else {
+      toast.error(res.error ?? 'Slug oluşturulamadı')
+    }
+    setSlugLoading(false)
+  }
+
+  const handleAiSeo = async () => {
+    if (!title) return
+    setSeoLoading(true)
+    if (!showSeo) setShowSeo(true)
+    const res = await generateSeoFieldsAction(title)
+    if (res.success && res.data) {
+      setValue('seoInfo.title', res.data.seoTitle, { shouldDirty: true })
+      setValue('seoInfo.description', res.data.seoDescription, {
+        shouldDirty: true,
+      })
+      setValue('seoInfo.keywords', res.data.seoKeywords, { shouldDirty: true })
+      toast.success('SEO alanları oluşturuldu')
+    } else {
+      toast.error(res.error ?? 'SEO alanları oluşturulamadı')
+    }
+    setSeoLoading(false)
   }
 
   const createMutation = useMutation({
@@ -160,9 +198,21 @@ export default function NewPostPage() {
 
             {/* Slug */}
             <div>
-              <label htmlFor="slug" className={labelClass}>
-                Slug *
-              </label>
+              <div className="mb-2 flex items-center gap-2">
+                <label
+                  htmlFor="slug"
+                  className={labelClass}
+                  style={{ marginBottom: 0 }}
+                >
+                  Slug *
+                </label>
+                <AiFieldButton
+                  onClick={handleAiSlug}
+                  isLoading={slugLoading}
+                  disabled={!title}
+                  label="AI ile oluştur"
+                />
+              </div>
               <div className="flex gap-2">
                 <input
                   id="slug"
@@ -299,24 +349,32 @@ export default function NewPostPage() {
               : 'border border-gray-200 bg-white'
           } backdrop-blur-sm`}
         >
-          <button
-            type="button"
-            onClick={() => setShowSeo(!showSeo)}
-            className="flex w-full items-center justify-between"
-          >
-            <h2
-              className={`text-lg font-semibold ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setShowSeo(!showSeo)}
+              className="flex items-center gap-3"
             >
-              SEO Ayarları
-            </h2>
-            <span
-              className={`transition-transform ${showSeo ? 'rotate-90' : ''}`}
-            >
-              →
-            </span>
-          </button>
+              <h2
+                className={`text-lg font-semibold ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}
+              >
+                SEO Ayarları
+              </h2>
+              <span
+                className={`transition-transform ${showSeo ? 'rotate-90' : ''}`}
+              >
+                →
+              </span>
+            </button>
+            <AiFieldButton
+              onClick={handleAiSeo}
+              isLoading={seoLoading}
+              disabled={!title}
+              label="AI ile doldur"
+            />
+          </div>
 
           {showSeo && (
             <div className="mt-4 space-y-4">
