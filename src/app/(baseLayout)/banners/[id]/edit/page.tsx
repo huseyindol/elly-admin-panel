@@ -12,6 +12,8 @@ import {
   updateBannerService,
 } from '@/app/_services/banners.services'
 import { getImageUrl } from '@/app/_utils/urlUtils'
+import { generateAltTextAction } from '@/actions/generate-field'
+import AiFieldButton from '@/components/ui/AiFieldButton'
 import { UpdateBannerInput, UpdateBannerSchema } from '@/schemas/banner.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -100,6 +102,7 @@ export default function EditBannerPage() {
   })
 
   const [imageError, setImageError] = useState<string | null>(null)
+  const [altTextLoading, setAltTextLoading] = useState(false)
 
   // Fetch banner data
   const {
@@ -117,6 +120,8 @@ export default function EditBannerPage() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<UpdateBannerInput>({
     resolver: zodResolver(UpdateBannerSchema),
@@ -131,6 +136,21 @@ export default function EditBannerPage() {
       subFolder: '',
     },
   })
+
+  const title = watch('title')
+
+  const handleAiAltText = async () => {
+    if (!title) return
+    setAltTextLoading(true)
+    const res = await generateAltTextAction(title)
+    if (res.success && res.altText) {
+      setValue('altText', res.altText, { shouldDirty: true })
+      toast.success('Alt metin oluşturuldu')
+    } else {
+      toast.error(res.error ?? 'Alt metin oluşturulamadı')
+    }
+    setAltTextLoading(false)
+  }
 
   // Derive display images from bannerData and newFiles
   const displayImages: ResponsiveImages = useMemo(() => {
@@ -515,9 +535,21 @@ export default function EditBannerPage() {
             </div>
 
             <div>
-              <label htmlFor="altText" className={labelClass}>
-                Alt Metin
-              </label>
+              <div className="mb-2 flex items-center gap-2">
+                <label
+                  htmlFor="altText"
+                  className={labelClass}
+                  style={{ marginBottom: 0 }}
+                >
+                  Alt Metin
+                </label>
+                <AiFieldButton
+                  onClick={handleAiAltText}
+                  isLoading={altTextLoading}
+                  disabled={!title}
+                  label="AI ile oluştur"
+                />
+              </div>
               <input
                 id="altText"
                 type="text"

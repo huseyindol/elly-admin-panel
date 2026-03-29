@@ -91,7 +91,32 @@ Tam olarak şu JSON formatında yanıt ver (başka hiçbir şey yazma):
   }
 }
 
-// ─── Description ─────────────────────────────────────────────────────────────
+// ─── Alt Text ────────────────────────────────────────────────────────────────
+
+export async function generateAltTextAction(
+  title: string,
+): Promise<{ success: boolean; altText?: string; error?: string }> {
+  try {
+    logger.info('[generateAltTextAction] Alt metin üretiliyor', { title })
+    const model = getGeminiModel()
+    const result = await model.generateContent(
+      `Aşağıdaki başlık için bir banner görselinin SEO dostu alt metnini yaz.
+Başlık: "${title}"
+
+Kurallar:
+- Maksimum 10 kelime
+- Görseli kısaca açıkla, anahtar kelime içersin
+- Türkçe yaz
+- Sadece alt metni döndür, başka hiçbir şey yazma`,
+    )
+    const altText = result.response.text().trim()
+    logger.info('[generateAltTextAction] Tamamlandı')
+    return { success: true, altText }
+  } catch (err) {
+    logger.error('[generateAltTextAction] Hata', err)
+    return { success: false, error: sanitizeApiKeyError(err) }
+  }
+}
 
 export async function generateDescriptionAction(
   name: string,
