@@ -32,10 +32,10 @@ export default function BaseAdminLayout({
         />
       </div>
 
-      <div className="relative flex">
+      <div className="relative flex w-full overflow-x-hidden">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        <main className="min-h-screen flex-1 lg:ml-0">
+        <main className="min-h-screen w-0 flex-1 lg:ml-0">
           <Header onToggleSidebar={() => setSidebarOpen(true)} />
           {children}
         </main>

@@ -72,7 +72,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             : 'border-r border-gray-200/50 bg-white/80'
         } backdrop-blur-xl`}
       >
-        <div className="flex h-full flex-col p-6">
+        <div
+          className="flex h-full flex-col p-6"
+          style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+        >
           {/* Logo */}
           <div className="mb-8 flex items-center justify-between">
             <Link href="/dashboard" className="flex items-center gap-3">
@@ -105,7 +108,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-2">
+          <nav className="flex-1 space-y-1 overflow-y-auto">
             {menuItems.map(item => {
               const active = isActive(item.href)
               let linkClass: string
@@ -125,6 +128,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={onClose}
                   className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${linkClass}`}
                 >
                   <span className={active ? 'text-violet-400' : ''}>
@@ -137,11 +141,29 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </Link>
               )
             })}
+
+            {/* Separator */}
+            <div
+              className={`my-2 border-t ${isDarkMode ? 'border-slate-700/50' : 'border-gray-200'}`}
+            />
+
+            {/* Logout Button — nav içinde, kolay erişilebilir */}
+            <button
+              onClick={onLogout}
+              className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                isDarkMode
+                  ? 'text-slate-400 hover:bg-rose-500/10 hover:text-rose-400'
+                  : 'text-gray-600 hover:bg-rose-50 hover:text-rose-600'
+              }`}
+            >
+              <Icons.LogOut />
+              <span className="font-medium">Çıkış Yap</span>
+            </button>
           </nav>
 
-          {/* User Profile */}
+          {/* User Profile — sadece bilgi, logout buradan kaldırıldı */}
           <div
-            className={`mt-6 rounded-2xl p-4 ${
+            className={`mt-4 rounded-2xl p-4 ${
               isDarkMode
                 ? 'border border-slate-700/50 bg-slate-800/50'
                 : 'border border-gray-200 bg-gray-100'
@@ -167,16 +189,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   Süper Admin
                 </p>
               </div>
-              <button
-                onClick={onLogout}
-                className={`rounded-lg p-2 transition-colors ${
-                  isDarkMode
-                    ? 'text-slate-400 hover:bg-slate-700'
-                    : 'text-gray-500 hover:bg-gray-200'
-                }`}
-              >
-                <Icons.LogOut />
-              </button>
             </div>
           </div>
         </div>
