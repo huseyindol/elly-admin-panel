@@ -188,7 +188,7 @@ export default function WidgetsListPage() {
             keyExtractor={widget => widget.id}
             emptyMessage="Widget bulunamadı"
             actions={{
-              onEdit: widget => router.push(`/admin/widgets/${widget.id}/edit`),
+              onEdit: widget => router.push(`/widgets/${widget.id}/edit`),
               onDelete: widget => setDeleteTarget(widget),
             }}
           />

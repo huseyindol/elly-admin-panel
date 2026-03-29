@@ -281,8 +281,7 @@ export default function ContentsListPage() {
                 : 'Henüz hiç içerik eklenmemiş'
             }
             actions={{
-              onEdit: content =>
-                router.push(`/admin/contents/${content.id}/edit`),
+              onEdit: content => router.push(`/contents/${content.id}/edit`),
               onDelete: content => setDeleteTarget(content),
             }}
           />

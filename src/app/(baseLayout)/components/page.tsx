@@ -208,7 +208,7 @@ export default function ComponentsListPage() {
             emptyMessage="Component bulunamadı"
             actions={{
               onEdit: component =>
-                router.push(`/admin/components/${component.id}/edit`),
+                router.push(`/components/${component.id}/edit`),
               onDelete: component => setDeleteTarget(component),
             }}
           />
