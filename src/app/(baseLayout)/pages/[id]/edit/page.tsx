@@ -9,6 +9,12 @@ import {
   updatePageService,
 } from '@/app/_services/pages.services'
 import { generateSlug } from '@/app/_utils/stringUtils'
+import {
+  generateDescriptionAction,
+  generateSeoFieldsAction,
+  generateSlugAction,
+} from '@/actions/generate-field'
+import AiFieldButton from '@/components/ui/AiFieldButton'
 import { UpdatePageInput, UpdatePageSchema } from '@/schemas/page'
 import { ComponentSummary, ComponentTypeEnum } from '@/types/BaseResponse'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -25,6 +31,9 @@ export default function EditPagePage() {
   const queryClient = useQueryClient()
   const { isDarkMode } = useAdminTheme()
   const [showSeoSettings, setShowSeoSettings] = useState(false)
+  const [slugLoading, setSlugLoading] = useState(false)
+  const [seoLoading, setSeoLoading] = useState(false)
+  const [descriptionLoading, setDescriptionLoading] = useState(false)
   const { templates: pageTemplates } = useTemplates('pages')
 
   // Fetch page data
@@ -65,8 +74,9 @@ export default function EditPagePage() {
     },
   })
 
-  // Watch component IDs for derived state
+  // Watch fields
   const selectedComponentIds = watch('componentIds')
+  const title = watch('title')
 
   // Fetch Components Summary
   const { data: componentsData } = useQuery({
@@ -156,6 +166,50 @@ export default function EditPagePage() {
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value
     setValue('slug', generateSlug(newTitle))
+  }
+
+  const handleAiSlug = async () => {
+    if (!title) return
+    setSlugLoading(true)
+    const res = await generateSlugAction(title)
+    if (res.success && res.slug) {
+      setValue('slug', res.slug, { shouldDirty: true })
+      toast.success('Slug oluşturuldu')
+    } else {
+      toast.error(res.error ?? 'Slug oluşturulamadı')
+    }
+    setSlugLoading(false)
+  }
+
+  const handleAiDescription = async () => {
+    if (!title) return
+    setDescriptionLoading(true)
+    const res = await generateDescriptionAction(title, 'sayfa')
+    if (res.success && res.description) {
+      setValue('description', res.description, { shouldDirty: true })
+      toast.success('Açıklama oluşturuldu')
+    } else {
+      toast.error(res.error ?? 'Açıklama oluşturulamadı')
+    }
+    setDescriptionLoading(false)
+  }
+
+  const handleAiSeo = async () => {
+    if (!title) return
+    setSeoLoading(true)
+    if (!showSeoSettings) setShowSeoSettings(true)
+    const res = await generateSeoFieldsAction(title)
+    if (res.success && res.data) {
+      setValue('seoInfo.title', res.data.seoTitle, { shouldDirty: true })
+      setValue('seoInfo.description', res.data.seoDescription, {
+        shouldDirty: true,
+      })
+      setValue('seoInfo.keywords', res.data.seoKeywords, { shouldDirty: true })
+      toast.success('SEO alanları oluşturuldu')
+    } else {
+      toast.error(res.error ?? 'SEO alanları oluşturulamadı')
+    }
+    setSeoLoading(false)
   }
 
   const onSubmit = (data: UpdatePageInput) => {
@@ -306,9 +360,21 @@ export default function EditPagePage() {
 
             {/* Slug */}
             <div>
-              <label htmlFor="slug" className={labelClass}>
-                Slug *
-              </label>
+              <div className="mb-2 flex items-center gap-2">
+                <label
+                  htmlFor="slug"
+                  className={labelClass}
+                  style={{ marginBottom: 0 }}
+                >
+                  Slug *
+                </label>
+                <AiFieldButton
+                  onClick={handleAiSlug}
+                  isLoading={slugLoading}
+                  disabled={!title}
+                  label="AI ile oluştur"
+                />
+              </div>
               <div className="flex items-center gap-2">
                 <span
                   className={`text-sm ${
@@ -332,9 +398,21 @@ export default function EditPagePage() {
 
             {/* Description */}
             <div>
-              <label htmlFor="description" className={labelClass}>
-                Açıklama
-              </label>
+              <div className="mb-2 flex items-center gap-2">
+                <label
+                  htmlFor="description"
+                  className={labelClass}
+                  style={{ marginBottom: 0 }}
+                >
+                  Açıklama
+                </label>
+                <AiFieldButton
+                  onClick={handleAiDescription}
+                  isLoading={descriptionLoading}
+                  disabled={!title}
+                  label="AI ile oluştur"
+                />
+              </div>
               <textarea
                 id="description"
                 {...register('description')}
@@ -393,26 +471,34 @@ export default function EditPagePage() {
               : 'border border-gray-200 bg-white'
           } backdrop-blur-sm`}
         >
-          <button
-            type="button"
-            onClick={() => setShowSeoSettings(!showSeoSettings)}
-            className="flex w-full items-center justify-between"
-          >
-            <h2
-              className={`text-lg font-semibold ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setShowSeoSettings(!showSeoSettings)}
+              className="flex items-center gap-3"
             >
-              SEO Ayarları
-            </h2>
-            <span
-              className={`transition-transform ${
-                showSeoSettings ? 'rotate-180' : ''
-              }`}
-            >
-              <Icons.ChevronRight />
-            </span>
-          </button>
+              <h2
+                className={`text-lg font-semibold ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}
+              >
+                SEO Ayarları
+              </h2>
+              <span
+                className={`transition-transform ${
+                  showSeoSettings ? 'rotate-180' : ''
+                }`}
+              >
+                <Icons.ChevronRight />
+              </span>
+            </button>
+            <AiFieldButton
+              onClick={handleAiSeo}
+              isLoading={seoLoading}
+              disabled={!title}
+              label="AI ile doldur"
+            />
+          </div>
 
           {showSeoSettings && (
             <div className="mt-4 space-y-4">
