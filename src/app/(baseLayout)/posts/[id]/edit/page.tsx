@@ -90,6 +90,12 @@ export default function EditPostPage() {
         shouldDirty: true,
       })
       setValue('seoInfo.keywords', res.data.seoKeywords, { shouldDirty: true })
+      const currentSlug = watch('slug')
+      if (currentSlug) {
+        setValue('seoInfo.canonicalUrl', `/${currentSlug}`, {
+          shouldDirty: true,
+        })
+      }
       toast.success('SEO alanları oluşturuldu')
     } else {
       toast.error(res.error ?? 'SEO alanları oluşturulamadı')

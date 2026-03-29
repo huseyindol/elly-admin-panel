@@ -11,6 +11,8 @@ import {
   BannerImageFiles,
   createBannerService,
 } from '@/app/_services/banners.services'
+import { generateAltTextAction } from '@/actions/generate-field'
+import AiFieldButton from '@/components/ui/AiFieldButton'
 import { CreateBannerInput, CreateBannerSchema } from '@/schemas/banner.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -43,10 +45,13 @@ export default function NewBannerPage() {
   })
 
   const [imageError, setImageError] = useState<string | null>(null)
+  const [altTextLoading, setAltTextLoading] = useState(false)
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<CreateBannerInput>({
     resolver: zodResolver(CreateBannerSchema),
@@ -61,6 +66,21 @@ export default function NewBannerPage() {
       subFolder: '',
     },
   })
+
+  const title = watch('title')
+
+  const handleAiAltText = async () => {
+    if (!title) return
+    setAltTextLoading(true)
+    const res = await generateAltTextAction(title)
+    if (res.success && res.altText) {
+      setValue('altText', res.altText, { shouldDirty: true })
+      toast.success('Alt metin oluşturuldu')
+    } else {
+      toast.error(res.error ?? 'Alt metin oluşturulamadı')
+    }
+    setAltTextLoading(false)
+  }
 
   // Handle image change for specific device type
   const handleImageChange = (
@@ -369,9 +389,21 @@ export default function NewBannerPage() {
 
             {/* Alt Text */}
             <div>
-              <label htmlFor="altText" className={labelClass}>
-                Alt Metin
-              </label>
+              <div className="mb-2 flex items-center gap-2">
+                <label
+                  htmlFor="altText"
+                  className={labelClass}
+                  style={{ marginBottom: 0 }}
+                >
+                  Alt Metin
+                </label>
+                <AiFieldButton
+                  onClick={handleAiAltText}
+                  isLoading={altTextLoading}
+                  disabled={!title}
+                  label="AI ile oluştur"
+                />
+              </div>
               <input
                 id="altText"
                 type="text"
