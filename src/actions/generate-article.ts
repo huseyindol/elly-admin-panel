@@ -147,6 +147,21 @@ export async function generateArticleAction(
     return { success: true, html: cleanHtml }
   } catch (err) {
     logger.error('[generateArticleAction] Hata oluştu', err)
+
+    // API key hatası — kullanıcıya teknik detay gösterme
+    const rawMessage = err instanceof Error ? err.message : String(err)
+    if (
+      rawMessage.includes('API_KEY_INVALID') ||
+      rawMessage.includes('API key not valid') ||
+      rawMessage.includes('API key')
+    ) {
+      return {
+        success: false,
+        error:
+          'Gemini API anahtarı geçersiz veya eksik. Lütfen sistem yöneticisiyle iletişime geçin.',
+      }
+    }
+
     const message =
       err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu'
     return { success: false, error: message }
