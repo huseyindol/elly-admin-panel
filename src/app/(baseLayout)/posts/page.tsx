@@ -179,7 +179,7 @@ export default function PostsListPage() {
             keyExtractor={post => post.id}
             emptyMessage="Post bulunamadı"
             actions={{
-              onEdit: post => router.push(`/admin/posts/${post.id}/edit`),
+              onEdit: post => router.push(`/posts/${post.id}/edit`),
               onDelete: post => setDeleteTarget(post),
             }}
           />
