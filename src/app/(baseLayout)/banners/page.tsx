@@ -275,7 +275,7 @@ export default function BannersListPage() {
                 : 'Henüz hiç banner eklenmemiş'
             }
             actions={{
-              onEdit: banner => router.push(`/admin/banners/${banner.id}/edit`),
+              onEdit: banner => router.push(`/banners/${banner.id}/edit`),
               onDelete: banner => setDeleteTarget(banner),
             }}
           />

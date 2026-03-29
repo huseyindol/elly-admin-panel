@@ -28,6 +28,9 @@ const envSchema = z.object({
       message: 'Secret must be at least 6 characters or empty',
     }),
 
+  // Gemini AI
+  GEMINI_API_KEY: z.string().optional(),
+
   // Vercel
   VERCEL_URL: z.string().optional(),
   VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),

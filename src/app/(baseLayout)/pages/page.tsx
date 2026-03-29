@@ -183,7 +183,7 @@ export default function PagesListPage() {
             keyExtractor={page => page.id}
             emptyMessage="Sayfa bulunamadı"
             actions={{
-              onEdit: page => router.push(`/admin/pages/${page.slug}/edit`),
+              onEdit: page => router.push(`/pages/${page.slug}/edit`),
               onDelete: page => setDeleteTarget(page),
             }}
           />

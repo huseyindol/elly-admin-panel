@@ -166,7 +166,7 @@ export default function FormsListPage() {
             keyExtractor={form => String(form.id)}
             emptyMessage="Form bulunamadı"
             actions={{
-              onEdit: form => router.push(`/admin/forms/${form.id}`),
+              onEdit: form => router.push(`/forms/${form.id}`),
               onDelete: form => setDeleteTarget(form),
             }}
           />

@@ -4,13 +4,15 @@ import { useAdminTheme } from '@/app/_hooks'
 import { useTemplates } from '@/app/_hooks/useTemplates'
 import { createPostService } from '@/app/_services/posts.services'
 import { generateSlug } from '@/app/_utils/stringUtils'
+import AiArticlePanel from '@/components/posts/AiArticlePanel'
+import RichTextEditor from '@/components/ui/RichTextEditor'
 import { CreatePostInput, CreatePostSchema } from '@/schemas/post.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
 export default function NewPostPage() {
@@ -18,11 +20,13 @@ export default function NewPostPage() {
   const queryClient = useQueryClient()
   const { isDarkMode } = useAdminTheme()
   const [showSeo, setShowSeo] = useState(false)
+  const [useAi, setUseAi] = useState(false)
   const { templates: postTemplates } = useTemplates('posts')
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
     watch,
     setValue,
@@ -38,13 +42,11 @@ export default function NewPostPage() {
     },
   })
 
-  // Auto-generate slug from title
   const title = watch('title')
   const handleGenerateSlug = () => {
     setValue('slug', generateSlug(title))
   }
 
-  // Create mutation
   const createMutation = useMutation({
     mutationFn: (data: CreatePostInput) => createPostService(data),
     onSuccess: () => {
@@ -52,8 +54,7 @@ export default function NewPostPage() {
       toast.success('Post başarıyla oluşturuldu')
       router.push('/posts')
     },
-    onError: error => {
-      console.error('Create error:', error)
+    onError: () => {
       toast.error('Post oluşturulurken bir hata oluştu')
     },
   })
@@ -97,9 +98,7 @@ export default function NewPostPage() {
       {/* Page Header */}
       <div>
         <h1
-          className={`text-2xl font-bold ${
-            isDarkMode ? 'text-white' : 'text-gray-900'
-          }`}
+          className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
         >
           Yeni Post Oluştur
         </h1>
@@ -189,17 +188,53 @@ export default function NewPostPage() {
               )}
             </div>
 
-            {/* Content */}
+            {/* Content Section */}
             <div>
-              <label htmlFor="content" className={labelClass}>
-                İçerik
-              </label>
-              <textarea
-                id="content"
-                {...register('content')}
-                rows={6}
-                className={inputClass}
-                placeholder="Post içeriği..."
+              {/* Content Header with AI toggle */}
+              <div className="mb-2 flex items-center justify-between">
+                <label className={labelClass} style={{ marginBottom: 0 }}>
+                  İçerik
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setUseAi(prev => !prev)}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    useAi
+                      ? isDarkMode
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-violet-600 text-white'
+                      : isDarkMode
+                        ? 'border border-slate-700 bg-slate-800 text-slate-300 hover:border-violet-500 hover:text-violet-400'
+                        : 'border border-gray-200 bg-white text-gray-600 hover:border-violet-400 hover:text-violet-600'
+                  }`}
+                >
+                  ✨ AI ile Oluştur {useAi ? '(Açık)' : '(Kapalı)'}
+                </button>
+              </div>
+
+              {/* AI Panel */}
+              {useAi && (
+                <div className="mb-3">
+                  <AiArticlePanel
+                    onGenerated={html =>
+                      setValue('content', html, { shouldDirty: true })
+                    }
+                  />
+                </div>
+              )}
+
+              {/* Rich Text Editor */}
+              <Controller
+                name="content"
+                control={control}
+                render={({ field }) => (
+                  <RichTextEditor
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    placeholder="Post içeriği..."
+                    minHeight="250px"
+                  />
+                )}
               />
             </div>
 
@@ -248,9 +283,7 @@ export default function NewPostPage() {
               />
               <label
                 htmlFor="status"
-                className={`text-sm ${
-                  isDarkMode ? 'text-slate-300' : 'text-gray-700'
-                }`}
+                className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}
               >
                 Aktif
               </label>
