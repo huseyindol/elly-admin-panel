@@ -76,18 +76,25 @@ export function DataTable<T>({
           </td>
         ))}
         {actions && (
-          <td className="px-6 py-4">
-            <div className="flex items-center gap-2">
+          <td
+            className="sticky right-0 px-4 py-3"
+            style={{
+              background: isDarkMode
+                ? 'rgb(15 23 42 / 0.95)'
+                : 'rgb(255 255 255 / 0.95)',
+            }}
+          >
+            <div className="flex items-center justify-end gap-1">
               {actions.onView && (
                 <button
                   onClick={e => {
                     e.stopPropagation()
                     actions.onView?.(item)
                   }}
-                  className={`rounded-lg p-2 transition-colors ${
+                  className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg transition-colors ${
                     isDarkMode
-                      ? 'text-slate-400 hover:bg-slate-700 hover:text-white'
-                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'text-slate-400 hover:bg-slate-700 hover:text-white active:bg-slate-600'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200'
                   }`}
                   title="Görüntüle"
                 >
@@ -100,10 +107,10 @@ export function DataTable<T>({
                     e.stopPropagation()
                     actions.onEdit?.(item)
                   }}
-                  className={`rounded-lg p-2 transition-colors ${
+                  className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg transition-colors ${
                     isDarkMode
-                      ? 'text-slate-400 hover:bg-slate-700 hover:text-violet-400'
-                      : 'text-gray-500 hover:bg-gray-100 hover:text-violet-600'
+                      ? 'text-slate-400 hover:bg-slate-700 hover:text-violet-400 active:bg-slate-600'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-violet-600 active:bg-gray-200'
                   }`}
                   title="Düzenle"
                 >
@@ -116,10 +123,10 @@ export function DataTable<T>({
                     e.stopPropagation()
                     actions.onDelete?.(item)
                   }}
-                  className={`rounded-lg p-2 transition-colors ${
+                  className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg transition-colors ${
                     isDarkMode
-                      ? 'text-slate-400 hover:bg-rose-500/20 hover:text-rose-400'
-                      : 'text-gray-500 hover:bg-rose-50 hover:text-rose-600'
+                      ? 'text-slate-400 hover:bg-rose-500/20 hover:text-rose-400 active:bg-rose-500/30'
+                      : 'text-gray-500 hover:bg-rose-50 hover:text-rose-600 active:bg-rose-100'
                   }`}
                   title="Sil"
                 >
@@ -272,8 +279,13 @@ export function DataTable<T>({
               ))}
               {actions && (
                 <th
-                  className="px-6 py-4 font-medium"
-                  style={{ width: '120px' }}
+                  className="sticky right-0 px-4 py-4 text-right font-medium"
+                  style={{
+                    width: '120px',
+                    background: isDarkMode
+                      ? 'rgb(15 23 42 / 0.95)'
+                      : 'rgb(255 255 255 / 0.95)',
+                  }}
                 >
                   İşlemler
                 </th>
