@@ -1,6 +1,7 @@
 'use server'
 
 import { getGeminiModel } from '@/lib/gemini'
+import { logger } from '@/lib/logger'
 
 export interface GenerateArticleInput {
   topic: string
@@ -19,6 +20,7 @@ export interface GenerateArticleResult {
  * for more focused and accurate content generation.
  */
 async function articleAgent(topic: string, keywords: string): Promise<string> {
+  logger.info('[ArticleAgent] Konu analiz ediliyor...', { topic, keywords })
   const model = getGeminiModel()
 
   const refinementPrompt = `Sen bir makale planlama ve içerik stratejisi uzmanısın.
@@ -38,6 +40,7 @@ Lütfen aşağıdaki formatta bir makale planı oluştur:
 Yanıtını Türkçe ver ve yalnızca yapılandırılmış planı döndür, ek açıklama yapma.`
 
   const refinementResult = await model.generateContent(refinementPrompt)
+  logger.info('[ArticleAgent] Outline hazırlandı')
   return refinementResult.response.text()
 }
 
@@ -46,6 +49,7 @@ Yanıtını Türkçe ver ve yalnızca yapılandırılmış planı döndür, ek a
  * Takes the refined outline and generates a full article as HTML
  */
 async function generateFullArticle(outline: string): Promise<string> {
+  logger.info('[ArticleAgent] Makale içeriği oluşturuluyor...')
   const model = getGeminiModel()
 
   const articlePrompt = `Sen profesyonel bir Türkçe içerik yazarı ve web editörüsün.
@@ -66,6 +70,7 @@ YAZIM KURALLARI:
 - Herhangi bir markdown, ek açıklama veya kod bloğu ekleme — sadece saf HTML döndür`
 
   const articleResult = await model.generateContent(articlePrompt)
+  logger.info('[ArticleAgent] Ham HTML içerik üretildi')
   return articleResult.response.text()
 }
 
@@ -75,6 +80,7 @@ YAZIM KURALLARI:
  * cleans up any unwanted tags, and ensures proper semantic markup
  */
 async function frontendAgent(rawHtml: string): Promise<string> {
+  logger.info('[FrontendAgent] HTML semantik yapısı gözden geçiriliyor...')
   const model = getGeminiModel()
 
   const reviewPrompt = `Sen bir frontend geliştirici ve HTML/erişilebilirlik uzmanısın.
@@ -104,6 +110,7 @@ YAPILACAKLAR:
     .replace(/\s*```$/i, '')
     .trim()
 
+  logger.info('[FrontendAgent] HTML temizlendi, içerik hazır')
   return cleanHtml
 }
 
@@ -125,6 +132,8 @@ export async function generateArticleAction(
       }
     }
 
+    logger.info('[generateArticleAction] Makale üretimi başlatıldı', { topic })
+
     // Step 1: Article Agent — refine topic into outline
     const outline = await articleAgent(topic.trim(), keywords.trim())
 
@@ -134,8 +143,10 @@ export async function generateArticleAction(
     // Step 3: Frontend Agent — review and clean HTML
     const cleanHtml = await frontendAgent(rawHtml)
 
+    logger.info('[generateArticleAction] Tamamlandı ✓')
     return { success: true, html: cleanHtml }
   } catch (err) {
+    logger.error('[generateArticleAction] Hata oluştu', err)
     const message =
       err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu'
     return { success: false, error: message }

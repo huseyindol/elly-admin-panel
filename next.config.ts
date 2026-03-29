@@ -11,6 +11,17 @@ const withBundleAnalyzer = bundleAnalyzer({
 const nextConfig = {
   output: 'standalone' as const,
 
+  // Server-side terminal logging
+  logging: {
+    fetches: {
+      fullUrl: true,
+      hmrRefreshes: true,
+    },
+    incomingRequests: {
+      ignore: [/^\/_next\//, /favicon\.ico$/],
+    },
+  },
+
   experimental: {
     optimizeCss: true,
     ppr: false,
