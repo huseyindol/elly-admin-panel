@@ -3,10 +3,8 @@
 import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React, { useTransition } from 'react'
+import React from 'react'
 import { logout } from '@/actions/auth/logout'
-import { removeGlobalCookie } from '@/context/CookieContext'
-import { CookieEnum } from '@/utils/constant/cookieConstant'
 import { useAdminTheme } from '../_hooks'
 import { Icons } from './Icons'
 
@@ -46,19 +44,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   }
 
   const queryClient = useQueryClient()
-  const [isLoggingOut, startTransition] = useTransition()
 
   const onLogout = () => {
-    // Client-side temizlik
     queryClient.clear()
-    removeGlobalCookie(CookieEnum.ACCESS_TOKEN)
-    removeGlobalCookie(CookieEnum.REFRESH_TOKEN)
-    removeGlobalCookie(CookieEnum.EXPIRED_DATE)
-    removeGlobalCookie(CookieEnum.USER_CODE)
-    // Server Action — startTransition ile doğru şekilde çağır
-    startTransition(async () => {
-      await logout()
-    })
+    logout()
   }
 
   return (
@@ -180,19 +169,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </div>
               <button
                 onClick={onLogout}
-                disabled={isLoggingOut}
-                className={`rounded-lg p-2 transition-colors disabled:opacity-50 ${
+                className={`rounded-lg p-2 transition-colors ${
                   isDarkMode
                     ? 'text-slate-400 hover:bg-slate-700'
                     : 'text-gray-500 hover:bg-gray-200'
                 }`}
-                title="Çıkış Yap"
               >
-                {isLoggingOut ? (
-                  <span className="block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                ) : (
-                  <Icons.LogOut />
-                )}
+                <Icons.LogOut />
               </button>
             </div>
           </div>
