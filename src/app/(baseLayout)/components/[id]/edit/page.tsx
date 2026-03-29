@@ -12,6 +12,8 @@ import {
   getComponentByIdService,
   updateComponentService,
 } from '@/app/_services/components.services'
+import { generateDescriptionAction } from '@/actions/generate-field'
+import AiFieldButton from '@/components/ui/AiFieldButton'
 import { getFormsSummaryService } from '@/app/_services/forms.services'
 import { getWidgetsSummaryService } from '@/app/_services/widgets.services'
 import { hasIdArrayChanges } from '@/app/_utils/arrayUtils'
@@ -45,6 +47,7 @@ export default function EditComponentPage() {
 
   // Selected sub-folder for banner filtering
   const [selectedSubFolder, setSelectedSubFolder] = useState<string>('all')
+  const [descriptionLoading, setDescriptionLoading] = useState(false)
 
   // Fetch component data
   const {
@@ -105,6 +108,7 @@ export default function EditComponentPage() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<UpdateComponentInput>({
     resolver: zodResolver(UpdateComponentSchema),
@@ -125,6 +129,20 @@ export default function EditComponentPage() {
 
   // Watch type field for conditional rendering
   const selectedType = watch('type')
+  const name = watch('name')
+
+  const handleAiDescription = async () => {
+    if (!name) return
+    setDescriptionLoading(true)
+    const res = await generateDescriptionAction(name, 'component')
+    if (res.success && res.description) {
+      setValue('description', res.description, { shouldDirty: true })
+      toast.success('Açıklama oluşturuldu')
+    } else {
+      toast.error(res.error ?? 'Açıklama oluşturulamadı')
+    }
+    setDescriptionLoading(false)
+  }
 
   // Populate form when data is loaded
   useEffect(() => {
@@ -367,9 +385,21 @@ export default function EditComponentPage() {
 
             {/* Description */}
             <div>
-              <label htmlFor="description" className={labelClass}>
-                Açıklama
-              </label>
+              <div className="mb-2 flex items-center gap-2">
+                <label
+                  htmlFor="description"
+                  className={labelClass}
+                  style={{ marginBottom: 0 }}
+                >
+                  Açıklama
+                </label>
+                <AiFieldButton
+                  onClick={handleAiDescription}
+                  isLoading={descriptionLoading}
+                  disabled={!name}
+                  label="AI ile oluştur"
+                />
+              </div>
               <textarea
                 id="description"
                 {...register('description')}

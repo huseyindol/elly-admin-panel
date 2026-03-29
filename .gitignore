@@ -56,8 +56,6 @@ next-env.d.ts
 bom.json
 
 
-# Claude - kişisel dosyalar (repo'da olmasın)
-.claude/
-
-# Claude - proje kuralları (repo'da kalsın, ignore ETMEYİN)
-# CLAUDE.md
+# Claude - proje kuralları repo'da kalır (.claude/, CLAUDE.md)
+# Sadece kişisel local overrides'ı ignore et:
+.claude/settings.local.json
