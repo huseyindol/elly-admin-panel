@@ -81,6 +81,9 @@ const AdminLoginPage = () => {
         String(response.data.expiredDate),
       )
       updateGlobalCookie(CookieEnum.USER_CODE, response.data.userCode)
+      if (formData.tenantId) {
+        updateGlobalCookie(CookieEnum.TENANT_ID, formData.tenantId)
+      }
       updateCookie(CookieEnum.ACCESS_TOKEN, response.data.token)
       updateCookie(CookieEnum.REFRESH_TOKEN, response.data.refreshToken)
       updateCookie(CookieEnum.EXPIRED_DATE, String(response.data.expiredDate))
