@@ -3,4 +3,5 @@ export enum CookieEnum {
   ACCESS_TOKEN = 'accessToken',
   REFRESH_TOKEN = 'refreshToken',
   EXPIRED_DATE = 'expiredDate',
+  TENANT_ID = 'tenantId',
 }

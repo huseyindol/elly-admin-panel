@@ -1,40 +1,33 @@
 'use server'
 
-import fs from 'node:fs'
-import path from 'node:path'
+import { CookieEnum } from '@/utils/constant/cookieConstant'
+import { cookies } from 'next/headers'
 
 export type TemplateOption = {
   value: string
   label: string
 }
 
-const DYNAMIC_COMPONENTS_PATH = path.join(
-  process.cwd(),
-  'src/components/dynamic',
-)
+const FALLBACK: TemplateOption[] = [{ value: '', label: 'Template Seçin' }]
 
 async function getTemplatesFromDir(dirName: string): Promise<TemplateOption[]> {
-  const dirPath = path.join(DYNAMIC_COMPONENTS_PATH, dirName)
+  const cookieStore = await cookies()
+  const tenantId = cookieStore.get(CookieEnum.TENANT_ID)?.value
 
-  if (!fs.existsSync(dirPath)) {
-    return [{ value: '', label: 'Template Seçin' }]
-  }
+  if (!tenantId) return FALLBACK
+
+  const siteUrl = process.env[`${tenantId.toUpperCase()}_SITE_URL`]
+  if (!siteUrl) return FALLBACK
 
   try {
-    const files = fs.readdirSync(dirPath)
-    const templates: TemplateOption[] = [{ value: '', label: 'Template Seçin' }]
-
-    files
-      .filter(file => file.endsWith('.tsx') || file.endsWith('.ts'))
-      .filter(file => !file.startsWith('index'))
-      .forEach(file => {
-        const name = file.replace(/\.(tsx|ts)$/, '')
-        templates.push({ value: name, label: name })
-      })
-
-    return templates
+    const res = await fetch(`${siteUrl}/api/templates?type=${dirName}`, {
+      next: { revalidate: 3600 },
+    })
+    if (!res.ok) return FALLBACK
+    const data: TemplateOption[] = await res.json()
+    return data
   } catch {
-    return [{ value: '', label: 'Template Seçin' }]
+    return FALLBACK
   }
 }
 
