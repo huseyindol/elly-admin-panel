@@ -1,0 +1,19 @@
+import {{ComponentName}} from '@/components/{{ComponentName}}'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+
+describe('{{ComponentName}} Component', () => {
+  it('should render without crashing', () => {
+    render(<{{ComponentName}} />)
+  })
+
+  it('should render children', () => {
+    render(<{{ComponentName}}>Test content</{{ComponentName}}>)
+    expect(screen.getByText('Test content')).toBeInTheDocument()
+  })
+
+  it('should apply custom className', () => {
+    const { container } = render(<{{ComponentName}} className="custom-class" />)
+    expect(container.firstChild).toHaveClass('custom-class')
+  })
+})
