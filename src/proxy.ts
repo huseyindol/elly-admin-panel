@@ -108,6 +108,7 @@ export async function proxy(request: NextRequest) {
 
   const isLoginRoute = request.nextUrl.pathname === '/login'
   const isApiRoute2 = request.nextUrl.pathname.startsWith('/api/')
+  const isDocsRoute = request.nextUrl.pathname.startsWith('/docs/')
   const isRootRoute = request.nextUrl.pathname === '/'
 
   // Root (/) → login veya dashboard'a yönlendir
@@ -122,7 +123,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Korumalı rotalar (login ve api hariç tüm rotalar)
-  const isProtectedRoute = !isLoginRoute && !isApiRoute2
+  const isProtectedRoute = !isLoginRoute && !isApiRoute2 && !isDocsRoute
 
   if (isProtectedRoute) {
     // accessToken veya expiredDate yoksa login'e yönlendir
