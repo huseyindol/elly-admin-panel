@@ -1,958 +1,1216 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Elly CMS — Mimari Dokumantasyonu</title>
-  <style>
-    :root {
-      --bg: #0a0e1a;
-      --surface: #111827;
-      --surface-2: #1e293b;
-      --border: #1e293b;
-      --text: #e2e8f0;
-      --text-muted: #94a3b8;
-      --accent: #8b5cf6;
-      --accent-glow: rgba(139, 92, 246, 0.15);
-      --green: #10b981;
-      --blue: #3b82f6;
-      --amber: #f59e0b;
-      --pink: #ec4899;
-      --red: #ef4444;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Elly CMS — Mimari Dokumantasyonu</title>
+    <style>
+      :root {
+        --bg: #0a0e1a;
+        --surface: #111827;
+        --surface-2: #1e293b;
+        --border: #1e293b;
+        --text: #e2e8f0;
+        --text-muted: #94a3b8;
+        --accent: #8b5cf6;
+        --accent-glow: rgba(139, 92, 246, 0.15);
+        --green: #10b981;
+        --blue: #3b82f6;
+        --amber: #f59e0b;
+        --pink: #ec4899;
+        --red: #ef4444;
+      }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.7;
-      -webkit-font-smoothing: antialiased;
-    }
+      body {
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.7;
+        -webkit-font-smoothing: antialiased;
+      }
 
-    .hero {
-      position: relative;
-      padding: 80px 24px 60px;
-      text-align: center;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -120px; right: -120px;
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%);
-      border-radius: 50%;
-    }
-    .hero::after {
-      content: '';
-      position: absolute;
-      bottom: -80px; left: -80px;
-      width: 300px; height: 300px;
-      background: radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%);
-      border-radius: 50%;
-    }
-    .hero h1 {
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      font-weight: 800;
-      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 12px;
-      position: relative;
-    }
-    .hero p {
-      font-size: 1.15rem;
-      color: var(--text-muted);
-      max-width: 640px;
-      margin: 0 auto;
-      position: relative;
-    }
+      .hero {
+        position: relative;
+        padding: 80px 24px 60px;
+        text-align: center;
+        overflow: hidden;
+      }
+      .hero::before {
+        content: '';
+        position: absolute;
+        top: -120px;
+        right: -120px;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(
+          circle,
+          rgba(139, 92, 246, 0.2) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+      }
+      .hero::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: -80px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(
+          circle,
+          rgba(6, 182, 212, 0.15) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+      }
+      .hero h1 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 800;
+        background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 12px;
+        position: relative;
+      }
+      .hero p {
+        font-size: 1.15rem;
+        color: var(--text-muted);
+        max-width: 640px;
+        margin: 0 auto;
+        position: relative;
+      }
 
-    .badge-row {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 28px;
-      position: relative;
-    }
-    .badge {
-      padding: 6px 16px;
-      border-radius: 9999px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      border: 1px solid var(--border);
-      background: var(--surface);
-    }
-    .badge--purple { border-color: #8b5cf670; color: #c4b5fd; }
-    .badge--blue { border-color: #3b82f670; color: #93c5fd; }
-    .badge--green { border-color: #10b98170; color: #6ee7b7; }
-    .badge--amber { border-color: #f59e0b70; color: #fcd34d; }
-    .badge--pink { border-color: #ec489970; color: #f9a8d4; }
+      .badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 28px;
+        position: relative;
+      }
+      .badge {
+        padding: 6px 16px;
+        border-radius: 9999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: 1px solid var(--border);
+        background: var(--surface);
+      }
+      .badge--purple {
+        border-color: #8b5cf670;
+        color: #c4b5fd;
+      }
+      .badge--blue {
+        border-color: #3b82f670;
+        color: #93c5fd;
+      }
+      .badge--green {
+        border-color: #10b98170;
+        color: #6ee7b7;
+      }
+      .badge--amber {
+        border-color: #f59e0b70;
+        color: #fcd34d;
+      }
+      .badge--pink {
+        border-color: #ec489970;
+        color: #f9a8d4;
+      }
 
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
 
-    .section {
-      margin-bottom: 80px;
-    }
+      .section {
+        margin-bottom: 80px;
+      }
 
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 32px;
-    }
-    .section-number {
-      width: 48px; height: 48px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, var(--accent), #6366f1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: #fff;
-      flex-shrink: 0;
-    }
-    .section-header h2 {
-      font-size: 1.6rem;
-      font-weight: 700;
-    }
-    .section-desc {
-      color: var(--text-muted);
-      font-size: 1rem;
-      margin-bottom: 28px;
-      max-width: 800px;
-    }
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+      .section-number {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--accent), #6366f1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #fff;
+        flex-shrink: 0;
+      }
+      .section-header h2 {
+        font-size: 1.6rem;
+        font-weight: 700;
+      }
+      .section-desc {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin-bottom: 28px;
+        max-width: 800px;
+      }
 
-    .diagram-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      margin-bottom: 24px;
-      transition: border-color 0.3s;
-    }
-    .diagram-card:hover {
-      border-color: #334155;
-    }
-    .diagram-card img {
-      width: 100%;
-      display: block;
-    }
+      .diagram-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 24px;
+        transition: border-color 0.3s;
+      }
+      .diagram-card:hover {
+        border-color: #334155;
+      }
+      .diagram-card img {
+        width: 100%;
+        display: block;
+      }
 
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 16px;
-      margin-top: 24px;
-    }
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+      }
 
-    .info-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 24px;
-      transition: transform 0.2s, border-color 0.3s;
-    }
-    .info-card:hover {
-      transform: translateY(-2px);
-      border-color: #334155;
-    }
-    .info-card h3 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .info-card p {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-    .info-card .dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-      flex-shrink: 0;
-    }
+      .info-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 24px;
+        transition:
+          transform 0.2s,
+          border-color 0.3s;
+      }
+      .info-card:hover {
+        transform: translateY(-2px);
+        border-color: #334155;
+      }
+      .info-card h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .info-card p {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+      .info-card .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
+      }
 
-    .table-wrap {
-      overflow-x: auto;
-      margin-top: 20px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-    }
-    thead {
-      background: var(--surface-2);
-    }
-    th {
-      text-align: left;
-      padding: 12px 16px;
-      font-weight: 600;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border-bottom: 1px solid var(--border);
-    }
-    td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      color: var(--text);
-    }
-    tr:hover td {
-      background: rgba(139, 92, 246, 0.04);
-    }
+      .table-wrap {
+        overflow-x: auto;
+        margin-top: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      thead {
+        background: var(--surface-2);
+      }
+      th {
+        text-align: left;
+        padding: 12px 16px;
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border);
+      }
+      td {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+      }
+      tr:hover td {
+        background: rgba(139, 92, 246, 0.04);
+      }
 
-    code {
-      background: var(--surface-2);
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-      color: #c4b5fd;
-    }
+      code {
+        background: var(--surface-2);
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        color: #c4b5fd;
+      }
 
-    .tech-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-      margin-top: 24px;
-    }
-    .tech-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .tech-item .tech-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .tech-item .tech-value {
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
+      .tech-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-top: 24px;
+      }
+      .tech-item {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .tech-item .tech-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .tech-item .tech-value {
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
 
-    .two-col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    @media (max-width: 768px) {
-      .two-col { grid-template-columns: 1fr; }
-    }
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 768px) {
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    .route-list {
-      list-style: none;
-    }
-    .route-list li {
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.9rem;
-    }
-    .route-list li:last-child { border-bottom: none; }
-    .route-path { font-family: monospace; color: #c4b5fd; font-weight: 600; }
-    .route-desc { color: var(--text-muted); font-size: 0.85rem; }
+      .route-list {
+        list-style: none;
+      }
+      .route-list li {
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+      }
+      .route-list li:last-child {
+        border-bottom: none;
+      }
+      .route-path {
+        font-family: monospace;
+        color: #c4b5fd;
+        font-weight: 600;
+      }
+      .route-desc {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
 
-    .divider {
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border), transparent);
-      margin: 60px 0;
-    }
+      .divider {
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--border),
+          transparent
+        );
+        margin: 60px 0;
+      }
 
-    .footer {
-      text-align: center;
-      padding: 40px 24px;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      border-top: 1px solid var(--border);
-    }
-    .footer strong { color: var(--text); }
+      .footer {
+        text-align: center;
+        padding: 40px 24px;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        border-top: 1px solid var(--border);
+      }
+      .footer strong {
+        color: var(--text);
+      }
 
-    .callout {
-      background: var(--accent-glow);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 12px;
-      padding: 20px 24px;
-      margin: 24px 0;
-      display: flex;
-      gap: 14px;
-      align-items: flex-start;
-    }
-    .callout-icon {
-      font-size: 1.3rem;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-    .callout p {
-      color: #c4b5fd;
-      font-size: 0.9rem;
-    }
+      .callout {
+        background: var(--accent-glow);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin: 24px 0;
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+      }
+      .callout-icon {
+        font-size: 1.3rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .callout p {
+        color: #c4b5fd;
+        font-size: 0.9rem;
+      }
 
-    .nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(10, 14, 26, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 24px;
-    }
-    .nav-inner {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-    .nav-logo {
-      font-weight: 800;
-      font-size: 1.1rem;
-      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .nav-links {
-      display: flex;
-      gap: 4px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .nav-links a {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 0.8rem;
-      font-weight: 500;
-      padding: 6px 12px;
-      border-radius: 8px;
-      white-space: nowrap;
-      transition: all 0.2s;
-    }
-    .nav-links a:hover {
-      color: var(--text);
-      background: var(--surface);
-    }
-  </style>
-</head>
-<body>
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(10, 14, 26, 0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+        padding: 14px 24px;
+      }
+      .nav-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .nav-logo {
+        font-weight: 800;
+        font-size: 1.1rem;
+        background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .nav-links {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .nav-links a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: 8px;
+        white-space: nowrap;
+        transition: all 0.2s;
+      }
+      .nav-links a:hover {
+        color: var(--text);
+        background: var(--surface);
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="nav">
+      <div class="nav-inner">
+        <span class="nav-logo">Elly CMS</span>
+        <div class="nav-links">
+          <a href="#entity">Entity</a>
+          <a href="#composition">Composition</a>
+          <a href="#architecture">Mimari</a>
+          <a href="#crud">CRUD</a>
+          <a href="#auth">Auth</a>
+          <a href="#form-engine">Form Engine</a>
+          <a href="#tech">Tech Stack</a>
+          <a href="#routes">Routes</a>
+        </div>
+      </div>
+    </nav>
 
-<nav class="nav">
-  <div class="nav-inner">
-    <span class="nav-logo">Elly CMS</span>
-    <div class="nav-links">
-      <a href="#entity">Entity</a>
-      <a href="#composition">Composition</a>
-      <a href="#architecture">Mimari</a>
-      <a href="#crud">CRUD</a>
-      <a href="#auth">Auth</a>
-      <a href="#form-engine">Form Engine</a>
-      <a href="#tech">Tech Stack</a>
-      <a href="#routes">Routes</a>
-    </div>
-  </div>
-</nav>
-
-<header class="hero">
-  <h1>Elly CMS Mimarisi</h1>
-  <p>Headless CMS admin panelinin mimari yapisi, entity iliskileri, katman organizasyonu ve teknik tasarim dokumantasyonu.</p>
-  <div class="badge-row">
-    <span class="badge badge--purple">Next.js 16</span>
-    <span class="badge badge--blue">React 19</span>
-    <span class="badge badge--green">TypeScript 5.9</span>
-    <span class="badge badge--amber">Tailwind CSS 4</span>
-    <span class="badge badge--pink">Zod 4</span>
-  </div>
-</header>
-
-<main class="container">
-
-  <!-- Section 1: Entity Hierarchy -->
-  <section class="section" id="entity">
-    <div class="section-header">
-      <div class="section-number">1</div>
-      <h2>Entity Hiyerarsisi</h2>
-    </div>
-    <p class="section-desc">
-      Elly CMS'in temel veri modeli hiyerarsik bir yapidadir. En ust duzey <code>Page</code> entity'si, icine <code>Component</code> alir. Her component tipine gore <code>Banner</code>, <code>Widget</code> veya <code>Form</code> icerebilir. Widget'lar da kendi icinde Banner veya Post barindirir.
-    </p>
-    <div class="diagram-card">
-      <img src="images/entity-hierarchy.png" alt="Entity Hierarchy Diagram" />
-    </div>
-
-    <div class="callout">
-      <span class="callout-icon">&#x1f4a1;</span>
+    <header class="hero">
+      <h1>Elly CMS Mimarisi</h1>
       <p>
-        Bu hiyerarsi, bir web sayfasinin nasil compose edildigini tanimlar.
-        Bir <strong>Page</strong> birden fazla <strong>Component</strong> icerir; her Component tipi (BANNER, WIDGET, FORM) farkli alt entity'ler barindirir.
+        Headless CMS admin panelinin mimari yapisi, entity iliskileri, katman
+        organizasyonu ve teknik tasarim dokumantasyonu.
       </p>
-    </div>
-
-    <div class="info-grid">
-      <div class="info-card">
-        <h3><span class="dot" style="background:#8b5cf6"></span> Page (Sayfa)</h3>
-        <p>En ust duzey entity. title, slug, status, template, seoInfo alanlari icerir. Birden fazla Component atanabilir.</p>
+      <div class="badge-row">
+        <span class="badge badge--purple">Next.js 16</span>
+        <span class="badge badge--blue">React 19</span>
+        <span class="badge badge--green">TypeScript 5.9</span>
+        <span class="badge badge--amber">Tailwind CSS 4</span>
+        <span class="badge badge--pink">Zod 4</span>
       </div>
-      <div class="info-card">
-        <h3><span class="dot" style="background:#a78bfa"></span> Component</h3>
-        <p>Sayfanin yapi taslari. 3 tipi var: BANNER, WIDGET, FORM. Her tipi farkli alt entity barindirir. orderIndex ile siralanir.</p>
-      </div>
-      <div class="info-card">
-        <h3><span class="dot" style="background:#f59e0b"></span> Banner</h3>
-        <p>Gorsel icerik birimi. Desktop, tablet, mobile icin ayri image destekler. Link ve target alanlari icerir.</p>
-      </div>
-      <div class="info-card">
-        <h3><span class="dot" style="background:#10b981"></span> Widget</h3>
-        <p>2 tipi var: BANNER (banner listesi) ve POST (post listesi). Template destekler.</p>
-      </div>
-      <div class="info-card">
-        <h3><span class="dot" style="background:#3b82f6"></span> Post (Yazi)</h3>
-        <p>Icerik yazisi. Rich text content, slug, SEO bilgileri icerir. Yaprak node — alt entity icermez.</p>
-      </div>
-      <div class="info-card">
-        <h3><span class="dot" style="background:#ec4899"></span> Form</h3>
-        <p>Schema-driven form. JSON olarak fields, steps ve config saklar. 11 farkli alan tipi destekler.</p>
-      </div>
-    </div>
-  </section>
+    </header>
 
-  <div class="divider"></div>
-
-  <!-- Section 2: Composition Rules -->
-  <section class="section" id="composition">
-    <div class="section-header">
-      <div class="section-number">2</div>
-      <h2>Composition Kurallari</h2>
-    </div>
-    <p class="section-desc">
-      Her entity sadece belirli alt entity'leri icerebilir. Bu kurallar CMS'in tutarliligini saglar ve frontend tarafinda dogru rendering yapilamasini garantiler.
-    </p>
-    <div class="diagram-card">
-      <img src="images/composition-rules.png" alt="Composition Rules" />
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Container</th>
-            <th>Icerebilecegi Entity'ler</th>
-            <th>Aciklama</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>Page</code></td>
-            <td><code>Component[]</code></td>
-            <td>Bir sayfa N adet component icerir</td>
-          </tr>
-          <tr>
-            <td><code>Component (BANNER)</code></td>
-            <td><code>Banner[]</code></td>
-            <td>Banner tipindeki component direkt banner icerir</td>
-          </tr>
-          <tr>
-            <td><code>Component (WIDGET)</code></td>
-            <td><code>Widget[]</code></td>
-            <td>Widget tipindeki component widget icerir</td>
-          </tr>
-          <tr>
-            <td><code>Component (FORM)</code></td>
-            <td><code>Form[]</code></td>
-            <td>Form tipindeki component form icerir</td>
-          </tr>
-          <tr>
-            <td><code>Widget (BANNER)</code></td>
-            <td><code>Banner[]</code></td>
-            <td>Banner tipindeki widget banner icerir</td>
-          </tr>
-          <tr>
-            <td><code>Widget (POST)</code></td>
-            <td><code>Post[]</code></td>
-            <td>Post tipindeki widget post icerir</td>
-          </tr>
-          <tr>
-            <td><code>Banner</code></td>
-            <td>&#8212;</td>
-            <td>Yaprak node, alt entity icermez</td>
-          </tr>
-          <tr>
-            <td><code>Post</code></td>
-            <td>&#8212;</td>
-            <td>Yaprak node, alt entity icermez</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- Section 3: Layer Architecture -->
-  <section class="section" id="architecture">
-    <div class="section-header">
-      <div class="section-number">3</div>
-      <h2>Katman Mimarisi</h2>
-    </div>
-    <p class="section-desc">
-      Uygulama 6 katmandan olusur. Her katman tek bir sorumluluga sahiptir. Veri akisi yukaridan asagiya, kullanicidan API'ye dogru ilerler.
-    </p>
-    <div class="diagram-card">
-      <img src="images/layer-architecture.png" alt="Layer Architecture" />
-    </div>
-
-    <div class="info-grid">
-      <div class="info-card">
-        <h3><span class="dot" style="background:#6366f1"></span> Route Layer</h3>
-        <p><code>src/app/(baseLayout)/</code> altindaki CRUD sayfalari. Her entity icin list, new, edit sayfalari.</p>
-      </div>
-      <div class="info-card">
-        <h3><span class="dot" style="background:#8b5cf6"></span> Layout Layer</h3>
-        <p>BaseAdminLayout (Sidebar + Header) ve LayoutLess (login sayfasi). Route group'lar ile ayrilmis.</p>
-      </div>
-      <div class="info-card">
-        <h3><span class="dot" style="background:#a78bfa"></span> Component Layer</h3>
-        <p><code>app/_components/</code> altinda colocated. DataTable, Modal, DynamicForm, ImageUploadBox gibi paylasilan UI parcalari.</p>
-      </div>
-      <div class="info-card">
-        <h3><span class="dot" style="background:#3b82f6"></span> Service Layer</h3>
-        <p><code>app/_services/</code> altinda her entity icin CRUD servisleri. Backend API'ye <code>fetcher</code> uzerinden istek atar.</p>
-      </div>
-      <div class="info-card">
-        <h3><span class="dot" style="background:#64748b"></span> Shared Infrastructure</h3>
-        <p>Zod semalari, TypeScript tipleri, utility fonksiyonlari. Tum katmanlar tarafindan kullanilir.</p>
-      </div>
-      <div class="info-card">
-        <h3><span class="dot" style="background:#ef4444"></span> External APIs</h3>
-        <p>Backend REST API (<code>/api/v1/*</code>) ve Google Gemini AI. Dis bagimliliklari temsil eder.</p>
-      </div>
-    </div>
-
-    <div class="callout">
-      <span class="callout-icon">&#x1f4c1;</span>
-      <p>
-        <strong>Colocated Pattern:</strong> Admin paneline ozel component, service, hook ve util dosyalari
-        <code>src/app/_components/</code>, <code>_services/</code>, <code>_hooks/</code>, <code>_utils/</code>
-        altinda colocated tutulur. Basta underscore (_) kullanilarak Next.js routing'den dislanir.
-      </p>
-    </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- Section 4: CRUD Pattern -->
-  <section class="section" id="crud">
-    <div class="section-header">
-      <div class="section-number">4</div>
-      <h2>CRUD Sayfa Yapisi</h2>
-    </div>
-    <p class="section-desc">
-      Her entity icin standart bir CRUD pattern uygulanir: Liste, Olusturma ve Duzenleme. Bu desen Pages, Components, Widgets, Banners, Posts ve Contents icin tekrarlanir.
-    </p>
-    <div class="diagram-card">
-      <img src="images/crud-pattern.png" alt="CRUD Pattern" />
-    </div>
-
-    <div class="two-col">
-      <div class="info-card">
-        <h3>Standart CRUD Rotalari</h3>
-        <p style="margin-bottom: 12px;">Her entity icin 3 sayfa:</p>
-        <ul style="list-style: none; padding: 0;">
-          <li style="padding: 6px 0; border-bottom: 1px solid var(--border);">
-            <code>/entity</code> &#8212; Liste (DataTable + Search)
-          </li>
-          <li style="padding: 6px 0; border-bottom: 1px solid var(--border);">
-            <code>/entity/new</code> &#8212; Olusturma (Form + Validation)
-          </li>
-          <li style="padding: 6px 0;">
-            <code>/entity/[id]/edit</code> &#8212; Duzenleme (Prefill + Update)
-          </li>
-        </ul>
-      </div>
-      <div class="info-card">
-        <h3>Kullanilan Ortak Componentler</h3>
-        <p style="margin-bottom: 12px;">Tum CRUD sayfalarinda paylasilan:</p>
-        <ul style="list-style: none; padding: 0;">
-          <li style="padding: 6px 0; border-bottom: 1px solid var(--border);"><code>DataTable</code> &#8212; Tablo + siralama</li>
-          <li style="padding: 6px 0; border-bottom: 1px solid var(--border);"><code>SearchInput</code> &#8212; Arama</li>
-          <li style="padding: 6px 0; border-bottom: 1px solid var(--border);"><code>DualListbox</code> &#8212; Coklu secim (ID atama)</li>
-          <li style="padding: 6px 0; border-bottom: 1px solid var(--border);"><code>ConfirmDialog</code> &#8212; Silme onay</li>
-          <li style="padding: 6px 0;"><code>StatusBadge</code> &#8212; Aktif/Pasif gosterge</li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- Section 5: Auth Flow -->
-  <section class="section" id="auth">
-    <div class="section-header">
-      <div class="section-number">5</div>
-      <h2>Kimlik Dogrulama Akisi</h2>
-    </div>
-    <p class="section-desc">
-      JWT tabanli kimlik dogrulama. Access token + refresh token mekanizmasi. Token'lar httpOnly cookie'lerde saklanir. Token suresi dolunca otomatik refresh yapilir.
-    </p>
-    <div class="diagram-card">
-      <img src="images/auth-flow.png" alt="Auth Flow" />
-    </div>
-
-    <div class="info-grid">
-      <div class="info-card">
-        <h3><span class="dot" style="background:#10b981"></span> Login Akisi</h3>
-        <p>Kullanici email + sifre gonderir. Server Action backend API'ye istek atar. Donen token'lar httpOnly cookie'ye yazilir. Dashboard'a redirect edilir.</p>
-      </div>
-      <div class="info-card">
-        <h3><span class="dot" style="background:#f59e0b"></span> Token Refresh</h3>
-        <p>Access token suresi dolunca 401 donulur. <code>refreshTokenProxy</code> otomatik olarak yeni token alir, cookie gunceller ve orijinal istegi tekrarlar.</p>
-      </div>
-      <div class="info-card">
-        <h3><span class="dot" style="background:#ef4444"></span> Logout</h3>
-        <p>Server Action ile cookie'ler silinir, TanStack Query cache temizlenir ve login sayfasina redirect edilir.</p>
-      </div>
-    </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- Section 6: Form Engine -->
-  <section class="section" id="form-engine">
-    <div class="section-header">
-      <div class="section-number">6</div>
-      <h2>Form Engine</h2>
-    </div>
-    <p class="section-desc">
-      Schema-driven form sistemi. Form tanimlari JSON olarak saklanir ve runtime'da dinamik olarak render edilir. Wizard, conditional fields ve validation destekler.
-    </p>
-    <div class="diagram-card">
-      <img src="images/form-engine.png" alt="Form Engine" />
-    </div>
-
-    <div class="two-col">
-      <div class="info-card">
-        <h3>Desteklenen Alan Tipleri</h3>
-        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px;">
-          <span class="badge badge--purple">text</span>
-          <span class="badge badge--purple">email</span>
-          <span class="badge badge--purple">number</span>
-          <span class="badge badge--blue">select</span>
-          <span class="badge badge--blue">checkbox</span>
-          <span class="badge badge--blue">multi_checkbox</span>
-          <span class="badge badge--blue">radio</span>
-          <span class="badge badge--green">textarea</span>
-          <span class="badge badge--green">date</span>
-          <span class="badge badge--amber">phone</span>
-          <span class="badge badge--amber">url</span>
+    <main class="container">
+      <!-- Section 1: Entity Hierarchy -->
+      <section class="section" id="entity">
+        <div class="section-header">
+          <div class="section-number">1</div>
+          <h2>Entity Hiyerarsisi</h2>
         </div>
-      </div>
-      <div class="info-card">
-        <h3>Runtime Componentleri</h3>
-        <ul style="list-style: none; padding: 0;">
-          <li style="padding: 6px 0; border-bottom: 1px solid var(--border);">
-            <code>DynamicForm</code> &#8212; Ana form container
-          </li>
-          <li style="padding: 6px 0; border-bottom: 1px solid var(--border);">
-            <code>zod-generator</code> &#8212; JSON schema'dan Zod validation uretir
-          </li>
-          <li style="padding: 6px 0; border-bottom: 1px solid var(--border);">
-            <code>FieldRenderer</code> &#8212; Her field tipini JSX'e donusturur
-          </li>
-          <li style="padding: 6px 0; border-bottom: 1px solid var(--border);">
-            <code>StepManager</code> &#8212; Wizard modunda adim navigasyonu
-          </li>
-          <li style="padding: 6px 0;">
-            <code>condition-evaluator</code> &#8212; Kosullu alan gosterimi
-          </li>
-        </ul>
-      </div>
-    </div>
+        <p class="section-desc">
+          Elly CMS'in temel veri modeli hiyerarsik bir yapidadir. En ust duzey
+          <code>Page</code> entity'si, icine <code>Component</code> alir. Her
+          component tipine gore <code>Banner</code>, <code>Widget</code> veya
+          <code>Form</code> icerebilir. Widget'lar da kendi icinde Banner veya
+          Post barindirir.
+        </p>
+        <div class="diagram-card">
+          <img
+            src="images/entity-hierarchy.png"
+            alt="Entity Hierarchy Diagram"
+          />
+        </div>
 
-    <div class="callout">
-      <span class="callout-icon">&#x2699;&#xfe0f;</span>
-      <p>
-        <strong>Layout secenekleri:</strong>
-        <code>single</code> (tek kolonlu),
-        <code>vertical</code> (dikey),
-        <code>wizard</code> (adim adim).
-        Wizard modunda <code>steps[]</code> tanimlanir ve her field bir step'e atanir.
-      </p>
-    </div>
-  </section>
+        <div class="callout">
+          <span class="callout-icon">&#x1f4a1;</span>
+          <p>
+            Bu hiyerarsi, bir web sayfasinin nasil compose edildigini tanimlar.
+            Bir <strong>Page</strong> birden fazla
+            <strong>Component</strong> icerir; her Component tipi (BANNER,
+            WIDGET, FORM) farkli alt entity'ler barindirir.
+          </p>
+        </div>
 
-  <div class="divider"></div>
-
-  <!-- Section 7: Tech Stack -->
-  <section class="section" id="tech">
-    <div class="section-header">
-      <div class="section-number">7</div>
-      <h2>Tech Stack</h2>
-    </div>
-    <div class="tech-grid">
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">Framework</div>
-          <div class="tech-value">Next.js 16</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">UI Library</div>
-          <div class="tech-value">React 19</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">Language</div>
-          <div class="tech-value">TypeScript 5.9</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">Styling</div>
-          <div class="tech-value">Tailwind CSS 4</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">Components</div>
-          <div class="tech-value">Shadcn UI</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">Data Fetching</div>
-          <div class="tech-value">TanStack Query 5</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">Forms</div>
-          <div class="tech-value">React Hook Form 7</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">Validation</div>
-          <div class="tech-value">Zod 4</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">Rich Text</div>
-          <div class="tech-value">TipTap 3</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">AI</div>
-          <div class="tech-value">Google Gemini</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">Animation</div>
-          <div class="tech-value">Framer Motion 12</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">Testing</div>
-          <div class="tech-value">Vitest 4</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">Package Manager</div>
-          <div class="tech-value">Bun</div>
-        </div>
-      </div>
-      <div class="tech-item">
-        <div>
-          <div class="tech-label">Deployment</div>
-          <div class="tech-value">Vercel</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- Section 8: Routes -->
-  <section class="section" id="routes">
-    <div class="section-header">
-      <div class="section-number">8</div>
-      <h2>Route Haritasi</h2>
-    </div>
-    <p class="section-desc">
-      Tum uygulama rotalari. <code>(baseLayout)</code> grubu Sidebar + Header icerir, <code>(layoutLess)</code> grubu layout'suz calisir.
-    </p>
-
-    <div class="two-col">
-      <div class="info-card" style="padding: 0; overflow: hidden;">
-        <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--surface-2);">
-          <h3 style="margin: 0; font-size: 0.95rem;">Admin Layout (baseLayout)</h3>
-        </div>
-        <ul class="route-list">
-          <li><span class="route-path">/dashboard</span><span class="route-desc">Gosterge paneli</span></li>
-          <li><span class="route-path">/pages/*</span><span class="route-desc">Sayfa CRUD</span></li>
-          <li><span class="route-path">/components/*</span><span class="route-desc">Component CRUD</span></li>
-          <li><span class="route-path">/widgets/*</span><span class="route-desc">Widget CRUD</span></li>
-          <li><span class="route-path">/banners/*</span><span class="route-desc">Banner CRUD</span></li>
-          <li><span class="route-path">/posts/*</span><span class="route-desc">Post CRUD</span></li>
-          <li><span class="route-path">/contents/*</span><span class="route-desc">Icerik CRUD</span></li>
-          <li><span class="route-path">/forms/*</span><span class="route-desc">Form CRUD</span></li>
-          <li><span class="route-path">/assets</span><span class="route-desc">Asset yonetimi</span></li>
-        </ul>
-      </div>
-
-      <div>
-        <div class="info-card" style="padding: 0; overflow: hidden; margin-bottom: 16px;">
-          <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--surface-2);">
-            <h3 style="margin: 0; font-size: 0.95rem;">Layout'suz (layoutLess)</h3>
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #8b5cf6"></span> Page (Sayfa)
+            </h3>
+            <p>
+              En ust duzey entity. title, slug, status, template, seoInfo
+              alanlari icerir. Birden fazla Component atanabilir.
+            </p>
           </div>
-          <ul class="route-list">
-            <li><span class="route-path">/login</span><span class="route-desc">Giris sayfasi</span></li>
-          </ul>
-        </div>
-
-        <div class="info-card" style="padding: 0; overflow: hidden;">
-          <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--surface-2);">
-            <h3 style="margin: 0; font-size: 0.95rem;">API Routes</h3>
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #a78bfa"></span> Component
+            </h3>
+            <p>
+              Sayfanin yapi taslari. 3 tipi var: BANNER, WIDGET, FORM. Her tipi
+              farkli alt entity barindirir. orderIndex ile siralanir.
+            </p>
           </div>
-          <ul class="route-list">
-            <li><span class="route-path">POST /api/revalidate</span><span class="route-desc">ISR cache invalidation</span></li>
-          </ul>
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #f59e0b"></span> Banner
+            </h3>
+            <p>
+              Gorsel icerik birimi. Desktop, tablet, mobile icin ayri image
+              destekler. Link ve target alanlari icerir.
+            </p>
+          </div>
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #10b981"></span> Widget
+            </h3>
+            <p>
+              2 tipi var: BANNER (banner listesi) ve POST (post listesi).
+              Template destekler.
+            </p>
+          </div>
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #3b82f6"></span> Post (Yazi)
+            </h3>
+            <p>
+              Icerik yazisi. Rich text content, slug, SEO bilgileri icerir.
+              Yaprak node — alt entity icermez.
+            </p>
+          </div>
+          <div class="info-card">
+            <h3><span class="dot" style="background: #ec4899"></span> Form</h3>
+            <p>
+              Schema-driven form. JSON olarak fields, steps ve config saklar. 11
+              farkli alan tipi destekler.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- Section 2: Composition Rules -->
+      <section class="section" id="composition">
+        <div class="section-header">
+          <div class="section-number">2</div>
+          <h2>Composition Kurallari</h2>
+        </div>
+        <p class="section-desc">
+          Her entity sadece belirli alt entity'leri icerebilir. Bu kurallar
+          CMS'in tutarliligini saglar ve frontend tarafinda dogru rendering
+          yapilamasini garantiler.
+        </p>
+        <div class="diagram-card">
+          <img src="images/composition-rules.png" alt="Composition Rules" />
         </div>
 
-        <div class="info-card" style="margin-top: 16px;">
-          <h3>Hata Sayfalari</h3>
-          <ul style="list-style: none; padding: 0;">
-            <li style="padding: 4px 0;"><code>error.tsx</code> &#8212; Route-level error</li>
-            <li style="padding: 4px 0;"><code>global-error.tsx</code> &#8212; Global error</li>
-            <li style="padding: 4px 0;"><code>not-found.tsx</code> &#8212; 404 sayfasi</li>
-          </ul>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Container</th>
+                <th>Icerebilecegi Entity'ler</th>
+                <th>Aciklama</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>Page</code></td>
+                <td><code>Component[]</code></td>
+                <td>Bir sayfa N adet component icerir</td>
+              </tr>
+              <tr>
+                <td><code>Component (BANNER)</code></td>
+                <td><code>Banner[]</code></td>
+                <td>Banner tipindeki component direkt banner icerir</td>
+              </tr>
+              <tr>
+                <td><code>Component (WIDGET)</code></td>
+                <td><code>Widget[]</code></td>
+                <td>Widget tipindeki component widget icerir</td>
+              </tr>
+              <tr>
+                <td><code>Component (FORM)</code></td>
+                <td><code>Form[]</code></td>
+                <td>Form tipindeki component form icerir</td>
+              </tr>
+              <tr>
+                <td><code>Widget (BANNER)</code></td>
+                <td><code>Banner[]</code></td>
+                <td>Banner tipindeki widget banner icerir</td>
+              </tr>
+              <tr>
+                <td><code>Widget (POST)</code></td>
+                <td><code>Post[]</code></td>
+                <td>Post tipindeki widget post icerir</td>
+              </tr>
+              <tr>
+                <td><code>Banner</code></td>
+                <td>&#8212;</td>
+                <td>Yaprak node, alt entity icermez</td>
+              </tr>
+              <tr>
+                <td><code>Post</code></td>
+                <td>&#8212;</td>
+                <td>Yaprak node, alt entity icermez</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </div>
-    </div>
-  </section>
+      </section>
 
-  <div class="divider"></div>
+      <div class="divider"></div>
 
-  <!-- Section 9: Directory Map -->
-  <section class="section" id="dirs">
-    <div class="section-header">
-      <div class="section-number">9</div>
-      <h2>Dizin Sorumluluk Haritasi</h2>
-    </div>
+      <!-- Section 3: Layer Architecture -->
+      <section class="section" id="architecture">
+        <div class="section-header">
+          <div class="section-number">3</div>
+          <h2>Katman Mimarisi</h2>
+        </div>
+        <p class="section-desc">
+          Uygulama 6 katmandan olusur. Her katman tek bir sorumluluga sahiptir.
+          Veri akisi yukaridan asagiya, kullanicidan API'ye dogru ilerler.
+        </p>
+        <div class="diagram-card">
+          <img src="images/layer-architecture.png" alt="Layer Architecture" />
+        </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Dizin</th>
-            <th>Sorumluluk</th>
-            <th>Ornekler</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>src/app/(baseLayout)/</code></td>
-            <td>Admin CRUD rotalari</td>
-            <td>pages/, components/, widgets/</td>
-          </tr>
-          <tr>
-            <td><code>src/app/(layoutLess)/</code></td>
-            <td>Chrome'suz sayfalar</td>
-            <td>login/</td>
-          </tr>
-          <tr>
-            <td><code>src/app/_components/</code></td>
-            <td>Admin UI componentleri (colocated)</td>
-            <td>DataTable, Modal, Sidebar</td>
-          </tr>
-          <tr>
-            <td><code>src/app/_services/</code></td>
-            <td>API servis fonksiyonlari (colocated)</td>
-            <td>pages.services.ts</td>
-          </tr>
-          <tr>
-            <td><code>src/app/_hooks/</code></td>
-            <td>Admin-specific React hooks</td>
-            <td>useFormSchema, useDebounce</td>
-          </tr>
-          <tr>
-            <td><code>src/app/_utils/</code></td>
-            <td>Admin yardimci fonksiyonlar</td>
-            <td>zod-generator, condition-evaluator</td>
-          </tr>
-          <tr>
-            <td><code>src/components/ui/</code></td>
-            <td>Shadcn UI primitives (global)</td>
-            <td>Button, Input, Card</td>
-          </tr>
-          <tr>
-            <td><code>src/schemas/</code></td>
-            <td>Zod validation semalari</td>
-            <td>page.ts, component.ts</td>
-          </tr>
-          <tr>
-            <td><code>src/types/</code></td>
-            <td>TypeScript tip tanimlari</td>
-            <td>BaseResponse.ts, form.ts</td>
-          </tr>
-          <tr>
-            <td><code>src/actions/</code></td>
-            <td>Global server actions</td>
-            <td>auth/logout, generate-article</td>
-          </tr>
-          <tr>
-            <td><code>src/lib/</code></td>
-            <td>Core library (env, security, AI)</td>
-            <td>env.ts, gemini.ts, rate-limiter.ts</td>
-          </tr>
-          <tr>
-            <td><code>src/providers/</code></td>
-            <td>React provider'lar</td>
-            <td>TanStack Query, Theme</td>
-          </tr>
-          <tr>
-            <td><code>src/proxy/</code></td>
-            <td>Token proxy islemleri</td>
-            <td>refreshTokenProxy</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #6366f1"></span> Route Layer
+            </h3>
+            <p>
+              <code>src/app/(baseLayout)/</code> altindaki CRUD sayfalari. Her
+              entity icin list, new, edit sayfalari.
+            </p>
+          </div>
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #8b5cf6"></span> Layout Layer
+            </h3>
+            <p>
+              BaseAdminLayout (Sidebar + Header) ve LayoutLess (login sayfasi).
+              Route group'lar ile ayrilmis.
+            </p>
+          </div>
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #a78bfa"></span> Component
+              Layer
+            </h3>
+            <p>
+              <code>app/_components/</code> altinda colocated. DataTable, Modal,
+              DynamicForm, ImageUploadBox gibi paylasilan UI parcalari.
+            </p>
+          </div>
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #3b82f6"></span> Service
+              Layer
+            </h3>
+            <p>
+              <code>app/_services/</code> altinda her entity icin CRUD
+              servisleri. Backend API'ye <code>fetcher</code> uzerinden istek
+              atar.
+            </p>
+          </div>
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #64748b"></span> Shared
+              Infrastructure
+            </h3>
+            <p>
+              Zod semalari, TypeScript tipleri, utility fonksiyonlari. Tum
+              katmanlar tarafindan kullanilir.
+            </p>
+          </div>
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #ef4444"></span> External
+              APIs
+            </h3>
+            <p>
+              Backend REST API (<code>/api/v1/*</code>) ve Google Gemini AI. Dis
+              bagimliliklari temsil eder.
+            </p>
+          </div>
+        </div>
 
-</main>
+        <div class="callout">
+          <span class="callout-icon">&#x1f4c1;</span>
+          <p>
+            <strong>Colocated Pattern:</strong> Admin paneline ozel component,
+            service, hook ve util dosyalari <code>src/app/_components/</code>,
+            <code>_services/</code>, <code>_hooks/</code>, <code>_utils/</code>
+            altinda colocated tutulur. Basta underscore (_) kullanilarak Next.js
+            routing'den dislanir.
+          </p>
+        </div>
+      </section>
 
-<footer class="footer">
-  <strong>Elly CMS Admin Panel</strong> &mdash; Mimari Dokumantasyonu<br />
-  Next.js 16 &middot; React 19 &middot; TypeScript 5.9 &middot; Tailwind CSS 4
-</footer>
+      <div class="divider"></div>
 
-</body>
+      <!-- Section 4: CRUD Pattern -->
+      <section class="section" id="crud">
+        <div class="section-header">
+          <div class="section-number">4</div>
+          <h2>CRUD Sayfa Yapisi</h2>
+        </div>
+        <p class="section-desc">
+          Her entity icin standart bir CRUD pattern uygulanir: Liste, Olusturma
+          ve Duzenleme. Bu desen Pages, Components, Widgets, Banners, Posts ve
+          Contents icin tekrarlanir.
+        </p>
+        <div class="diagram-card">
+          <img src="images/crud-pattern.png" alt="CRUD Pattern" />
+        </div>
+
+        <div class="two-col">
+          <div class="info-card">
+            <h3>Standart CRUD Rotalari</h3>
+            <p style="margin-bottom: 12px">Her entity icin 3 sayfa:</p>
+            <ul style="list-style: none; padding: 0">
+              <li
+                style="padding: 6px 0; border-bottom: 1px solid var(--border)"
+              >
+                <code>/entity</code> &#8212; Liste (DataTable + Search)
+              </li>
+              <li
+                style="padding: 6px 0; border-bottom: 1px solid var(--border)"
+              >
+                <code>/entity/new</code> &#8212; Olusturma (Form + Validation)
+              </li>
+              <li style="padding: 6px 0">
+                <code>/entity/[id]/edit</code> &#8212; Duzenleme (Prefill +
+                Update)
+              </li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h3>Kullanilan Ortak Componentler</h3>
+            <p style="margin-bottom: 12px">Tum CRUD sayfalarinda paylasilan:</p>
+            <ul style="list-style: none; padding: 0">
+              <li
+                style="padding: 6px 0; border-bottom: 1px solid var(--border)"
+              >
+                <code>DataTable</code> &#8212; Tablo + siralama
+              </li>
+              <li
+                style="padding: 6px 0; border-bottom: 1px solid var(--border)"
+              >
+                <code>SearchInput</code> &#8212; Arama
+              </li>
+              <li
+                style="padding: 6px 0; border-bottom: 1px solid var(--border)"
+              >
+                <code>DualListbox</code> &#8212; Coklu secim (ID atama)
+              </li>
+              <li
+                style="padding: 6px 0; border-bottom: 1px solid var(--border)"
+              >
+                <code>ConfirmDialog</code> &#8212; Silme onay
+              </li>
+              <li style="padding: 6px 0">
+                <code>StatusBadge</code> &#8212; Aktif/Pasif gosterge
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- Section 5: Auth Flow -->
+      <section class="section" id="auth">
+        <div class="section-header">
+          <div class="section-number">5</div>
+          <h2>Kimlik Dogrulama Akisi</h2>
+        </div>
+        <p class="section-desc">
+          JWT tabanli kimlik dogrulama. Access token + refresh token
+          mekanizmasi. Token'lar httpOnly cookie'lerde saklanir. Token suresi
+          dolunca otomatik refresh yapilir.
+        </p>
+        <div class="diagram-card">
+          <img src="images/auth-flow.png" alt="Auth Flow" />
+        </div>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #10b981"></span> Login Akisi
+            </h3>
+            <p>
+              Kullanici email + sifre gonderir. Server Action backend API'ye
+              istek atar. Donen token'lar httpOnly cookie'ye yazilir.
+              Dashboard'a redirect edilir.
+            </p>
+          </div>
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #f59e0b"></span> Token
+              Refresh
+            </h3>
+            <p>
+              Access token suresi dolunca 401 donulur.
+              <code>refreshTokenProxy</code> otomatik olarak yeni token alir,
+              cookie gunceller ve orijinal istegi tekrarlar.
+            </p>
+          </div>
+          <div class="info-card">
+            <h3>
+              <span class="dot" style="background: #ef4444"></span> Logout
+            </h3>
+            <p>
+              Server Action ile cookie'ler silinir, TanStack Query cache
+              temizlenir ve login sayfasina redirect edilir.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- Section 6: Form Engine -->
+      <section class="section" id="form-engine">
+        <div class="section-header">
+          <div class="section-number">6</div>
+          <h2>Form Engine</h2>
+        </div>
+        <p class="section-desc">
+          Schema-driven form sistemi. Form tanimlari JSON olarak saklanir ve
+          runtime'da dinamik olarak render edilir. Wizard, conditional fields ve
+          validation destekler.
+        </p>
+        <div class="diagram-card">
+          <img src="images/form-engine.png" alt="Form Engine" />
+        </div>
+
+        <div class="two-col">
+          <div class="info-card">
+            <h3>Desteklenen Alan Tipleri</h3>
+            <div
+              style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px"
+            >
+              <span class="badge badge--purple">text</span>
+              <span class="badge badge--purple">email</span>
+              <span class="badge badge--purple">number</span>
+              <span class="badge badge--blue">select</span>
+              <span class="badge badge--blue">checkbox</span>
+              <span class="badge badge--blue">multi_checkbox</span>
+              <span class="badge badge--blue">radio</span>
+              <span class="badge badge--green">textarea</span>
+              <span class="badge badge--green">date</span>
+              <span class="badge badge--amber">phone</span>
+              <span class="badge badge--amber">url</span>
+            </div>
+          </div>
+          <div class="info-card">
+            <h3>Runtime Componentleri</h3>
+            <ul style="list-style: none; padding: 0">
+              <li
+                style="padding: 6px 0; border-bottom: 1px solid var(--border)"
+              >
+                <code>DynamicForm</code> &#8212; Ana form container
+              </li>
+              <li
+                style="padding: 6px 0; border-bottom: 1px solid var(--border)"
+              >
+                <code>zod-generator</code> &#8212; JSON schema'dan Zod
+                validation uretir
+              </li>
+              <li
+                style="padding: 6px 0; border-bottom: 1px solid var(--border)"
+              >
+                <code>FieldRenderer</code> &#8212; Her field tipini JSX'e
+                donusturur
+              </li>
+              <li
+                style="padding: 6px 0; border-bottom: 1px solid var(--border)"
+              >
+                <code>StepManager</code> &#8212; Wizard modunda adim navigasyonu
+              </li>
+              <li style="padding: 6px 0">
+                <code>condition-evaluator</code> &#8212; Kosullu alan gosterimi
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout">
+          <span class="callout-icon">&#x2699;&#xfe0f;</span>
+          <p>
+            <strong>Layout secenekleri:</strong>
+            <code>single</code> (tek kolonlu), <code>vertical</code> (dikey),
+            <code>wizard</code> (adim adim). Wizard modunda
+            <code>steps[]</code> tanimlanir ve her field bir step'e atanir.
+          </p>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- Section 7: Tech Stack -->
+      <section class="section" id="tech">
+        <div class="section-header">
+          <div class="section-number">7</div>
+          <h2>Tech Stack</h2>
+        </div>
+        <div class="tech-grid">
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">Framework</div>
+              <div class="tech-value">Next.js 16</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">UI Library</div>
+              <div class="tech-value">React 19</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">Language</div>
+              <div class="tech-value">TypeScript 5.9</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">Styling</div>
+              <div class="tech-value">Tailwind CSS 4</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">Components</div>
+              <div class="tech-value">Shadcn UI</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">Data Fetching</div>
+              <div class="tech-value">TanStack Query 5</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">Forms</div>
+              <div class="tech-value">React Hook Form 7</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">Validation</div>
+              <div class="tech-value">Zod 4</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">Rich Text</div>
+              <div class="tech-value">TipTap 3</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">AI</div>
+              <div class="tech-value">Google Gemini</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">Animation</div>
+              <div class="tech-value">Framer Motion 12</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">Testing</div>
+              <div class="tech-value">Vitest 4</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">Package Manager</div>
+              <div class="tech-value">Bun</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div>
+              <div class="tech-label">Deployment</div>
+              <div class="tech-value">Vercel</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- Section 8: Routes -->
+      <section class="section" id="routes">
+        <div class="section-header">
+          <div class="section-number">8</div>
+          <h2>Route Haritasi</h2>
+        </div>
+        <p class="section-desc">
+          Tum uygulama rotalari. <code>(baseLayout)</code> grubu Sidebar +
+          Header icerir, <code>(layoutLess)</code> grubu layout'suz calisir.
+        </p>
+
+        <div class="two-col">
+          <div class="info-card" style="padding: 0; overflow: hidden">
+            <div
+              style="
+                padding: 16px 20px;
+                border-bottom: 1px solid var(--border);
+                background: var(--surface-2);
+              "
+            >
+              <h3 style="margin: 0; font-size: 0.95rem">
+                Admin Layout (baseLayout)
+              </h3>
+            </div>
+            <ul class="route-list">
+              <li>
+                <span class="route-path">/dashboard</span
+                ><span class="route-desc">Gosterge paneli</span>
+              </li>
+              <li>
+                <span class="route-path">/pages/*</span
+                ><span class="route-desc">Sayfa CRUD</span>
+              </li>
+              <li>
+                <span class="route-path">/components/*</span
+                ><span class="route-desc">Component CRUD</span>
+              </li>
+              <li>
+                <span class="route-path">/widgets/*</span
+                ><span class="route-desc">Widget CRUD</span>
+              </li>
+              <li>
+                <span class="route-path">/banners/*</span
+                ><span class="route-desc">Banner CRUD</span>
+              </li>
+              <li>
+                <span class="route-path">/posts/*</span
+                ><span class="route-desc">Post CRUD</span>
+              </li>
+              <li>
+                <span class="route-path">/contents/*</span
+                ><span class="route-desc">Icerik CRUD</span>
+              </li>
+              <li>
+                <span class="route-path">/forms/*</span
+                ><span class="route-desc">Form CRUD</span>
+              </li>
+              <li>
+                <span class="route-path">/assets</span
+                ><span class="route-desc">Asset yonetimi</span>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <div
+              class="info-card"
+              style="padding: 0; overflow: hidden; margin-bottom: 16px"
+            >
+              <div
+                style="
+                  padding: 16px 20px;
+                  border-bottom: 1px solid var(--border);
+                  background: var(--surface-2);
+                "
+              >
+                <h3 style="margin: 0; font-size: 0.95rem">
+                  Layout'suz (layoutLess)
+                </h3>
+              </div>
+              <ul class="route-list">
+                <li>
+                  <span class="route-path">/login</span
+                  ><span class="route-desc">Giris sayfasi</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="info-card" style="padding: 0; overflow: hidden">
+              <div
+                style="
+                  padding: 16px 20px;
+                  border-bottom: 1px solid var(--border);
+                  background: var(--surface-2);
+                "
+              >
+                <h3 style="margin: 0; font-size: 0.95rem">API Routes</h3>
+              </div>
+              <ul class="route-list">
+                <li>
+                  <span class="route-path">POST /api/revalidate</span
+                  ><span class="route-desc">ISR cache invalidation</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="info-card" style="margin-top: 16px">
+              <h3>Hata Sayfalari</h3>
+              <ul style="list-style: none; padding: 0">
+                <li style="padding: 4px 0">
+                  <code>error.tsx</code> &#8212; Route-level error
+                </li>
+                <li style="padding: 4px 0">
+                  <code>global-error.tsx</code> &#8212; Global error
+                </li>
+                <li style="padding: 4px 0">
+                  <code>not-found.tsx</code> &#8212; 404 sayfasi
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- Section 9: Directory Map -->
+      <section class="section" id="dirs">
+        <div class="section-header">
+          <div class="section-number">9</div>
+          <h2>Dizin Sorumluluk Haritasi</h2>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Dizin</th>
+                <th>Sorumluluk</th>
+                <th>Ornekler</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>src/app/(baseLayout)/</code></td>
+                <td>Admin CRUD rotalari</td>
+                <td>pages/, components/, widgets/</td>
+              </tr>
+              <tr>
+                <td><code>src/app/(layoutLess)/</code></td>
+                <td>Chrome'suz sayfalar</td>
+                <td>login/</td>
+              </tr>
+              <tr>
+                <td><code>src/app/_components/</code></td>
+                <td>Admin UI componentleri (colocated)</td>
+                <td>DataTable, Modal, Sidebar</td>
+              </tr>
+              <tr>
+                <td><code>src/app/_services/</code></td>
+                <td>API servis fonksiyonlari (colocated)</td>
+                <td>pages.services.ts</td>
+              </tr>
+              <tr>
+                <td><code>src/app/_hooks/</code></td>
+                <td>Admin-specific React hooks</td>
+                <td>useFormSchema, useDebounce</td>
+              </tr>
+              <tr>
+                <td><code>src/app/_utils/</code></td>
+                <td>Admin yardimci fonksiyonlar</td>
+                <td>zod-generator, condition-evaluator</td>
+              </tr>
+              <tr>
+                <td><code>src/components/ui/</code></td>
+                <td>Shadcn UI primitives (global)</td>
+                <td>Button, Input, Card</td>
+              </tr>
+              <tr>
+                <td><code>src/schemas/</code></td>
+                <td>Zod validation semalari</td>
+                <td>page.ts, component.ts</td>
+              </tr>
+              <tr>
+                <td><code>src/types/</code></td>
+                <td>TypeScript tip tanimlari</td>
+                <td>BaseResponse.ts, form.ts</td>
+              </tr>
+              <tr>
+                <td><code>src/actions/</code></td>
+                <td>Global server actions</td>
+                <td>auth/logout, generate-article</td>
+              </tr>
+              <tr>
+                <td><code>src/lib/</code></td>
+                <td>Core library (env, security, AI)</td>
+                <td>env.ts, gemini.ts, rate-limiter.ts</td>
+              </tr>
+              <tr>
+                <td><code>src/providers/</code></td>
+                <td>React provider'lar</td>
+                <td>TanStack Query, Theme</td>
+              </tr>
+              <tr>
+                <td><code>src/proxy/</code></td>
+                <td>Token proxy islemleri</td>
+                <td>refreshTokenProxy</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <strong>Elly CMS Admin Panel</strong> &mdash; Mimari Dokumantasyonu<br />
+      Next.js 16 &middot; React 19 &middot; TypeScript 5.9 &middot; Tailwind CSS
+      4
+    </footer>
+  </body>
 </html>
