@@ -1,7 +1,7 @@
 'use client'
 
 import { useAdminTheme } from '@/app/_hooks'
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { useEffect } from 'react'
 
@@ -76,7 +76,7 @@ export default function RichTextEditor({
         'data-placeholder': placeholder,
       },
     },
-    onUpdate({ editor: ed }) {
+    onUpdate({ editor: ed }: { editor: Editor }) {
       const html = ed.getHTML()
       onChange(html === '<p></p>' ? '' : html)
     },

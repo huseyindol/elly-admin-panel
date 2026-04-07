@@ -1,336 +1,431 @@
-# Hüseyin DOL - Portfolio Sitesi
+# Elly CMS — Admin Panel
 
-Bu proje, Next.js ve Tailwind CSS kullanılarak geliştirilmiş modern bir portfolio sitesidir.
+Headless CMS yonetim paneli. Sayfalar, componentler, widgetlar, bannerlar, postlar ve formlar tek bir arayuzden yonetilir. Backend API uzerinden CRUD islemleri yapilir; frontend tamamen Next.js App Router + React Server Components mimarisi uzerine kuruludur.
 
-## ✨ Özellikler
+## Tech Stack
 
-### 🎨 UI/UX
+| Katman          | Teknoloji                                    |
+| --------------- | -------------------------------------------- |
+| Framework       | Next.js 16 (App Router, RSC, Server Actions) |
+| UI Library      | React 19                                     |
+| Language        | TypeScript 5.9 (strict mode)                 |
+| Styling         | Tailwind CSS 4, Shadcn UI                    |
+| State / Data    | TanStack Query 5                             |
+| Forms           | React Hook Form 7 + Zod 4                    |
+| Rich Text       | TipTap 3                                     |
+| AI              | Google Generative AI (Gemini)                |
+| Animation       | Framer Motion 12                             |
+| Toast           | Sonner                                       |
+| Test            | Vitest 4 + Testing Library                   |
+| Package Manager | Bun                                          |
+| Deployment      | Vercel (standalone output)                   |
 
-- ✅ Responsive tasarım
-- ✅ Karanlık/Aydınlık mod desteği
-- ✅ Modern UI/UX
-- ✅ Smooth animasyonlar
-- ✅ SEO optimizasyonu
-
-### 🔒 Güvenlik & Hata Yönetimi
-
-- ✅ Error Boundaries (React & Next.js)
-- ✅ Rate Limiting (IP-based)
-- ✅ Security Headers (OWASP best practices)
-- ✅ Environment Validation (Zod)
-- ✅ Input sanitization
-- ✅ CSRF protection ready
-- ✅ XSS protection
-
-### 🧪 Testing & Quality
-
-- ✅ Vitest test framework
-- ✅ Testing Library (React)
-- ✅ %70+ code coverage
-- ✅ Component tests
-- ✅ API tests
-- ✅ Library/utility tests
-- ✅ CI/CD pipeline (GitHub Actions)
-
-### ⚡ Performance
-
-- ✅ Server Components
-- ✅ Server Actions
-- ✅ Image optimization
-- ✅ Bundle optimization
-- ✅ Vercel Analytics
-- ✅ Speed Insights
-
-## 🚀 Teknolojiler
-
-- [Next.js 16](https://nextjs.org/) - React Framework
-- [React 19](https://react.dev/) - UI Library
-- [TypeScript 5](https://www.typescriptlang.org/) - Type Safety
-- [Tailwind CSS 4](https://tailwindcss.com/) - Styling
-- [Zod](https://zod.dev/) - Schema Validation
-- [TanStack Query](https://tanstack.com/query) - Data Fetching
-- [Vitest](https://vitest.dev/) - Testing Framework
-- [Shadcn UI](https://ui.shadcn.com/) - Component Library
-
-## 📦 Kurulum
-
-### 1. Projeyi Klonlayın
+## Kurulum
 
 ```bash
-git clone https://github.com/huseyindol/portfolio.git
-cd portfolio
-```
-
-### 2. Bağımlılıkları Yükleyin
-
-```bash
+# 1. Bagimliliklari yukle
 bun install
-```
 
-### 3. Environment Variables
-
-```bash
-# .env.example'ı kopyalayın
+# 2. Environment variables
 cp .env.example .env.local
+# .env.local dosyasini duzenle
 
-# Gerekli değişkenleri doldurun
-nano .env.local
-```
-
-**Zorunlu Variables:**
-
-```bash
-NEXT_PUBLIC_HOST=http://localhost:3000
-```
-
-**Opsiyonel Variables:**
-
-```bash
-NEXT_PUBLIC_RESEND_API_KEY=your_api_key
-NEXT_PUBLIC_RESEND_FROM_EMAIL=noreply@yourdomain.com
-NEXT_PUBLIC_RESEND_TO_EMAIL=your@email.com
-NEXT_PUBLIC_REVALIDATE_SECRET=your-secret-key-min-6-chars
-```
-
-### 4. Geliştirme Sunucusunu Başlatın
-
-```bash
+# 3. Dev server (port 3333)
 bun dev
 ```
 
-Tarayıcınızda [http://localhost:3000](http://localhost:3000) adresini açın.
+Tarayicida [http://localhost:3333](http://localhost:3333) adresini ac.
 
-## 🧪 Testing
-
-### Test Komutları
-
-```bash
-# Tüm testleri çalıştır
-bun test
-
-# Watch mode (değişiklikleri izle)
-bun test:watch
-
-# UI ile test çalıştır
-bun test:ui
-
-# Coverage raporu oluştur
-bun test:coverage
-
-# CI için test çalıştır
-bun test:ci
-```
-
-### Test Coverage
-
-```bash
-# Coverage raporu oluştur ve aç
-bun test:coverage
-open coverage/index.html
-```
-
-**Current Coverage:** %75+ (branches, functions, lines)
-
-## 📚 API Dokümantasyonu
-
-Bu proje, modern **Scalar UI** ile otomatik API dokümantasyonu kullanır:
-
-### 🎯 Scalar UI Dokümantasyonu
-
-- **Ana URL:** [http://localhost:3000/api-docs-auto](http://localhost:3000/api-docs-auto)
-- **Alternatif:** [http://localhost:3000/docs](http://localhost:3000/docs)
-
-### 🔗 OpenAPI Spesifikasyonu
-
-- **JSON Endpoint:** [http://localhost:3000/openapi.json](http://localhost:3000/openapi.json)
-
-### 🛠️ Mevcut API'lar
-
-| Endpoint          | Açıklama         | Özellikler          |
-| ----------------- | ---------------- | ------------------- |
-| `/api/contact`    | E-posta gönderme | Resend entegrasyonu |
-| `/api/revalidate` | Cache yenileme   | Tag/Path based      |
-
-## 🔒 Güvenlik Özellikleri
-
-### 1. Error Boundaries
-
-- React Error Boundary component
-- Next.js route-level error handlers
-- Global error handler
-- 404 sayfası
-
-### 2. Rate Limiting
-
-- IP-based request limiting
-- Configurable time windows
-- API routes: 60 req/min
-- Other routes: 100 req/15min
-- 429 Too Many Requests response
-
-### 3. Security Headers
+## Proje Yapisi
 
 ```
-✅ Strict-Transport-Security
-✅ X-Frame-Options
-✅ X-Content-Type-Options
-✅ X-XSS-Protection
-✅ Content-Security-Policy
-✅ Referrer-Policy
-✅ Permissions-Policy
-```
-
-### 4. Environment Validation
-
-- Zod-based validation
-- Build-time checks
-- Type-safe access
-- Clear error messages
-
-## 📊 Scripts
-
-```bash
-# Development
-bun dev              # Start dev server
-bun build            # Build for production
-bun start            # Start production server
-
-# Code Quality
-bun lint             # Run ESLint
-bun lint:fix         # Fix ESLint errors
-bun type-check       # TypeScript type check
-bun format           # Format code with Prettier
-bun format:check     # Check formatting
-
-# Testing
-bun test             # Run tests
-bun test:watch       # Run tests in watch mode
-bun test:ui          # Run tests with UI
-bun test:coverage    # Generate coverage report
-bun test:ci          # Run tests for CI
-```
-
-## 📁 Proje Yapısı
-
-```
-nextjs-approute-project/
-├── .github/
-│   └── workflows/          # GitHub Actions CI/CD
-├── docs/                   # Dokümantasyon
-│   ├── SECURITY.md
-│   ├── ERROR_HANDLING.md
-│   ├── TESTING.md
-│   └── IMPLEMENTATION_SUMMARY.md
-├── public/                 # Statik dosyalar
+elly-admin-panel/
 ├── src/
-│   ├── app/               # Next.js App Router
-│   │   ├── api/          # API routes
-│   │   ├── (site)/       # Public pages
-│   │   ├── (admin)/      # Admin pages
-│   │   ├── error.tsx     # Error handler
-│   │   ├── global-error.tsx
-│   │   └── not-found.tsx
-│   ├── components/        # React components
-│   │   ├── ui/           # Shadcn UI components
-│   │   └── ErrorBoundary.tsx
-│   ├── lib/              # Utilities & configs
-│   │   ├── env.ts        # Environment validation
+│   ├── app/                          # Next.js App Router
+│   │   ├── layout.tsx                # Root layout (Providers)
+│   │   ├── globals.css               # Global stiller
+│   │   ├── error.tsx                 # Route-level error handler
+│   │   ├── global-error.tsx          # Global error boundary
+│   │   ├── not-found.tsx             # 404 sayfasi
+│   │   │
+│   │   ├── (baseLayout)/             # Admin layout (Sidebar + Header)
+│   │   │   ├── layout.tsx
+│   │   │   ├── dashboard/            # Gosterge paneli
+│   │   │   ├── pages/                # Sayfa CRUD
+│   │   │   ├── components/           # Component CRUD
+│   │   │   ├── widgets/              # Widget CRUD
+│   │   │   ├── banners/              # Banner CRUD
+│   │   │   ├── posts/                # Post CRUD
+│   │   │   ├── contents/             # Icerik CRUD
+│   │   │   ├── forms/                # Form CRUD
+│   │   │   └── assets/               # Asset yonetimi
+│   │   │
+│   │   ├── (layoutLess)/             # Layout'suz sayfalar
+│   │   │   ├── layout.tsx
+│   │   │   └── login/                # Giris sayfasi
+│   │   │
+│   │   ├── _components/              # Colocated admin componentleri
+│   │   │   ├── _layouts/             # BaseAdminLayout
+│   │   │   ├── assets/               # Asset tablosu, upload modal
+│   │   │   ├── forms/                # DynamicForm, FieldRenderer, StepManager
+│   │   │   ├── DataTable.tsx
+│   │   │   ├── Header.tsx
+│   │   │   ├── Sidebar.tsx
+│   │   │   ├── Modal.tsx
+│   │   │   ├── SearchInput.tsx
+│   │   │   ├── DualListbox.tsx
+│   │   │   ├── ImageUploadBox.tsx
+│   │   │   ├── TagsInput.tsx
+│   │   │   ├── ConfirmDialog.tsx
+│   │   │   ├── StatusBadge.tsx
+│   │   │   ├── CopyButton.tsx
+│   │   │   ├── StatsCard.tsx
+│   │   │   ├── RevenueChart.tsx
+│   │   │   ├── ActivityFeed.tsx
+│   │   │   ├── TopProducts.tsx
+│   │   │   ├── RecentOrders.tsx
+│   │   │   └── Icons.tsx
+│   │   │
+│   │   ├── _services/                # API service fonksiyonlari
+│   │   │   ├── pages.services.ts
+│   │   │   ├── components.services.ts
+│   │   │   ├── widgets.services.ts
+│   │   │   ├── banners.services.ts
+│   │   │   ├── posts.services.ts
+│   │   │   ├── contents.services.ts
+│   │   │   ├── forms.services.ts
+│   │   │   └── assets.services.ts
+│   │   │
+│   │   ├── _hooks/                   # Custom React hooks
+│   │   │   ├── useAdminTheme.ts
+│   │   │   ├── useBasicInfos.ts
+│   │   │   ├── useDebounce.ts
+│   │   │   ├── useFormSchema.ts
+│   │   │   └── useTemplates.ts
+│   │   │
+│   │   ├── _utils/                   # Admin yardimci fonksiyonlari
+│   │   │   ├── zod-generator.ts
+│   │   │   ├── zod-introspection.ts
+│   │   │   ├── condition-evaluator.ts
+│   │   │   ├── arrayUtils.ts
+│   │   │   ├── stringUtils.ts
+│   │   │   └── urlUtils.ts
+│   │   │
+│   │   ├── _actions/                 # Colocated server actions
+│   │   │   └── templates.actions.ts
+│   │   │
+│   │   └── api/
+│   │       └── revalidate/           # ISR cache invalidation endpoint
+│   │           └── route.ts
+│   │
+│   ├── components/                   # Shared (global) componentler
+│   │   ├── ui/                       # Shadcn UI primitives
+│   │   │   ├── button.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── label.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── badge.tsx
+│   │   │   ├── alert.tsx
+│   │   │   ├── dropdown-menu.tsx
+│   │   │   ├── theme-toggle.tsx
+│   │   │   ├── RichTextEditor.tsx
+│   │   │   └── AiFieldButton.tsx
+│   │   └── posts/
+│   │       └── AiArticlePanel.tsx
+│   │
+│   ├── actions/                      # Global server actions
+│   │   ├── auth/
+│   │   │   ├── logout.ts
+│   │   │   └── saveTokens.ts
+│   │   ├── generate-article.ts
+│   │   └── generate-field.ts
+│   │
+│   ├── schemas/                      # Zod validation semalari
+│   │   ├── page.ts
+│   │   ├── component.ts
+│   │   ├── widget.schema.ts
+│   │   ├── banner.schema.ts
+│   │   ├── post.schema.ts
+│   │   ├── form.schema.ts
+│   │   ├── pageseo.ts
+│   │   ├── revalidate.ts
+│   │   ├── user.ts
+│   │   ├── constants/
+│   │   │   └── industryOptions.ts
+│   │   └── dynamic/
+│   │       ├── experienceSchema.ts
+│   │       └── skillsSchema.ts
+│   │
+│   ├── types/                        # TypeScript tip tanimlari
+│   │   ├── BaseResponse.ts           # API response + entity modelleri
+│   │   ├── APITypes.ts
+│   │   ├── AuthResponse.ts
+│   │   ├── content.ts
+│   │   ├── form.ts
+│   │   ├── siteInfoTypes.ts
+│   │   ├── ssgTypes.ts
+│   │   └── userTypes.ts
+│   │
+│   ├── services/                     # Global servisler
+│   │   └── auth/
+│   │       └── refreshService.ts
+│   │
+│   ├── utils/                        # Genel utility
+│   │   ├── hooks.ts
+│   │   ├── imageUrl.ts
+│   │   ├── constant/
+│   │   │   └── cookieConstant.ts
+│   │   ├── form/
+│   │   │   └── validate.tsx
+│   │   └── services/
+│   │       ├── fetcher.ts
+│   │       └── contents.ts
+│   │
+│   ├── context/
+│   │   └── CookieContext.tsx
+│   │
+│   ├── providers/
+│   │   ├── Providers.tsx             # TanStack Query + Theme
+│   │   ├── ThemeProvider.tsx
+│   │   └── HydrationProvider.tsx
+│   │
+│   ├── proxy/                        # Token proxy
+│   │   ├── refreshTokenProxy.ts
+│   │   └── removeCookies.ts
+│   │
+│   ├── lib/                          # Core library
+│   │   ├── env.ts                    # Zod env validation
+│   │   ├── gemini.ts                 # Gemini AI client
+│   │   ├── logger.ts
 │   │   ├── rate-limiter.ts
-│   │   └── security.ts
-│   ├── types/            # TypeScript types
-│   ├── schemas/          # Zod schemas
-│   └── middleware.ts     # Next.js middleware
-├── tests/                # Test files
-│   ├── components/
+│   │   ├── security.ts
+│   │   └── utils.ts                  # cn() helper
+│   │
+│   └── data/
+│       └── mockData.ts
+│
+├── tests/                            # Vitest testleri
+│   ├── setup.ts
+│   ├── utils/
+│   │   └── test-utils.tsx
 │   ├── lib/
+│   │   ├── rate-limiter.test.ts
+│   │   └── security.test.ts
 │   └── api/
-├── vitest.config.ts      # Vitest configuration
+│       └── revalidate.test.ts
+│
+├── scripts/                          # CI/CD & analiz
+│   ├── generate-templates.ts
+│   ├── performance-audit.mjs
+│   ├── load-test.k6.js
+│   └── upload-sbom.sh
+│
+├── .github/workflows/                # GitHub Actions
+│   ├── ci.yml
+│   └── test-pr.yml
+│
+├── next.config.ts
+├── tsconfig.json
+├── tailwind.config.js
+├── postcss.config.mjs
+├── vitest.config.ts
+├── eslint.config.mjs
+├── .prettierrc
+├── components.json                   # Shadcn UI config
 └── package.json
 ```
 
-## 🔄 CI/CD Pipeline
+## Entity Iliskileri (CMS Veri Modeli)
+
+Bu CMS'in temel veri modeli hiyerarsik bir yapidadir:
+
+```
+Page
+ └── Component[]  (type: BANNER | WIDGET | FORM)
+      ├── Banner[]
+      ├── Widget[]  (type: BANNER | POST)
+      │    ├── Banner[]
+      │    └── Post[]
+      └── Form[]
+```
+
+### Page (Sayfa)
+
+En ust duzey entity. Bir sayfa birden fazla **Component** icerebilir.
+
+| Alan       | Tip         | Aciklama                    |
+| ---------- | ----------- | --------------------------- |
+| title      | string      | Sayfa basligi               |
+| slug       | string      | URL-friendly tanimlayici    |
+| status     | boolean     | Aktif/Pasif                 |
+| template   | string?     | Sablom adi                  |
+| seoInfo    | SeoInfo?    | SEO meta verileri           |
+| components | Component[] | Sayfaya atanan componentler |
+
+### Component (Bilesen)
+
+Bir sayfanin icindeki yapi taslari. Tipine gore **Banner**, **Widget** veya **Form** icerebilir.
+
+| Alan       | Tip                    | Aciklama            |
+| ---------- | ---------------------- | ------------------- |
+| name       | string                 | Component adi       |
+| type       | BANNER / WIDGET / FORM | Component tipi      |
+| orderIndex | number                 | Siralama            |
+| status     | boolean                | Aktif/Pasif         |
+| template   | string?                | Sablon adi          |
+| banners    | Banner[]               | Icerideki bannerlar |
+| widgets    | Widget[]               | Icerideki widgetlar |
+| forms      | Form[]                 | Icerideki formlar   |
+
+### Widget
+
+Bir componentin icinde yer alan alt birim. Tipine gore **Banner** veya **Post** icerebilir.
+
+| Alan       | Tip           | Aciklama                  |
+| ---------- | ------------- | ------------------------- |
+| name       | string        | Widget adi                |
+| type       | BANNER / POST | Widget tipi               |
+| orderIndex | number        | Siralama                  |
+| banners    | Banner[]      | Widget icindeki bannerlar |
+| posts      | Post[]        | Widget icindeki postlar   |
+
+### Banner
+
+Gorsel icerik birimi. Desktop, tablet ve mobil icin ayri gorseller destekler.
+
+| Alan       | Tip                       | Aciklama                 |
+| ---------- | ------------------------- | ------------------------ |
+| title      | string                    | Banner basligi           |
+| images     | {desktop, tablet, mobile} | Responsive gorseller     |
+| link       | string?                   | Tiklaninca gidilecek URL |
+| target     | \_blank / \_self          | Link acilis sekli        |
+| orderIndex | number                    | Siralama                 |
+| subFolder  | string                    | Asset alt klasoru        |
+
+### Post (Yazi)
+
+Icerik yazisi. SEO bilgileri icerir.
+
+| Alan       | Tip     | Aciklama                 |
+| ---------- | ------- | ------------------------ |
+| title      | string  | Yazi basligi             |
+| content    | string  | Icerik (HTML/Rich Text)  |
+| slug       | string  | URL-friendly tanimlayici |
+| seoInfo    | SeoInfo | SEO meta verileri        |
+| orderIndex | number  | Siralama                 |
+
+### Form
+
+Dinamik form tanimlama. Schema-driven: alanlar, adimlar ve layout JSON olarak saklanir.
+
+| Alan          | Tip        | Aciklama             |
+| ------------- | ---------- | -------------------- |
+| title         | string     | Form basligi         |
+| version       | number     | Versiyon             |
+| active        | boolean    | Aktif/Pasif          |
+| schema.fields | Field[]    | Form alanlari        |
+| schema.steps  | Step[]?    | Wizard adimlari      |
+| schema.config | FormConfig | Layout, submit label |
+
+**Desteklenen alan tipleri:** `text`, `email`, `number`, `select`, `checkbox`, `multi_checkbox`, `radio`, `textarea`, `date`, `phone`, `url`
+
+**Layout secenekleri:** `single`, `vertical`, `wizard`
+
+## API Endpointleri
+
+Tum API cagrilari `src/app/_services/` altindaki servis fonksiyonlari uzerinden yapilir. Backend API base URL environment variable ile belirlenir.
+
+| Entity     | List                        | Get                        | Create                  | Update                     | Delete                        |
+| ---------- | --------------------------- | -------------------------- | ----------------------- | -------------------------- | ----------------------------- |
+| Pages      | GET /api/v1/pages/list      | GET /api/v1/pages/:slug    | POST /api/v1/pages      | PUT /api/v1/pages/:id      | DELETE /api/v1/pages/:id      |
+| Components | GET /api/v1/components/list | GET /api/v1/components/:id | POST /api/v1/components | PUT /api/v1/components/:id | DELETE /api/v1/components/:id |
+| Widgets    | GET /api/v1/widgets/list    | GET /api/v1/widgets/:id    | POST /api/v1/widgets    | PUT /api/v1/widgets/:id    | DELETE /api/v1/widgets/:id    |
+| Banners    | GET /api/v1/banners/list    | GET /api/v1/banners/:id    | POST /api/v1/banners    | PUT /api/v1/banners/:id    | DELETE /api/v1/banners/:id    |
+| Posts      | GET /api/v1/posts/list      | GET /api/v1/posts/:id      | POST /api/v1/posts      | PUT /api/v1/posts/:id      | DELETE /api/v1/posts/:id      |
+| Forms      | GET /api/v1/forms/list      | GET /api/v1/forms/:id      | POST /api/v1/forms      | PUT /api/v1/forms/:id      | DELETE /api/v1/forms/:id      |
+
+**Internal API route:** `POST /api/revalidate` — ISR cache invalidation (tag/path based)
+
+## Route Yapisi
+
+| Route                   | Sayfa            | Aciklama                  |
+| ----------------------- | ---------------- | ------------------------- |
+| `/login`                | Login            | Giris sayfasi (layoutsuz) |
+| `/dashboard`            | Dashboard        | Gosterge paneli           |
+| `/pages`                | Page List        | Sayfa listesi             |
+| `/pages/new`            | Page Create      | Yeni sayfa olustur        |
+| `/pages/[id]/edit`      | Page Edit        | Sayfa duzenle             |
+| `/components`           | Component List   | Component listesi         |
+| `/components/new`       | Component Create | Yeni component olustur    |
+| `/components/[id]/edit` | Component Edit   | Component duzenle         |
+| `/widgets`              | Widget List      | Widget listesi            |
+| `/widgets/new`          | Widget Create    | Yeni widget olustur       |
+| `/widgets/[id]/edit`    | Widget Edit      | Widget duzenle            |
+| `/banners`              | Banner List      | Banner listesi            |
+| `/banners/new`          | Banner Create    | Yeni banner olustur       |
+| `/banners/[id]/edit`    | Banner Edit      | Banner duzenle            |
+| `/posts`                | Post List        | Post listesi              |
+| `/posts/new`            | Post Create      | Yeni post olustur         |
+| `/posts/[id]/edit`      | Post Edit        | Post duzenle              |
+| `/contents`             | Content List     | Icerik listesi            |
+| `/contents/new`         | Content Create   | Yeni icerik olustur       |
+| `/contents/[id]/edit`   | Content Edit     | Icerik duzenle            |
+| `/forms`                | Form List        | Form listesi              |
+| `/forms/new`            | Form Create      | Yeni form olustur         |
+| `/forms/[id]`           | Form Detail      | Form detay / duzenle      |
+| `/assets`               | Asset List       | Asset yonetimi            |
+
+## Scripts
+
+```bash
+# Development
+bun dev                 # Dev server (port 3333, --inspect)
+bun build               # Production build
+bun start               # Production server
+
+# Code Quality
+bun lint                # ESLint
+bun lint:fix            # ESLint auto-fix
+bun type-check          # tsc --noEmit
+bun format              # Prettier write
+bun format:check        # Prettier check
+
+# Testing
+bun test                # Vitest (interactive)
+bun test:run            # Vitest single run
+bun test:watch          # Vitest watch mode
+bun test:ui             # Vitest UI
+bun test:coverage       # Coverage raporu
+bun test:ci             # CI mode (coverage + verbose)
+
+# Performance & Analysis
+bun analyze             # Bundle analyzer
+bun run perf:audit      # Performance audit
+bun run perf:build      # Build + audit
+bun run load-test       # k6 load test
+bun run load-test:quick # k6 quick (10 VU, 30s)
+
+# Security & SBOM
+bun run sbom:generate   # CycloneDX SBOM
+bun run sbom:upload     # SBOM upload
+```
+
+## Guvenlik
+
+- **Rate Limiting:** IP bazli, `src/lib/rate-limiter.ts`
+- **Security Headers:** HSTS, CSP, X-Frame-Options — `src/lib/security.ts`
+- **Environment Validation:** Zod ile build-time kontrol — `src/lib/env.ts`
+- **Auth:** JWT token yonetimi, refresh token proxy
+- **Input Sanitization:** Tum API rotalarda zorunlu
+- **Pre-commit Hook:** `tsc --noEmit` (Husky + lint-staged)
+
+## CI/CD
 
 GitHub Actions workflows:
 
-1. **Lint & Type Check** - ESLint, TypeScript, Prettier
-2. **Tests** - Vitest with coverage
-3. **Build** - Production build
-4. **Security Scan** - Dependency audit
+- **ci.yml** — Lint, type-check, build, test
+- **test-pr.yml** — PR uzerinde test + coverage
 
-## 📖 Dokümantasyon
+## Lisans
 
-- **Güvenlik:** [docs/SECURITY.md](docs/SECURITY.md)
-- **Error Handling:** [docs/ERROR_HANDLING.md](docs/ERROR_HANDLING.md)
-- **Testing:** [docs/TESTING.md](docs/TESTING.md)
-- **Implementation:** [docs/IMPLEMENTATION_SUMMARY.md](docs/IMPLEMENTATION_SUMMARY.md)
-
-## 🎯 Production Checklist
-
-- [x] Error Boundaries
-- [x] Rate Limiting
-- [x] Security Headers
-- [x] Environment Validation
-- [x] Testing Infrastructure
-- [x] CI/CD Pipeline
-- [x] Code Coverage (70%+)
-- [x] TypeScript Strict Mode
-- [x] ESLint Configuration
-- [x] Prettier Configuration
-- [x] Git Hooks (Husky)
-- [ ] Sentry Integration (optional)
-- [ ] Database Setup (optional)
-- [ ] Authentication (optional)
-
-## 🚀 Deployment
-
-### Vercel (Önerilen)
-
-```bash
-# Vercel CLI ile deploy
-vercel
-
-# Production deploy
-vercel --prod
-```
-
-### Docker
-
-```bash
-# Docker image oluştur
-docker build -t nextjs-portfolio .
-
-# Container çalıştır
-docker run -p 3000:3000 nextjs-portfolio
-```
-
-### Manual Build
-
-```bash
-# Production build
-bun run build
-
-# Start production server
-bun run start
-```
-
-## 🤝 Contributing
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) file for details
-
-## 📧 İletişim
-
-Hüseyin DOL - [info@next.huseyindol.com](mailto:info@next.huseyindol.com)
-
-Project Link: [https://github.com/huseyindol/portfolio](https://github.com/huseyindol/portfolio)
-
----
-
-**Made with ❤️ by Hüseyin DOL**
+MIT
