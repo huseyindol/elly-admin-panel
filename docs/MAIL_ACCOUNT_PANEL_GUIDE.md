@@ -25,6 +25,7 @@ ile şifreli tutulur; API response'larda **asla** dönmez.
 ## API Endpoint Referansı
 
 ### 1. Tüm Hesapları Listele
+
 ```
 GET /api/v1/mail-accounts
 Authorization: Bearer <token>
@@ -51,6 +52,7 @@ Response 200:
 ```
 
 ### 2. Hesap Detayı
+
 ```
 GET /api/v1/mail-accounts/{id}
 Authorization: Bearer <token>
@@ -59,6 +61,7 @@ Response 200: { "result": true, "data": { ...DtoMailAccountResponse } }
 ```
 
 ### 3. Yeni Hesap Ekle
+
 ```
 POST /api/v1/mail-accounts
 Authorization: Bearer <token>
@@ -71,7 +74,7 @@ Body:
   "smtpHost": "smtp.gmail.com",
   "smtpPort": 587,
   "smtpUsername": "sales@firma.com",
-  "smtpPassword": "gmail-app-password-16-char",
+  "smtpPassword": "<app-password>",
   "isDefault": false,
   "active": true
 }
@@ -88,6 +91,7 @@ Response 201: { "result": true, "data": { ...DtoMailAccountResponse } }
 ```
 
 ### 4. Hesap Güncelle
+
 ```
 PUT /api/v1/mail-accounts/{id}
 Authorization: Bearer <token>
@@ -100,6 +104,7 @@ Response 200: { "result": true, "data": { ...DtoMailAccountResponse } }
 ```
 
 ### 5. Hesap Sil
+
 ```
 DELETE /api/v1/mail-accounts/{id}
 Authorization: Bearer <token>
@@ -108,6 +113,7 @@ Response 200: { "result": true, "data": true }
 ```
 
 ### 6. Varsayılan Yap
+
 ```
 PUT /api/v1/mail-accounts/{id}/default
 Authorization: Bearer <token>
@@ -117,6 +123,7 @@ Hata: Pasif hesap varsayılan yapılamaz → 400 Bad Request
 ```
 
 ### 7. SMTP Bağlantı Testi (Gerçek Mail Gönderir)
+
 ```
 POST /api/v1/mail-accounts/{id}/test
 Authorization: Bearer <token>
@@ -132,6 +139,7 @@ Hata 400: { "result": false, "message": "SMTP bağlantısı başarısız [smtp.g
 ```
 
 ### 8. Form Tanımı Oluştur/Güncelle (Mevcut endpoint güncellendi)
+
 ```
 POST /api/v1/forms
 PUT  /api/v1/forms/{id}
@@ -145,6 +153,7 @@ Body'e eklenen yeni alan:
 ```
 
 ### 9. Email Gönder (Mevcut endpoint güncellendi)
+
 ```
 POST /api/v1/emails/send
 Authorization: Bearer <token>
@@ -164,6 +173,7 @@ Body'e eklenen yeni alan:
 ## DTO Yapıları
 
 ### DtoMailAccountResponse (API'den gelen)
+
 ```typescript
 interface MailAccount {
   id: number
@@ -181,16 +191,17 @@ interface MailAccount {
 ```
 
 ### DtoMailAccountRequest (API'ye gönderilen)
+
 ```typescript
 interface MailAccountRequest {
-  name: string              // zorunlu
-  fromAddress: string       // zorunlu, email format
-  smtpHost: string          // zorunlu
-  smtpPort: number          // zorunlu, 1-65535
-  smtpUsername: string      // zorunlu
-  smtpPassword?: string     // oluştururken zorunlu, güncellerken opsiyonel
-  isDefault?: boolean       // default: false
-  active?: boolean          // default: true
+  name: string // zorunlu
+  fromAddress: string // zorunlu, email format
+  smtpHost: string // zorunlu
+  smtpPort: number // zorunlu, 1-65535
+  smtpUsername: string // zorunlu
+  smtpPassword?: string // oluştururken zorunlu, güncellerken opsiyonel
+  isDefault?: boolean // default: false
+  active?: boolean // default: true
 }
 ```
 
@@ -201,6 +212,7 @@ interface MailAccountRequest {
 ### Sayfalar
 
 #### `/mail-accounts` — Hesap Listesi
+
 - Tüm hesapları kart veya tablo formatında göster
 - Her kart: ad, from adresi, SMTP host:port, varsayılan rozeti, aktif/pasif durumu
 - Eylemler: Düzenle, Sil, Varsayılan Yap, Bağlantı Testi
@@ -209,6 +221,7 @@ interface MailAccountRequest {
 - Pasif hesaplar soluk görünmeli, "Varsayılan Yap" butonları devre dışı olmalı
 
 #### `/mail-accounts/new` — Yeni Hesap
+
 - Form alanları: ad, from adresi, SMTP host, port, kullanıcı adı, şifre
 - Şifre alanı: input type="password", göster/gizle toggle
 - "Varsayılan olarak ayarla" checkbox
@@ -216,6 +229,7 @@ interface MailAccountRequest {
 - Kaydet butonu → POST /api/v1/mail-accounts
 
 #### `/mail-accounts/{id}/edit` — Hesap Düzenle
+
 - Yeni hesap formu ile aynı yapı
 - Şifre alanı boş gelir; "Şifreyi değiştirmek için doldurun" placeholder'ı
 - Mevcut değerler form'a dolu gelir (şifre hariç)
@@ -224,12 +238,14 @@ interface MailAccountRequest {
 ### Bileşenler
 
 #### `SmtpTestModal`
+
 - "Bağlantı Testi" butonuna tıklanınca açılır
 - Tek input: test alıcısı email adresi
 - "Test Gönder" butonu → loading state → başarı/hata mesajı
 - Hata mesajında SMTP host:port bilgisi görünür
 
 #### `MailAccountSelect` (Form Editörü'nde kullanılacak)
+
 - Dropdown/select bileşeni
 - Seçenekler: "Varsayılan (otomatik)" + hesap listesi
 - Her seçenekte: hesap adı + from adresi
@@ -240,6 +256,7 @@ interface MailAccountRequest {
 ## UX Akışları
 
 ### Varsayılan Hesap Yönetimi
+
 ```
 Kullanıcı "Varsayılan Yap" tıklar
   → Onay dialog: "Bu hesabı varsayılan yapmak istediğinizden emin misiniz?"
@@ -249,6 +266,7 @@ Kullanıcı "Varsayılan Yap" tıklar
 ```
 
 ### Hesap Silme
+
 ```
 Kullanıcı "Sil" tıklar
   → Onay dialog: "Bu hesabı silmek istediğinizden emin misiniz?
@@ -258,6 +276,7 @@ Kullanıcı "Sil" tıklar
 ```
 
 ### Bağlantı Testi
+
 ```
 Kullanıcı "Test Et" tıklar
   → SmtpTestModal açılır
@@ -306,15 +325,16 @@ Seçenek listesi `/api/v1/mail-accounts` → yalnızca `active: true` olanlar.
 
 ## Backend Hata Kodları
 
-| HTTP | Durum | Sebep |
-|------|-------|-------|
+| HTTP | Durum       | Sebep                                                     |
+| ---- | ----------- | --------------------------------------------------------- |
 | 400  | Bad Request | Validasyon hatası, pasif hesabı varsayılan yapma girişimi |
-| 400  | Bad Request | SMTP bağlantı testi başarısız (hata mesajı döner) |
-| 404  | Not Found | Hesap bulunamadı |
-| 404  | Not Found | Varsayılan hesap tanımlanmamış (EmailQueueService) |
-| 409  | Conflict | Veri bütünlüğü ihlali |
+| 400  | Bad Request | SMTP bağlantı testi başarısız (hata mesajı döner)         |
+| 404  | Not Found   | Hesap bulunamadı                                          |
+| 404  | Not Found   | Varsayılan hesap tanımlanmamış (EmailQueueService)        |
+| 409  | Conflict    | Veri bütünlüğü ihlali                                     |
 
 Genel response yapısı:
+
 ```json
 {
   "result": false,
