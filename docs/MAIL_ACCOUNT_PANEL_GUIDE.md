@@ -74,7 +74,7 @@ Body:
   "smtpHost": "smtp.gmail.com",
   "smtpPort": 587,
   "smtpUsername": "sales@firma.com",
-  "smtpPassword": "gmail-app-password-16-char",
+  "smtpPassword": "<app-password>",
   "isDefault": false,
   "active": true
 }
