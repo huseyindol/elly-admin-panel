@@ -70,7 +70,9 @@ Huseyin DOL'un modern portföy ve CMS sitesi. Next.js 16 App Router, React 19, T
 
 ## Agent Teams Koordinasyonu
 
-Bu proje `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` ile çalışır. Takım yapısı:
+**Cursor ve diğer asistanlar:** Rol tanımlarının araç-agnostic özeti ve dizin eşlemesi için kökteki [`AGENTS.md`](./AGENTS.md) dosyasına bak. Cursor’da bağlam olarak `@AGENTS.md` veya `@.agents/<rol>.md` kullanılabilir.
+
+Bu proje `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` ile çalışır. Claude Code subagent tanımları `.claude/agents/` altındadır; Cursor ile aynı içerik `.agents/` altında tekrarlanır (model/tools frontmatter hariç). Takım yapısı:
 
 ### Takım Yapısı
 

@@ -33,10 +33,12 @@
 - Hook: `useTemplates(type)` — `src/app/_hooks/useTemplates.ts`
 - API: `GET /api/v1/templates?type=posts|pages|...`
 
-### SKILL-05: Claude Agent Teams
+### SKILL-05: Agent Teams (Claude Code + Cursor)
 
-- `.claude/agents/` → team-lead, test-writer, security-reviewer, ui-reviewer, nextjs-performance
-- `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` ile aktif
+- `.claude/agents/` → Claude Code subagent’ları (YAML: model, tools)
+- `.agents/` → aynı roller, Cursor/genel kullanım (araç-agnostic frontmatter)
+- Kök `AGENTS.md` → envanter ve koordinasyon özeti
+- `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` ile Claude tarafında aktif
 
 ### SKILL-06: RichText Editor
 
