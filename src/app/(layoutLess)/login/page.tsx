@@ -87,6 +87,9 @@ const AdminLoginPage = () => {
       updateCookie(CookieEnum.ACCESS_TOKEN, response.data.token)
       updateCookie(CookieEnum.REFRESH_TOKEN, response.data.refreshToken)
       updateCookie(CookieEnum.EXPIRED_DATE, String(response.data.expiredDate))
+      if (formData.tenantId) {
+        updateCookie(CookieEnum.TENANT_ID, formData.tenantId)
+      }
 
       // Full navigation: server action set-cookie header'larının browser'da işlenmesini garanti eder
 
