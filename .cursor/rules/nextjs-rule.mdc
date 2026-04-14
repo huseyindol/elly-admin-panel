@@ -1,5 +1,6 @@
 ---
-alwaysApply: true
+description: "[DEPRECATED] Eski genel Next.js kuralı. Yerine project-conventions.mdc kullanılır."
+alwaysApply: false
 ---
 
 - Act as a Senior Frontend Architect and React Expert.

@@ -17,7 +17,7 @@ Huseyin DOL'un modern portföy ve CMS sitesi. Next.js 16 App Router, React 19, T
 
 ## Dizin Yapısı
 
-- `src/app/` — Sayfalar (App Router). `(site)/` public, `(admin)/` yönetim paneli
+- `src/app/` — Sayfalar (App Router). `(baseLayout)/` admin panel sayfaları, `(layoutLess)/` layout-free (login)
 - `src/components/` — React componentleri. `ui/` shadcn, `forms/` formlar, `dynamic/` dinamik içerik
 - `src/lib/` — Yardımcı araçlar (env.ts, rate-limiter.ts, security.ts, utils.ts)
 - `src/services/` — API servisleri (auth, typicode)

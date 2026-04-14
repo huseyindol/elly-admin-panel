@@ -1,0 +1,78 @@
+---
+description: "Proje kod stili, naming kuralları ve mimari pattern'lar. Her kod yazımında ve review'da otomatik uygulanır."
+alwaysApply: true
+---
+
+## Naming Conventions
+
+- React components: PascalCase (`MyComponent.tsx`)
+- Utility/lib files: kebab-case (`rate-limiter.ts`)
+- Constants: UPPER_SNAKE_CASE
+- Hooks: camelCase starting with `use` (`useMyHook`)
+- Types/interfaces: PascalCase (`type MyType`, `interface MyInterface`)
+- Zod schemas: camelCase ending with `Schema` (`contactFormSchema`)
+
+## Proje Yapısı
+
+- `src/app/(baseLayout)/` — admin panel sayfaları
+- `src/app/(layoutLess)/` — layout-free (login)
+- `src/app/_services/` — API servis katmanı
+- `src/app/_hooks/` — TanStack Query hook'ları
+- `src/app/_actions/` — Server Actions
+- `src/components/ui/` — Shadcn primitives
+- `src/schemas/` — Zod şemaları
+- `src/types/` — TypeScript tipler
+- `src/lib/` — Core kütüphaneler (env, rate-limiter, security, gemini, logger)
+- `src/actions/` — Global Server Actions (AI generation, auth)
+
+## Component Patterns
+
+- Server Components by default — add `'use client'` only when needed (state, effects, event handlers, browser APIs)
+- Props interfaces defined inline or in `src/types/`
+- Shadcn UI components from `src/components/ui/` — don't reinvent base elements
+- Tailwind CSS for styling — no inline styles, no CSS modules
+
+## API Route Patterns
+
+```typescript
+// Every API route must have:
+import { rateLimiter } from '@/lib/rate-limiter'
+// Rate limit check at the start
+// Method validation
+// Zod schema validation for body/params
+// Error responses must not leak internals
+```
+
+## Validation Pattern
+
+```typescript
+// Schemas in src/schemas/
+import { z } from 'zod'
+export const mySchema = z.object({ ... })
+
+// In route: parse input with schema
+const result = mySchema.safeParse(await req.json())
+if (!result.success) return NextResponse.json({ error: result.error }, { status: 400 })
+```
+
+## Environment Variables
+
+```typescript
+// Always use src/lib/env.ts — never process.env directly
+import { env } from '@/lib/env'
+const apiKey = env.MY_API_KEY
+```
+
+## Package Manager
+
+- Sadece **Bun** kullan: `bun run`, `bun install`, `bunx`
+- npm/npx/yarn YASAK
+
+## Forbidden
+
+- `any` TypeScript type
+- `console.log` in production code (use `logger` from `src/lib/logger.ts`)
+- Direct `process.env` access (use `src/lib/env.ts`)
+- Editing `.env` files
+- `dangerouslySetInnerHTML` without sanitization justification
+- Cookie'ye number yazarken `String()` dönüşümü unutma

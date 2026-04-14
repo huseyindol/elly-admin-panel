@@ -1,0 +1,60 @@
+---
+description: "Gemini AI entegrasyon referansı. AI özelliği eklerken otomatik uygulanır."
+globs: ["src/actions/generate-*.ts", "src/components/**/Ai*.tsx"]
+alwaysApply: false
+---
+
+## Gemini AI Entegrasyon Referansı
+
+Bu projede AI üretimi Gemini API + Server Actions ile yapılır.
+
+### Mevcut AI Altyapı
+
+| Dosya | İşlev |
+|---|---|
+| `src/lib/gemini.ts` | Gemini client (model: `gemini-2.0-flash`) |
+| `src/actions/generate-field.ts` | Tekil alan üretimi (slug, SEO, alt text, description) |
+| `src/actions/generate-article.ts` | 3-aşamalı makale pipeline |
+| `src/components/ui/AiFieldButton.tsx` | Inline AI buton komponenti |
+| `src/components/posts/AiArticlePanel.tsx` | Makale üretim paneli |
+
+### Yeni AI Action Paterni
+
+```typescript
+'use server'
+
+import { geminiModel } from '@/lib/gemini'
+import { logger } from '@/lib/logger'
+
+export async function generate{Feature}Action(input: InputType): Promise<{
+  success: boolean
+  data?: OutputType
+  error?: string
+}> {
+  try {
+    const prompt = `...`
+    const result = await geminiModel.generateContent(prompt)
+    const text = result.response.text()
+    return { success: true, data: parsedOutput }
+  } catch (error) {
+    logger.error('generate-{feature} failed', error)
+    return { success: false, error: 'Üretim sırasında bir hata oluştu.' }
+  }
+}
+```
+
+### Kurallar
+
+1. **Server Action** — `'use server'` zorunlu, API key client'a gitmez
+2. **Hata sanitizasyonu** — ham error mesajını kullanıcıya dönme
+3. **Logger** — `console.log` yasak, `logger.error()` kullan
+4. **AiFieldButton** — tekil alan üretimi için
+5. **Panel component** — çok aşamalı üretim için ayrı bileşen
+
+### 3-Aşamalı Pipeline Pattern
+
+1. Planlama Agent — konu → outline (JSON)
+2. Üretim Agent — outline → tam içerik (HTML)
+3. Temizlik Agent — ham çıktı → sanitize edilmiş çıktı
+
+İzin verilen HTML: h1, h2, h3, p, ul, ol, li, strong, em, blockquote

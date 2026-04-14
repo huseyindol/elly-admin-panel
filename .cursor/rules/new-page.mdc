@@ -1,0 +1,40 @@
+---
+description: "Admin sayfaları scaffold (list, create, edit). @new-page ile referans verip entity adını kebab-case belirt."
+alwaysApply: false
+---
+
+Verilen entity için admin panel sayfalarını scaffold et.
+
+## Adımlar
+
+1. Entity adlarını türet: `entity-name` (kebab), `EntityName` (Pascal)
+2. Referans oku: `src/app/(baseLayout)/mail-accounts/` altındaki page'ler
+
+3. **List page**: `src/app/(baseLayout)/{entity-name}/page.tsx`
+   - `'use client'` directive
+   - `use{EntityName}` hook'tan `listQuery`
+   - `DataTable` with column definitions
+   - Delete confirmation via `AlertDialog`
+   - Link to `/new` ve `/[id]/edit`
+   - Loading spinner, error toast, empty state
+   - Breadcrumb: Dashboard > {Entity Name}
+
+4. **Create page**: `src/app/(baseLayout)/{entity-name}/new/page.tsx`
+   - `'use client'` directive
+   - React Hook Form + Zod schema
+   - `createMutation` from hook
+   - Success toast + redirect to list
+   - Breadcrumb: Dashboard > {Entity Name} > Yeni
+
+5. **Edit page**: `src/app/(baseLayout)/{entity-name}/[id]/edit/page.tsx`
+   - `'use client'` directive
+   - `useParams()` to get `id`
+   - `getQuery(id)` to fetch existing data
+   - React Hook Form with `defaultValues`
+   - `updateMutation` from hook
+   - Loading state while fetching
+   - Breadcrumb: Dashboard > {Entity Name} > Düzenle
+
+6. Raporda hatırlat:
+   - Sidebar menu entry: `src/app/_components/Sidebar.tsx`
+   - Zod schema yoksa: `@new-service` veya `/new-service` ile oluştur

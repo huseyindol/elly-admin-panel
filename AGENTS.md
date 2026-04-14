@@ -1,52 +1,82 @@
-# Agent rehberi — Cursor, Claude Code ve genel kullanım
+# Agent & Skill Rehberi — Claude Code + Cursor
 
-Bu dosya, projede yapay zekâ asistanlarının ve alt-agent rollerinin nerede tanımlandığını ve nasıl koordine edileceğini özetler. **Proje bağlamı ve stack** için önce [`CLAUDE.md`](./CLAUDE.md) okunmalıdır.
+Bu dosya, projede yapay zekâ asistanlarının, rollerin ve skill'lerin nerede tanımlandığını özetler. **Proje bağlamı ve stack** için önce [`CLAUDE.md`](./CLAUDE.md) okunmalıdır.
 
 ## Yapı özeti
 
-| Konum                                              | Amaç                                                                                          |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| [`CLAUDE.md`](./CLAUDE.md)                         | Proje stack’i, dizin yapısı, kod/test/API kuralları, agent tablosu                            |
-| **Bu dosya (`AGENTS.md`)**                         | Tüm platformlar için agent envanteri ve eşleme                                                |
-| [`.claude/agents/`](./.claude/agents/)             | **Claude Code** subagent tanımları (YAML frontmatter: `model`, `tools`)                       |
-| [`.agents/`](./.agents/)                           | **Cursor ve diğer araçlar** için aynı rollerin araç-agnostic kopyası (model/tools satırı yok) |
-| [`.claude/settings.json`](./.claude/settings.json) | Claude Code Bash/izin allowlist                                                               |
-| [`.claude/skills/`](./.claude/skills/)             | Proje skill’leri (ör. `project-conventions`)                                                  |
-| [`.claude/PROGRESS.md`](./.claude/PROGRESS.md)     | Modül ilerlemesi ve oturum notları (tercihen tek kaynak)                                      |
+| Konum                                              | Platform     | Amaç                                                 |
+| -------------------------------------------------- | ------------ | ---------------------------------------------------- |
+| [`.claude/agents/`](./.claude/agents/)             | Claude Code  | Subagent tanımları (YAML: `model`, `tools`)          |
+| [`.claude/skills/`](./.claude/skills/)             | Claude Code  | Skill'ler — `/komut` ile çalışır                     |
+| [`.claude/settings.json`](./.claude/settings.json) | Claude Code  | Bash/izin allowlist                                  |
+| [`.claude/PROGRESS.md`](./.claude/PROGRESS.md)     | Her iki araç | Modül ilerlemesi ve oturum notları                   |
+| [`.cursor/rules/`](./.cursor/rules/)               | Cursor       | Agent rolleri + skill'ler — `@kural-adı` ile çalışır |
+| [`.agents/`](./.agents/)                           | Genel        | Araç-agnostic agent tanımları (legacy referans)      |
+| **Bu dosya (`AGENTS.md`)**                         | Her iki araç | Envanter ve koordinasyon özeti                       |
 
-`.claude/agents/*.md` ile `.agents/*.md` **aynı rol ve talimatları** taşır; fark yalnızca Claude Code’a özel metadata’dadır.
+## Platform eşleme tablosu
 
-## Rol envanteri
+### Agent Rolleri
 
-| Rol                    | Dosya (Claude)                         | Dosya (genel / Cursor)          | Yetki                                | Ne zaman                           |
-| ---------------------- | -------------------------------------- | ------------------------------- | ------------------------------------ | ---------------------------------- |
-| **team-lead**          | `.claude/agents/team-lead.md`          | `.agents/team-lead.md`          | Okuma/yazma, koordinasyon            | Büyük özellik, çok dosya, refactor |
-| **test-writer**        | `.claude/agents/test-writer.md`        | `.agents/test-writer.md`        | Okuma/yazma, test                    | Yeni veya değişen kod için Vitest  |
-| **security-reviewer**  | `.claude/agents/security-reviewer.md`  | `.agents/security-reviewer.md`  | Salt okunur                          | API, server action, auth, form     |
-| **ui-reviewer**        | `.claude/agents/ui-reviewer.md`        | `.agents/ui-reviewer.md`        | Salt okunur                          | Yeni sayfa/component, a11y         |
-| **nextjs-performance** | `.claude/agents/nextjs-performance.md` | `.agents/nextjs-performance.md` | Salt okunur (+ analiz için terminal) | Bundle, RSC sınırı, data fetching  |
+| Rol                    | Claude Code                            | Cursor                | Kullanım                               |
+| ---------------------- | -------------------------------------- | --------------------- | -------------------------------------- |
+| **team-lead**          | `.claude/agents/team-lead.md`          | `@team-lead`          | Büyük özellik, refactor, koordinasyon  |
+| **test-writer**        | `.claude/agents/test-writer.md`        | `@test-writer`        | Vitest test yazımı                     |
+| **security-reviewer**  | `.claude/agents/security-reviewer.md`  | `@security-reviewer`  | API/auth güvenlik review (salt okunur) |
+| **ui-reviewer**        | `.claude/agents/ui-reviewer.md`        | `@ui-reviewer`        | UI/a11y review (salt okunur)           |
+| **nextjs-performance** | `.claude/agents/nextjs-performance.md` | `@nextjs-performance` | Performance review (salt okunur)       |
 
-Claude Code tarafında `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` ile subagent takımı kullanılıyorsa tanımlar `.claude/agents/` içinden gelir.
+### Skill'ler
 
-## Koordinasyon kuralları (tüm agent’lar)
+| Skill                   | Claude Code             | Cursor                    | Açıklama                                    |
+| ----------------------- | ----------------------- | ------------------------- | ------------------------------------------- |
+| **project-conventions** | _(otomatik)_            | _(alwaysApply)_           | Kod stili, naming, mimari — her zaman aktif |
+| **gen-test**            | `/gen-test <dosya>`     | `@gen-test`               | Kaynak dosya için Vitest testi üretir       |
+| **new-component**       | `/new-component <Ad>`   | `@new-component`          | React component + test scaffold             |
+| **new-module**          | `/new-module <entity>`  | `@new-module`             | Tam CRUD modül scaffold (7 dosya)           |
+| **new-service**         | `/new-service <entity>` | `@new-service`            | Service + TanStack Query hook çifti         |
+| **new-page**            | `/new-page <entity>`    | `@new-page`               | Admin sayfaları scaffold (list, new, edit)  |
+| **pr-check**            | `/pr-check`             | `@pr-check`               | Git diff'i proje checklist'ine göre review  |
+| **ai-generate**         | _(otomatik)_            | _(globs: generate-\*.ts)_ | Gemini AI entegrasyon referansı             |
+| **debug-fix**           | `/debug-fix <sorun>`    | `@debug-fix`              | Sistematik hata ayıklama akışı              |
 
-- Team lead büyük işleri alt görevlere böler; **aynı dosyaya birden fazla yazıcı agent atanmaz** (çakışma önleme).
-- Önce salt okunur incelemeleri (security, ui, performance) paralel düşün; ardından implementasyon ve test-writer.
-- Rapor formatı: **severity/impact**, **location** (`dosya:satır`), **issue**, **fix**.
-- Package manager: **Bun** (`bun run`, `bun install`, `bunx`). `console.log` production kodunda yok. TypeScript strict, `any` yok.
+## Nasıl kullanılır
 
-## Cursor kullanımı
+### Claude Code'da
 
-- Büyük işlerde ilgili rol dosyasını bağlam olarak ekle: ör. `@.agents/team-lead.md` veya `@AGENTS.md`.
-- Kod stili için: `@.claude/skills/project-conventions/SKILL.md` (veya workspace’te eşlenen skill).
+```
+# Slash command ile skill çalıştır
+/new-module blog-categories
+/gen-test src/components/ui/AiFieldButton.tsx
+/pr-check
 
-## Admin uygulama dizinleri (güncel repo)
+# Agent Teams ile (otomatik atanır)
+# team-lead büyük görevleri alt agent'lara dağıtır
+```
 
-`CLAUDE.md` üst düzey `(site)` / `(admin)` özetini verebilir; bu repodaki yönetim paneli sayfaları pratikte şunlardır:
+### Cursor'da
 
-- `src/app/(baseLayout)/` — çoğu admin sayfası
-- `src/app/(layoutLess)/` — örn. login
-- `src/app/_actions/` — server actions
-- `src/app/_hooks/`, `src/app/_services/` — TanStack Query hook’ları ve servis katmanı
+```
+# Chat'te @ ile referans ver
+@new-module blog-categories entity'si için CRUD modül oluştur
+@gen-test src/components/ui/AiFieldButton.tsx için test yaz
+@pr-check bu PR'ı kontrol et
+@team-lead bu feature'ı planla ve böl
+@security-reviewer bu API route'u incele
+```
 
-Detaylı modül listesi ve checklist için `.claude/PROGRESS.md` kullanılır.
+## Koordinasyon kuralları (tüm agent'lar)
+
+- Team lead büyük işleri alt görevlere böler; **aynı dosyaya birden fazla yazıcı agent atanmaz**
+- Önce salt okunur incelemeleri (security, ui, performance) paralel düşün; ardından implementasyon
+- Rapor formatı: **severity/impact**, **location** (`dosya:satır`), **issue**, **fix**
+- Package manager: **Bun** (`bun run`, `bun install`, `bunx`)
+- `console.log` production kodunda yok. TypeScript strict, `any` yok
+
+## Admin uygulama dizinleri
+
+- `src/app/(baseLayout)/` — admin panel sayfaları
+- `src/app/(layoutLess)/` — login
+- `src/app/_actions/`, `src/app/_hooks/`, `src/app/_services/` — iş mantığı katmanı
+
+Detaylı modül listesi ve TODO'lar: [`.claude/PROGRESS.md`](./.claude/PROGRESS.md)

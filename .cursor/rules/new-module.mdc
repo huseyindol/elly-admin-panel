@@ -1,0 +1,45 @@
+---
+description: "Tam CRUD modül scaffold (service, hook, schema, types, pages). @new-module ile referans verip entity adını kebab-case belirt."
+alwaysApply: false
+---
+
+Verilen entity için tam CRUD admin modülü scaffold et.
+
+## Adımlar
+
+1. Entity adlarını türet:
+   - `entity-name` — kebab-case (e.g. `blog-categories`)
+   - `EntityName` — PascalCase (e.g. `BlogCategories`)
+   - `entitySingular` — tekil form (e.g. `blog-category`)
+
+2. Referans dosyaları oku (pattern olarak):
+   - `src/app/_services/mail-accounts.services.ts` — service pattern
+   - `src/app/_hooks/useMailAccounts.ts` — TanStack Query hook pattern
+   - `src/schemas/mail-account.ts` — Zod schema pattern
+   - `src/types/mail-account.ts` — type pattern
+   - `src/app/(baseLayout)/mail-accounts/page.tsx` — list page
+   - `src/app/(baseLayout)/mail-accounts/new/page.tsx` — create page
+
+3. Bu dosyaları oluştur:
+
+```
+src/app/_services/{entity-name}.services.ts    — CRUD API calls via fetcher
+src/app/_hooks/use{EntityName}.ts              — TanStack Query hooks (list, get, create, update, delete)
+src/schemas/{entity-name}.ts                   — Zod create + update schemas
+src/types/{entity-name}.ts                     — TypeScript interfaces (Entity, CreateDTO, UpdateDTO)
+src/app/(baseLayout)/{entity-name}/page.tsx    — List page with DataTable
+src/app/(baseLayout)/{entity-name}/new/page.tsx — Create form page
+src/app/(baseLayout)/{entity-name}/[id]/edit/page.tsx — Edit form page
+```
+
+4. Service: `fetcher` from `@/utils/services/fetcher`, prefix: `/api/v1/{entity-name}`
+5. Hook: `useQuery` list/get, `useMutation` CUD, cache key: `['{entity-name}']`
+6. Pages: `'use client'`, DataTable, React Hook Form + Zod, Toast, Loading states, Breadcrumb
+
+## Naming
+
+- Dosyalar: kebab-case (`blog-categories.services.ts`)
+- Types/Components: PascalCase (`BlogCategory`)
+- Hook: `use{PascalCase}` (`useBlogCategories`)
+- API: `/api/v1/{kebab-case}`
+- Cache key: `['{kebab-case}']`

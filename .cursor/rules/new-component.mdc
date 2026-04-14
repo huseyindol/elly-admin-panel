@@ -1,0 +1,62 @@
+---
+description: "Yeni React component + test dosyası scaffold eder. @new-component ile referans verip component adını PascalCase belirt."
+alwaysApply: false
+---
+
+Yeni bir React component scaffold et.
+
+## Adımlar
+
+1. Component adını al (PascalCase)
+2. Yerleşim belirle:
+   - UI primitive → `src/components/ui/`
+   - Form element → `src/components/forms/`
+   - Diğer → `src/components/`
+3. Component dosyası oluştur:
+
+```typescript
+import { cn } from '@/lib/utils'
+
+interface {ComponentName}Props {
+  className?: string
+  children?: React.ReactNode
+}
+
+export default function {ComponentName}({ className, children }: {ComponentName}Props) {
+  return (
+    <div className={cn('', className)}>
+      {children}
+    </div>
+  )
+}
+```
+
+4. Test dosyası oluştur: `tests/components/{ComponentName}.test.tsx`
+
+```typescript
+import {ComponentName} from '@/components/{ComponentName}'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+
+describe('{ComponentName} Component', () => {
+  it('should render without crashing', () => {
+    render(<{ComponentName} />)
+  })
+
+  it('should render children', () => {
+    render(<{ComponentName}>Test content</{ComponentName}>)
+    expect(screen.getByText('Test content')).toBeInTheDocument()
+  })
+
+  it('should apply custom className', () => {
+    const { container } = render(<{ComponentName} className="custom-class" />)
+    expect(container.firstChild).toHaveClass('custom-class')
+  })
+})
+```
+
+## Naming
+
+- PascalCase component: `MyCard`
+- kebab-case CSS/test ref: `my-card`
+- Dosya adı = component adı

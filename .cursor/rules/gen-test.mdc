@@ -1,0 +1,44 @@
+---
+description: "Bir kaynak dosya için Vitest + Testing Library testi üretir. @gen-test ile referans verip dosya yolunu belirt."
+alwaysApply: false
+---
+
+Verilen kaynak dosya için kapsamlı bir Vitest testi üret.
+
+## Adımlar
+
+1. Kaynak dosyayı oku
+2. `tests/setup.ts` dosyasını oku (global test config)
+3. `tests/**/*.test.{ts,tsx}` altındaki mevcut testlerden 2-3 tanesini stil referansı olarak incele
+4. Doğru çıktı yolunu belirle:
+   - `src/components/Foo.tsx` → `tests/components/Foo.test.tsx`
+   - `src/lib/bar.ts` → `tests/lib/bar.test.ts`
+   - `src/app/api/baz/route.ts` → `tests/api/baz.test.ts`
+   - `src/services/foo.ts` → `tests/services/foo.test.ts`
+5. Testi yaz:
+
+### Import Sırası
+
+```typescript
+import ComponentOrFunction from '@/path/to/source'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+```
+
+### Mock Pattern (describe bloklarından önce)
+
+```typescript
+vi.mock('module-name', () => ({
+  ExportName: () => <div>Mock</div>,
+}))
+```
+
+### Test Coverage Gereksinimleri
+
+- Render/call without crashing
+- Tüm props/arguments kapsanmalı
+- User interactions (component ise)
+- Loading / error / empty states (varsa)
+- Edge cases
+
+Test dosyasını çıktı yoluna yaz.

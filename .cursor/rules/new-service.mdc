@@ -1,0 +1,62 @@
+---
+description: "Service + TanStack Query hook çifti oluşturur. @new-service ile referans verip entity adını kebab-case belirt."
+alwaysApply: false
+---
+
+Verilen entity için service ve TanStack Query hook çifti oluştur.
+
+## Adımlar
+
+1. Entity adlarını türet: `entity-name` (kebab), `EntityName` (Pascal)
+2. Referans oku: `src/app/_services/mail-accounts.services.ts`, `src/app/_hooks/useMailAccounts.ts`
+
+3. Type dosyası: `src/types/{entity-name}.ts`
+
+```typescript
+export interface {EntityName} {
+  id: string
+  // TODO: Entity alanlarını ekle
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Create{EntityName}DTO {
+  // TODO: Create alanlarını ekle
+}
+
+export interface Update{EntityName}DTO extends Partial<Create{EntityName}DTO> {}
+```
+
+4. Service: `src/app/_services/{entity-name}.services.ts`
+
+```typescript
+import { fetcher } from '@/utils/services/fetcher'
+import type { {EntityName}, Create{EntityName}DTO, Update{EntityName}DTO } from '@/types/{entity-name}'
+import type { BaseResponse } from '@/types/BaseResponse'
+
+const BASE_URL = '/api/v1/{entity-name}'
+
+export const {entityName}Service = {
+  getAll: () => fetcher<BaseResponse<{EntityName}[]>>(BASE_URL),
+  getById: (id: string) => fetcher<BaseResponse<{EntityName}>>(`${BASE_URL}/${id}`),
+  create: (data: Create{EntityName}DTO) => fetcher<BaseResponse<{EntityName}>>(BASE_URL, { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Update{EntityName}DTO) => fetcher<BaseResponse<{EntityName}>>(`${BASE_URL}/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: string) => fetcher<BaseResponse<void>>(`${BASE_URL}/${id}`, { method: 'DELETE' }),
+}
+```
+
+5. Hook: `src/app/_hooks/use{EntityName}.ts`
+
+```typescript
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { {entityName}Service } from '@/app/_services/{entity-name}.services'
+
+const QUERY_KEY = ['{entity-name}']
+
+export function use{EntityName}() {
+  const queryClient = useQueryClient()
+  const listQuery = useQuery({ queryKey: QUERY_KEY, queryFn: {entityName}Service.getAll })
+  // getQuery, createMutation, updateMutation, deleteMutation ...
+  return { listQuery, createMutation, updateMutation, deleteMutation }
+}
+```

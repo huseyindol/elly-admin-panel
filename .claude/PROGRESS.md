@@ -33,12 +33,21 @@
 - Hook: `useTemplates(type)` — `src/app/_hooks/useTemplates.ts`
 - API: `GET /api/v1/templates?type=posts|pages|...`
 
-### SKILL-05: Agent Teams (Claude Code + Cursor)
+### SKILL-05: Agent Teams + Cross-Platform Skills (Claude Code + Cursor)
 
-- `.claude/agents/` → Claude Code subagent’ları (YAML: model, tools)
-- `.agents/` → aynı roller, Cursor/genel kullanım (araç-agnostic frontmatter)
-- Kök `AGENTS.md` → envanter ve koordinasyon özeti
+- `.claude/agents/` → Claude Code subagent’ları (YAML: model, tools) — 5 rol
+- `.claude/skills/` → Claude Code skill’leri — 9 adet, `/komut` ile çalışır
+- `.cursor/rules/` → Cursor .mdc rules — aynı 5 agent + 9 skill, `@kural-adı` ile çalışır
+- `.agents/` → araç-agnostic agent tanımları (legacy referans)
+- Kök `AGENTS.md` → platform eşleme tablosu ve koordinasyon özeti
 - `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` ile Claude tarafında aktif
+
+**Cross-platform eşleşme tamamlandı:**
+| Claude Code | Cursor | Tetikleme |
+|---|---|---|
+| `.claude/agents/team-lead.md` | `.cursor/rules/team-lead.mdc` | subagent / `@team-lead` |
+| `.claude/skills/new-module/SKILL.md` | `.cursor/rules/new-module.mdc` | `/new-module` / `@new-module` |
+| _(9 skill + 5 agent — tam eşleşme)_ | | |
 
 ### SKILL-06: RichText Editor
 
@@ -100,9 +109,11 @@
 
 ## OTURUM LOGU
 
-| Tarih      | Yapılan                                           | Sonraki Adım                             |
-| ---------- | ------------------------------------------------- | ---------------------------------------- |
-| 2026-04-12 | Memory sistemi kuruldu, proje tam snapshot alındı | SKILL-08 (log temizliği) veya yeni modül |
+| Tarih      | Yapılan                                                                                                                                                                                                           | Sonraki Adım                             |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| 2026-04-12 | Memory sistemi kuruldu, proje tam snapshot alındı                                                                                                                                                                 | Skill sistemi genişletme                 |
+| 2026-04-13 | 5 yeni skill eklendi (new-module, new-service, new-page, ai-generate, debug-fix). Bug fix: pr-check `npm`→`bun`, CLAUDE.md dizin yapısı düzeltildi, settings.json genişletildi, AGENTS.md skill envanteri eklendi | Cross-platform eşleşme                   |
+| 2026-04-14 | `.cursor/rules/` altına 14 .mdc dosyası oluşturuldu: 5 agent + 9 skill. Eski `nextjs-rule.mdc` deprecated. AGENTS.md platform eşleme tablosuna güncellendi. Claude Code ↔ Cursor tam eşleşme tamamlandı           | SKILL-08 (log temizliği) veya yeni modül |
 
 ---
 
