@@ -1,32 +1,106 @@
 'use client'
 
-import { useAdminTheme } from '@/app/_hooks'
-import { useEmailClasspathTemplates } from '@/app/_hooks/useEmailTemplates'
-import { Icons } from '@/app/_components/Icons'
+import Link from 'next/link'
+import { useMemo, useState } from 'react'
+import { Column, DataTable, DestructiveConfirmDialog } from '@/app/_components'
+import { useAdminTheme, usePermission } from '@/app/_hooks'
+import {
+  useDeleteEmailTemplate,
+  useEmailTemplates,
+} from '@/app/_hooks/useEmailTemplates'
+import { formatAbsoluteTime } from '@/app/_utils/dateUtils'
+import { Permissions, type EmailTemplate } from '@/types/cms'
 
 export function TemplateListTable() {
   const { isDarkMode } = useAdminTheme()
-  const {
-    data: templates,
-    isLoading,
-    isError,
-    error,
-  } = useEmailClasspathTemplates()
+  const canManage = usePermission(Permissions.EMAIL_TEMPLATES_MANAGE)
+  const { data, isLoading, isError, error } = useEmailTemplates()
+  const deleteTemplate = useDeleteEmailTemplate()
 
-  if (isLoading) {
-    return (
-      <div className="space-y-2">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className={`h-12 animate-pulse rounded-xl ${
-              isDarkMode ? 'bg-slate-800' : 'bg-gray-100'
+  const [deleteTarget, setDeleteTarget] = useState<EmailTemplate | null>(null)
+
+  const templates = useMemo(() => data?.content ?? [], [data])
+
+  const columns = useMemo<Column<EmailTemplate>[]>(
+    () => [
+      {
+        key: 'templateKey',
+        header: 'Template Key',
+        render: t => <span className="font-mono text-sm">{t.templateKey}</span>,
+      },
+      {
+        key: 'subject',
+        header: 'Konu',
+        render: t => (
+          <span className="block max-w-xs truncate text-sm">{t.subject}</span>
+        ),
+      },
+      {
+        key: 'active',
+        header: 'Durum',
+        width: '90px',
+        render: t => (
+          <span
+            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+              t.active
+                ? isDarkMode
+                  ? 'bg-emerald-500/20 text-emerald-300'
+                  : 'bg-emerald-50 text-emerald-700'
+                : isDarkMode
+                  ? 'bg-slate-700 text-slate-400'
+                  : 'bg-gray-100 text-gray-500'
             }`}
-          />
-        ))}
-      </div>
-    )
-  }
+          >
+            {t.active ? 'Aktif' : 'Pasif'}
+          </span>
+        ),
+      },
+      {
+        key: 'updatedAt',
+        header: 'Güncelleme',
+        width: '160px',
+        render: t => (
+          <span
+            className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}
+          >
+            {formatAbsoluteTime(t.updatedAt ?? t.createdAt ?? null)}
+          </span>
+        ),
+      },
+      {
+        key: 'actions',
+        header: '',
+        width: '130px',
+        render: t => (
+          <div
+            className="flex justify-end gap-1"
+            onClick={e => e.stopPropagation()}
+          >
+            <Link
+              href={`/email-templates/${t.templateKey}`}
+              className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                isDarkMode
+                  ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Düzenle
+            </Link>
+            {canManage && (
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(t)}
+                className="rounded-lg bg-rose-500/10 px-2.5 py-1.5 text-xs font-medium text-rose-500 transition-colors hover:bg-rose-500/20"
+              >
+                Sil
+              </button>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [isDarkMode, canManage],
+  )
 
   if (isError) {
     return (
@@ -42,63 +116,39 @@ export function TemplateListTable() {
     )
   }
 
-  if (!templates?.length) {
-    return (
-      <div
-        className={`rounded-xl p-8 text-center text-sm ${
-          isDarkMode ? 'text-slate-500' : 'text-gray-400'
-        }`}
-      >
-        Template bulunamadı.
-      </div>
-    )
-  }
-
   return (
-    <div
-      className={`overflow-hidden rounded-2xl border ${
-        isDarkMode ? 'border-slate-700/50' : 'border-gray-200'
-      }`}
-    >
-      <div
-        className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wider ${
-          isDarkMode
-            ? 'border-b border-slate-700/50 bg-slate-800/60 text-slate-400'
-            : 'border-b border-gray-200 bg-gray-50 text-gray-500'
-        }`}
-      >
-        Template Adı
-      </div>
-      <ul className="divide-y divide-slate-700/30 dark:divide-slate-700/30">
-        {templates.map(name => (
-          <li
-            key={name}
-            className={`flex items-center gap-3 px-4 py-3 ${
-              isDarkMode
-                ? 'text-slate-200 hover:bg-slate-800/40'
-                : 'text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            <span
-              className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg ${
-                isDarkMode
-                  ? 'bg-slate-700 text-slate-300'
-                  : 'bg-gray-100 text-gray-500'
-              }`}
-            >
-              <Icons.Mail />
-            </span>
-            <span className="font-mono text-sm">{name}</span>
-          </li>
-        ))}
-      </ul>
-      <div
-        className={`px-4 py-2 text-right text-xs ${
-          isDarkMode ? 'text-slate-500' : 'text-gray-400'
-        }`}
-      >
-        {templates.length} template
-      </div>
-    </div>
+    <>
+      <DataTable
+        data={templates}
+        columns={columns}
+        isLoading={isLoading}
+        keyExtractor={t => t.templateKey}
+        emptyMessage="Henüz email template yok"
+      />
+
+      <DestructiveConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteTemplate.mutate(deleteTarget.templateKey, {
+              onSuccess: () => setDeleteTarget(null),
+            })
+          }
+        }}
+        title="Template Sil"
+        description={
+          deleteTarget ? (
+            <>
+              <strong className="font-mono">{deleteTarget.templateKey}</strong>{' '}
+              template&apos;i kalıcı olarak silinecek. Bu işlem geri alınamaz.
+            </>
+          ) : null
+        }
+        expectedText={deleteTarget?.templateKey ?? ''}
+        confirmText="Template'i Sil"
+        isLoading={deleteTemplate.isPending}
+      />
+    </>
   )
 }

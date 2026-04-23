@@ -222,37 +222,11 @@ NEXT_PUBLIC_ELLY_API_URL=https://api.huseyindol.com
 
 ---
 
-## Prompt 2 — Email Templates Sayfası (v4 Feature — Beklemede)
+## Prompt 2 — Email Templates Sayfası (v4 — ✅ Tamamlandı)
 
-> ⚠️ **Backend henüz deploy edilmedi.** `/api/v1/email-templates` CRUD endpoint'leri
-> v4 kapsamında yazılacak — şu an mevcut değil.
->
-> **Mevcut durum:** Sayfa şu an `/api/v1/emails/templates` (classpath template listesi,
-> `string[]`) ile çalışıyor — sadece okuma, CRUD yok.
-> v4 deploy edilince bu bölüm güncellenip tam CRUD aktif edilecek.
+**v4 backend deploy edildi.** Tam CRUD aktif.
 
-### Mevcut (aktif) endpoint
-
-| Method | Path                       | Permission             | Açıklama                                    |
-| ------ | -------------------------- | ---------------------- | ------------------------------------------- |
-| GET    | `/api/v1/emails/templates` | `email_templates:read` | Classpath template isim listesi (`string[]`) |
-
-**Servis:** `src/app/_services/email-templates.services.ts` → `getEmailClasspathTemplatesService()`
-**Hook:** `src/app/_hooks/useEmailTemplates.ts` → `useEmailClasspathTemplates()`
-**Sayfa:** `src/app/(baseLayout)/email-templates/page.tsx` — read-only liste
-**`/new` ve `/[key]`** sayfaları → `/email-templates`'e redirect (v4 hazır olana kadar devre dışı)
-
----
-
-### v4 Hazır Olduğunda Yapılacaklar
-
-v4 backend deploy edilince aşağıdaki prompt çalıştırılır:
-
-```
-
-Email Templates sayfasına tam CRUD ekle (/api/v1/email-templates v4 endpoint'leri aktif).
-
-## Bağlam
+### Endpoint'ler
 
 | Method | Path                                     | Permission               | Açıklama              |
 | ------ | ---------------------------------------- | ------------------------ | --------------------- |
@@ -263,21 +237,37 @@ Email Templates sayfasına tam CRUD ekle (/api/v1/email-templates v4 endpoint'le
 | DELETE | `/api/v1/email-templates/{key}`          | `email_templates:manage` | Sil (soft)            |
 | POST   | `/api/v1/email-templates/{key}/preview`  | `email_templates:read`   | Dummy data ile render |
 
-Preview body: `{ "data": { "userName": "Ahmet", "link": "https://..." } }`
-Preview response: `{ "html": "<html>...", "subject": "Render edilmiş subject" }`
-Tipler: `EmailTemplate`, `EmailTemplateCreateRequest`, `EmailTemplateUpdateRequest` (`types/cms.ts`)
+Ayrıca classpath template listesi (yardımcı, form seçicisinde kullanılır):
 
-## Değişiklikler
+| Method | Path                       | Permission             | Açıklama                  |
+| ------ | -------------------------- | ---------------------- | ------------------------- |
+| GET    | `/api/v1/emails/templates` | `email_templates:read` | Classpath isim listesi    |
 
-- `getEmailClasspathTemplatesService` → `getEmailTemplatesService(page, size)` ile değiştir
-- `useEmailClasspathTemplates` → `useEmailTemplates` + `useEmailTemplate` + mutations
-- `TemplateListTable` → `Page<EmailTemplate>` ile CRUD tablo
-  (kolonlar: templateKey, subject, active badge, updatedAt, actions)
-- `/new` ve `/[key]` redirect'lerini kaldır, TemplateForm + MonacoBodyEditor geri getir
-- `optimisticLockVersion` hidden field — 409 Conflict → toast "Başka biri güncellemiş"
-- "Yeni Template" butonunu page.tsx'e geri ekle
+### Dosya Yapısı
 
 ```
+
+src/app/(baseLayout)/email-templates/
+├── page.tsx # Liste + "Yeni Template" butonu
+├── loading.tsx
+├── new/page.tsx # Oluşturma formu
+├── [key]/page.tsx # Edit + Preview
+└── \_components/
+├── TemplateListTable.tsx # DataTable<EmailTemplate>
+├── TemplateForm.tsx # create/update (mode prop)
+├── MonacoBodyEditor.tsx # HTML Monaco editor (dynamic import)
+└── PreviewPanel.tsx # JSON input + iframe preview
+
+src/app/\_services/email-templates.services.ts
+src/app/\_hooks/useEmailTemplates.ts
+src/schemas/emailTemplateSchema.ts
+src/types/cms.ts → EmailTemplate, EmailTemplateCreateRequest, EmailTemplateUpdateRequest
+
+```
+
+Preview body: `{ "data": { "userName": "Ahmet", "link": "https://..." } }`
+Preview response: `{ "html": "<html>...", "subject": "Render edilmiş subject" }`
+409 Conflict → toast "Başka biri bu template'i güncellemiş. Sayfayı yenileyip tekrar dene."
 
 ---
 
