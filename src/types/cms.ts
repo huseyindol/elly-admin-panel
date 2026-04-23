@@ -124,12 +124,25 @@ export interface Page<T> {
 // ========== Permission constants (CMS ile eşleşen) ==========
 
 export const Permissions = {
+  // Email Templates (v4)
   EMAIL_TEMPLATES_READ: 'email_templates:read',
   EMAIL_TEMPLATES_MANAGE: 'email_templates:manage',
+  // Email Logs (v3)
   EMAILS_READ: 'emails:read',
   EMAILS_RETRY: 'emails:retry',
+  // RabbitMQ
   RABBIT_READ: 'rabbit:read',
   RABBIT_MANAGE: 'rabbit:manage',
+  // Mail Accounts (v2)
+  MAIL_READ: 'mail:read',
+  MAIL_CREATE: 'mail:create',
+  MAIL_UPDATE: 'mail:update',
+  MAIL_DELETE: 'mail:delete',
+  // Forms (v2)
+  FORMS_READ: 'forms:read',
+  FORMS_CREATE: 'forms:create',
+  FORMS_UPDATE: 'forms:update',
+  FORMS_DELETE: 'forms:delete',
 } as const
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions]
