@@ -222,11 +222,18 @@ NEXT_PUBLIC_ELLY_API_URL=https://api.huseyindol.com
 
 ---
 
-## Prompt 2 — Email Templates Sayfası (v4 — ✅ Tamamlandı)
+## Prompt 2 — Email Templates Sayfası (v4 Feature)
 
-**v4 backend deploy edildi.** Tam CRUD aktif.
+**Ön koşul:** Prompt 1 tamamlandı (http client + types hazır). CMS v4 backend deploy edildi — endpoint'ler aktif.
 
-### Endpoint'ler
+```
+
+elly-admin-panel'e "Email Templates" admin sayfası ekle. Bu sayfa, CMS'te
+veritabanında saklanan Thymeleaf email template'lerini panel'den yönetmeyi sağlar.
+
+## Bağlam
+
+CMS endpoint'leri:
 
 | Method | Path                                     | Permission               | Açıklama              |
 | ------ | ---------------------------------------- | ------------------------ | --------------------- |
@@ -237,37 +244,121 @@ NEXT_PUBLIC_ELLY_API_URL=https://api.huseyindol.com
 | DELETE | `/api/v1/email-templates/{key}`          | `email_templates:manage` | Sil (soft)            |
 | POST   | `/api/v1/email-templates/{key}/preview`  | `email_templates:read`   | Dummy data ile render |
 
-Ayrıca classpath template listesi (yardımcı, form seçicisinde kullanılır):
+Request/Response tipleri: `EmailTemplate` (zaten `types/cms.ts`'de tanımlı).
 
-| Method | Path                       | Permission             | Açıklama                  |
-| ------ | -------------------------- | ---------------------- | ------------------------- |
-| GET    | `/api/v1/emails/templates` | `email_templates:read` | Classpath isim listesi    |
+Preview endpoint'i şu body bekler:
 
-### Dosya Yapısı
-
+```json
+{ "data": { "userName": "Ahmet", "link": "https://..." } }
 ```
 
-src/app/(baseLayout)/email-templates/
-├── page.tsx # Liste + "Yeni Template" butonu
-├── loading.tsx
-├── new/page.tsx # Oluşturma formu
-├── [key]/page.tsx # Edit + Preview
-└── \_components/
-├── TemplateListTable.tsx # DataTable<EmailTemplate>
-├── TemplateForm.tsx # create/update (mode prop)
-├── MonacoBodyEditor.tsx # HTML Monaco editor (dynamic import)
-└── PreviewPanel.tsx # JSON input + iframe preview
+Response:
 
-src/app/\_services/email-templates.services.ts
-src/app/\_hooks/useEmailTemplates.ts
-src/schemas/emailTemplateSchema.ts
-src/types/cms.ts → EmailTemplate, EmailTemplateCreateRequest, EmailTemplateUpdateRequest
-
+```json
+{ "html": "<html>...", "subject": "Render edilmiş subject" }
 ```
 
-Preview body: `{ "data": { "userName": "Ahmet", "link": "https://..." } }`
-Preview response: `{ "html": "<html>...", "subject": "Render edilmiş subject" }`
-409 Conflict → toast "Başka biri bu template'i güncellemiş. Sayfayı yenileyip tekrar dene."
+## Görev
+
+### Dosyalar
+
+```
+app/(admin)/admin/email-templates/
+├── page.tsx                         # Liste sayfası
+├── loading.tsx                      # Skeleton
+├── new/
+│   └── page.tsx                     # Oluşturma formu
+├── [key]/
+│   ├── page.tsx                     # Edit sayfası
+│   └── _components/
+│       ├── TemplateForm.tsx
+│       ├── MonacoBodyEditor.tsx
+│       └── PreviewPanel.tsx
+└── _components/
+    ├── TemplateListTable.tsx
+    └── DeleteConfirmDialog.tsx
+
+lib/api/email-templates.ts           # API client fonksiyonlari
+lib/hooks/email-templates/
+├── useEmailTemplates.ts             # useQuery list
+├── useEmailTemplate.ts              # useQuery detail
+└── useTemplateMutations.ts          # create/update/delete/preview
+```
+
+### Özellikler
+
+**Liste sayfası (`/admin/email-templates`)**
+
+- Server Component, `requirePermission('email_templates:read')`
+- Tablo: templateKey (mono font), subject, active (badge), updatedAt, actions
+- "Yeni Template" butonu (sağ üst) — `rabbit:manage` değil, `email_templates:manage`
+- Satır tıklanınca `/admin/email-templates/{key}` edit sayfasına git
+- Her satırda "Delete" butonu — permission'a göre disabled
+- TanStack Query `staleTime: 30_000`
+
+**Oluşturma formu (`/new`)**
+
+- react-hook-form + zod schema
+- Alanlar: templateKey (regex `^[a-z0-9-]+$`), subject, description, active checkbox, htmlBody
+- htmlBody için Monaco editor (HTML mode, VS dark theme, 500px yükseklik)
+- Monaco `dynamic(() => import('@monaco-editor/react'), { ssr: false })`
+- "Preview" butonu (form submit etmez) → panel açar, dummy JSON girilir, iframe'de render
+- "Kaydet" → `POST /api/v1/email-templates` → başarılıysa edit sayfasına redirect
+
+**Edit sayfası (`/[key]`)**
+
+- URL'den `key` alır, `useEmailTemplate(key)` ile fetch
+- `TemplateForm` bileşenini `defaultValues` ile doldurur
+- `optimisticLockVersion` hidden field — PUT body'sinde gönderilir
+- 409 Conflict (OptimisticLockException) → toast: "Başka biri güncellemiş, yenile"
+- Delete butonu (sağ üst, destructive variant) — confirm dialog + success redirect
+
+**Preview Panel**
+
+- Sol: JSON textarea (dummy data, default: `{"userName": "Ahmet"}`)
+- Sağ: iframe `sandbox=""` `srcDoc={html}` (XSS koruması)
+- "Render et" butonu → `POST /preview` → iframe güncellenir
+- Response'taki `subject` de gösterilsin (iframe üstünde)
+
+**Delete Confirm Dialog**
+
+- shadcn Dialog (veya projenin modal bileşeni)
+- "Onaylamak için templateKey'i yaz: **welcome**"
+- Input değeri eşleşince "Sil" butonu aktif olur
+
+### TanStack Query Hook'ları
+
+Query key'leri:
+
+```typescript
+export const emailTemplatesKeys = {
+  all: ['email-templates'] as const,
+  list: (params?: Record<string, unknown>) =>
+    [...emailTemplatesKeys.all, 'list', params] as const,
+  detail: (key: string) => [...emailTemplatesKeys.all, 'detail', key] as const,
+}
+```
+
+Mutations `onSuccess`'te `invalidateQueries({ queryKey: emailTemplatesKeys.all })` çağır.
+
+### Navigasyon
+
+Admin sidebar'a (mevcutsa) "Email Templates" linki ekle.
+İkon: envelope / mail (lucide veya projedeki ikon kitaplığı).
+
+### Doğrulama
+
+- `npm run build` hatasız
+- Strict TS, lint temiz
+- Sayfa aç → liste gelsin → detay aç → preview çalışsın
+- Permission testi: `email_templates:read` yok → `/403` redirect
+- Monaco editor SSR hatası vermemeli (dynamic import kontrolü)
+
+Kısıt: Monaco kurulu değilse `npm install @monaco-editor/react` kur.
+Yoksa `react-hook-form` ve `zod` ile formu yaz, form kütüphanesi zaten kurulu
+olabilir — Prompt 0 raporundan teyit et.
+
+```
 
 ---
 
@@ -1196,13 +1287,11 @@ Her tenant DB'sinde bu migration'ı çalıştır.
 4. **v4 backend henüz yazılmadıysa:** Prompt 2 (Email Templates) çalışmaz —
    endpoint 404 döner. Önce elly repo'sunda v4 endpoint'lerini yazdırmalısın.
    **Hazır promptlar (deploy edilmiş ve çalışan):**
+   - Prompt 2 — Email Templates (`email_templates:read`, `email_templates:manage`) — v4 backend deploy edildi
    - Prompt 3 — RabbitMQ yönetim (`rabbit:read`, `rabbit:manage`)
    - Prompt 4 — Email Logs (`emails:read`, `emails:retry`) — auth: JWT Bearer only, X-API-KEY yok
    - Prompt 5 — Mail Accounts (`mail:read/create/update/delete`)
    - Prompt 6 — Forms (`forms:read/create/update/delete`)
-
-   **Bekleyenler (backend henüz yazılmadı — 404 döner):**
-   - Prompt 2 — Email Templates (v4 — `/api/v1/email-templates` endpoint'leri implement edilince)
 
 5. **Stack uyuşmazlığı:** Projen shadcn/ui değil MUI kullanıyorsa, Prompt
    sonuna şunu ekle: _"Yukarıdaki örnek kodlar shadcn/ui varsayımıyla yazıldı.
