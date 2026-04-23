@@ -93,3 +93,25 @@ export const testMailAccountService = async (id: number, testTo: string) => {
   }
   return response
 }
+
+export const verifyMailAccountService = async (id: number) => {
+  const response: BaseResponse<string> = await fetcher(
+    `/api/v1/mail-accounts/${id}/verify`,
+    { method: 'POST' },
+  )
+  if (!response.result) {
+    throw new Error(response.message ?? 'SMTP doğrulama başarısız')
+  }
+  return response
+}
+
+export const getActiveMailAccountsService = async () => {
+  const response: BaseResponse<MailAccount[]> = await fetcher(
+    '/api/v1/mail-accounts/active',
+    { method: 'GET' },
+  )
+  if (!response.result) {
+    throw new Error(response.message ?? 'Aktif mail hesapları yüklenemedi')
+  }
+  return response
+}

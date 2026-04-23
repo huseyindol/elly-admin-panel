@@ -93,6 +93,15 @@ export interface FormSchema {
   version: number
   schema: FormSchemaDefinition
   active: boolean
+
+  // Mail+Form v2 fields
+  senderMailAccountId: number
+  senderMailAccountName: string
+  senderFromAddress: string
+  recipientEmail: string
+  notificationSubject: string | null
+  notificationEnabled: boolean
+
   createdAt?: string
   updatedAt?: string
 }

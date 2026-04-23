@@ -104,6 +104,13 @@ export const CreateFormSchema = z.object({
   version: z.number().default(1),
   active: z.boolean().default(true),
   schema: SchemaDefinitionSchema,
+  senderMailAccountId: z
+    .number()
+    .int()
+    .positive('Bir gönderici hesap seçmelisiniz'),
+  recipientEmail: z.string().email('Geçerli bir e-posta adresi girin'),
+  notificationSubject: z.string().max(255).optional(),
+  notificationEnabled: z.boolean().default(true),
 })
 
 export const UpdateFormSchema = CreateFormSchema

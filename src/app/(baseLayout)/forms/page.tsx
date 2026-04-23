@@ -80,22 +80,39 @@ export default function FormsListPage() {
       ),
     },
     {
-      key: 'schema',
-      header: 'Düzen',
+      key: 'senderMailAccountName',
+      header: 'Gönderici',
       render: form => (
-        <span className="rounded bg-cyan-500/20 px-2 py-0.5 text-xs text-cyan-400">
-          {form.schema?.config?.layout === 'vertical' ? 'Dikey' : 'Tek Sayfa'}
+        <span
+          className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}
+        >
+          {form.senderMailAccountName || '—'}
         </span>
       ),
     },
     {
-      key: 'fields',
-      header: 'Alan Sayısı',
+      key: 'recipientEmail',
+      header: 'Alıcı',
       render: form => (
         <span
-          className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}
+          className={`font-mono text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}
         >
-          {form.schema?.fields?.length ?? 0}
+          {form.recipientEmail || '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'notificationEnabled',
+      header: 'Bildirim',
+      render: form => (
+        <span
+          className={`rounded px-2 py-0.5 text-xs font-medium ${
+            form.notificationEnabled
+              ? 'bg-emerald-500/20 text-emerald-400'
+              : 'bg-slate-500/20 text-slate-400'
+          }`}
+        >
+          {form.notificationEnabled ? 'Açık' : 'Kapalı'}
         </span>
       ),
     },
