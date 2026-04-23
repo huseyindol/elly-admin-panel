@@ -28,6 +28,10 @@ Huseyin DOL'un modern portföy ve CMS sitesi. Next.js 16 App Router, React 19, T
 - `src/providers/` — React Provider'lar
 - `tests/` — Vitest test dosyaları (components/, lib/, api/)
 
+## Davranış Rehberi
+
+LLM kodlama hatalarını azaltmak için dört ilke her zaman aktiftir: **Düşün → Sor, Basit tut, Cerrahi değiş, Hedef-odaklı ilerle**. Detay için [`.claude/skills/karpathy-guidelines/SKILL.md`](./.claude/skills/karpathy-guidelines/SKILL.md) (Cursor karşılığı `.cursor/rules/karpathy-guidelines.mdc`).
+
 ## Kodlama Kuralları
 
 - TypeScript strict mode — `any` kullanma

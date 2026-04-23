@@ -28,18 +28,19 @@ Bu dosya, projede yapay zekâ asistanlarının, rollerin ve skill'lerin nerede t
 
 ### Skill'ler
 
-| Skill                   | Claude Code               | Cursor                    | Açıklama                                                |
-| ----------------------- | ------------------------- | ------------------------- | ------------------------------------------------------- |
-| **project-conventions** | _(otomatik)_              | _(alwaysApply)_           | Kod stili, naming, mimari — her zaman aktif             |
-| **gen-test**            | `/gen-test <dosya>`       | `@gen-test`               | Kaynak dosya için Vitest testi üretir                   |
-| **new-component**       | `/new-component <Ad>`     | `@new-component`          | React component + test scaffold                         |
-| **new-module**          | `/new-module <entity>`    | `@new-module`             | Tam CRUD modül scaffold (7 dosya)                       |
-| **new-service**         | `/new-service <entity>`   | `@new-service`            | Service + TanStack Query hook çifti                     |
-| **new-page**            | `/new-page <entity>`      | `@new-page`               | Admin sayfaları scaffold (list, new, edit)              |
-| **pr-check**            | `/pr-check`               | `@pr-check`               | Git diff'i proje checklist'ine göre review              |
-| **doc-changes**         | `/doc-changes [açıklama]` | `@doc-changes`            | Değişiklikleri CHANGELOG + rehber olarak dokümante eder |
-| **ai-generate**         | _(otomatik)_              | _(globs: generate-\*.ts)_ | Gemini AI entegrasyon referansı                         |
-| **debug-fix**           | `/debug-fix <sorun>`      | `@debug-fix`              | Sistematik hata ayıklama akışı                          |
+| Skill                   | Claude Code               | Cursor                    | Açıklama                                                                         |
+| ----------------------- | ------------------------- | ------------------------- | -------------------------------------------------------------------------------- |
+| **project-conventions** | _(otomatik)_              | _(alwaysApply)_           | Kod stili, naming, mimari — her zaman aktif                                      |
+| **karpathy-guidelines** | _(otomatik)_              | _(alwaysApply)_           | Karpathy davranış rehberi — varsayım, basitlik, cerrahi değişiklik, hedef odaklı |
+| **gen-test**            | `/gen-test <dosya>`       | `@gen-test`               | Kaynak dosya için Vitest testi üretir                                            |
+| **new-component**       | `/new-component <Ad>`     | `@new-component`          | React component + test scaffold                                                  |
+| **new-module**          | `/new-module <entity>`    | `@new-module`             | Tam CRUD modül scaffold (7 dosya)                                                |
+| **new-service**         | `/new-service <entity>`   | `@new-service`            | Service + TanStack Query hook çifti                                              |
+| **new-page**            | `/new-page <entity>`      | `@new-page`               | Admin sayfaları scaffold (list, new, edit)                                       |
+| **pr-check**            | `/pr-check`               | `@pr-check`               | Git diff'i proje checklist'ine göre review                                       |
+| **doc-changes**         | `/doc-changes [açıklama]` | `@doc-changes`            | Değişiklikleri CHANGELOG + rehber olarak dokümante eder                          |
+| **ai-generate**         | _(otomatik)_              | _(globs: generate-\*.ts)_ | Gemini AI entegrasyon referansı                                                  |
+| **debug-fix**           | `/debug-fix <sorun>`      | `@debug-fix`              | Sistematik hata ayıklama akışı                                                   |
 
 ## Nasıl kullanılır
 
