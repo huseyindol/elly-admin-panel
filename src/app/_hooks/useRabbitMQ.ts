@@ -25,8 +25,10 @@ export function useRabbitOverview() {
   return useQuery({
     queryKey: rabbitKeys.overview(),
     queryFn: () => getRabbitOverviewService(),
-    refetchInterval: 10_000,
+    // Hata durumunda polling durdur — backend 500 alırken flood'u engeller
+    refetchInterval: query => (query.state.error ? false : 10_000),
     staleTime: 5_000,
+    retry: 1,
   })
 }
 
@@ -34,8 +36,9 @@ export function useRabbitQueues() {
   return useQuery({
     queryKey: rabbitKeys.queues(),
     queryFn: () => getRabbitQueuesService(),
-    refetchInterval: 5_000,
+    refetchInterval: query => (query.state.error ? false : 5_000),
     staleTime: 2_000,
+    retry: 1,
   })
 }
 

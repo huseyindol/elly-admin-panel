@@ -27,7 +27,18 @@ export default function Providers({
   cookiesData: Record<string, string>
 }>) {
   const [cookies, setCookies] = useState<Record<string, string>>(cookiesData)
-  const [queryClient] = useState(() => new QueryClient())
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // Hata alınan sorgular varsayılan 3 yerine 1 kez yeniden denensin
+            retry: 1,
+            refetchOnWindowFocus: false,
+          },
+        },
+      }),
+  )
 
   const updateCookie = (name: string, value: string) => {
     setCookies(prev => ({
