@@ -14,6 +14,46 @@ interface MenuItem {
   href: string
 }
 
+function NavLink({
+  item,
+  active,
+  isDarkMode,
+  onClick,
+}: {
+  item: MenuItem
+  active: boolean
+  isDarkMode: boolean
+  onClick: () => void
+}) {
+  let linkClass: string
+  if (active) {
+    linkClass = `bg-gradient-to-r from-violet-500/20 to-purple-500/20 ${
+      isDarkMode
+        ? 'border border-violet-500/30 text-white'
+        : 'border border-violet-500/30 text-gray-900'
+    }`
+  } else {
+    linkClass = isDarkMode
+      ? 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+  }
+  return (
+    <Link
+      href={item.href}
+      onClick={onClick}
+      className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${linkClass}`}
+    >
+      <span className={active ? 'text-violet-400' : ''}>
+        <item.icon />
+      </span>
+      <span className="font-medium">{item.label}</span>
+      {active && (
+        <span className="ml-auto h-2 w-2 animate-pulse rounded-full bg-violet-400" />
+      )}
+    </Link>
+  )
+}
+
 interface SidebarProps {
   isOpen: boolean
   onClose: () => void
@@ -30,6 +70,17 @@ const menuItems: MenuItem[] = [
   { icon: Icons.Image, label: 'Assetler', href: '/assets' },
   { icon: Icons.ClipboardList, label: 'Formlar', href: '/forms' },
   { icon: Icons.Settings, label: 'Ayarlar', href: '/settings' },
+]
+
+// CMS yönetim menüsü — ayrı bölüm
+const cmsManagementItems: MenuItem[] = [
+  { icon: Icons.Mail, label: 'Email Templates', href: '/email-templates' },
+  { icon: Icons.Inbox, label: 'Email Logları', href: '/email-logs' },
+  {
+    icon: Icons.Activity,
+    label: 'RabbitMQ',
+    href: '/infrastructure/rabbitmq',
+  },
 ]
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -109,38 +160,36 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           {/* Navigation */}
           <nav className="flex-1 space-y-1 overflow-y-auto">
-            {menuItems.map(item => {
-              const active = isActive(item.href)
-              let linkClass: string
-              if (active) {
-                linkClass = `bg-gradient-to-r from-violet-500/20 to-purple-500/20 ${
-                  isDarkMode
-                    ? 'border border-violet-500/30 text-white'
-                    : 'border border-violet-500/30 text-gray-900'
-                }`
-              } else {
-                linkClass = isDarkMode
-                  ? 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-              }
+            {menuItems.map(item => (
+              <NavLink
+                key={item.href}
+                item={item}
+                active={isActive(item.href)}
+                isDarkMode={isDarkMode}
+                onClick={onClose}
+              />
+            ))}
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${linkClass}`}
-                >
-                  <span className={active ? 'text-violet-400' : ''}>
-                    <item.icon />
-                  </span>
-                  <span className="font-medium">{item.label}</span>
-                  {active && (
-                    <span className="ml-auto h-2 w-2 animate-pulse rounded-full bg-violet-400" />
-                  )}
-                </Link>
-              )
-            })}
+            {/* CMS Yönetim — Separator */}
+            <div
+              className={`my-2 border-t ${isDarkMode ? 'border-slate-700/50' : 'border-gray-200'}`}
+            />
+            <p
+              className={`px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest ${
+                isDarkMode ? 'text-slate-600' : 'text-gray-400'
+              }`}
+            >
+              CMS Yönetim
+            </p>
+            {cmsManagementItems.map(item => (
+              <NavLink
+                key={item.href}
+                item={item}
+                active={isActive(item.href)}
+                isDarkMode={isDarkMode}
+                onClick={onClose}
+              />
+            ))}
 
             {/* Separator */}
             <div
