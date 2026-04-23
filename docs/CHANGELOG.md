@@ -17,7 +17,14 @@ Kayıt formatı:
 
 ## [Unreleased]
 
-_Sonraki release'e taşınacak tamamlanmamış değişiklikler buraya girilir._
+### Changed
+
+- `docs/elly-admin-panel-integration-prompts.md` güncellendi:
+  - TypeScript interface alanları noktalı virgülle hizalandı (prettier uyumu)
+  - Prompt 2 (Email Templates) üstüne ⚠️ uyarısı eklendi — v4 backend henüz deploy edilmedi, endpoint 404 döner
+  - Email Logs bağlamına auth notu eklendi: JWT Bearer token yeterli, `X-API-KEY` header'ı kaldırıldı
+  - "Hazır promptlar" listesi izin sabitleri (`rabbit:read`, `emails:read`, vb.) ile detaylandırıldı
+  - Beklenen promptlar bölümü açıklandı: Prompt 2 — v4 `/api/v1/email-templates` implement edilince
 
 ---
 

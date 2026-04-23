@@ -224,8 +224,12 @@ NEXT_PUBLIC_ELLY_API_URL=https://api.huseyindol.com
 
 ## Prompt 2 — Email Templates Sayfası (v4 Feature)
 
+> ⚠️ **Backend henüz deploy edilmedi.** `/api/v1/email-templates` endpoint'leri v4
+> kapsamında yazılacak — şu an 404 döner. Bu prompt'u **CMS tarafında v4 deploy
+> edilene kadar çalıştırma.** v4 tamamlandığında bu uyarıyı kaldır.
+
 **Ön koşul:** Prompt 1 tamamlandı (http client + types hazır). CMS tarafında v4
-endpoint'leri deploy edildi (backend henüz yazılmadıysa bu prompt'u bekleyebilirsin).
+endpoint'leri deploy edilmeli (backend henüz yazılmadıysa bu prompt'u bekleyebilirsin).
 
 ```
 
@@ -533,6 +537,9 @@ elly-admin-panel'e "Email Logs" admin sayfası ekle. Gönderilen/kuyrukta bekley
 başarısız mail kayıtlarını listeler, FAILED olanları tek tıkla retry eder.
 
 ## Bağlam
+
+Auth: **JWT Bearer token** — `Authorization: Bearer <token>` header'ı yeterli.
+`X-API-KEY` header'ı GEREKMEZ ve BEKLENMİYOR (backend'de kaldırıldı).
 
 CMS endpoint'leri:
 
@@ -1284,14 +1291,14 @@ Her tenant DB'sinde bu migration'ı çalıştır.
 
 4. **v4 backend henüz yazılmadıysa:** Prompt 2 (Email Templates) çalışmaz —
    endpoint 404 döner. Önce elly repo'sunda v4 endpoint'lerini yazdırmalısın.
-   **Hazır promptlar (bugün itibarıyla deploy edilmiş ve çalışan):**
-   - Prompt 3 — RabbitMQ yönetim
-   - Prompt 4 — Email Logs (v3 retry)
-   - Prompt 5 — Mail Accounts (v2 DB-based)
-   - Prompt 6 — Forms (Mail+Form v2 entegrasyonlu)
+   **Hazır promptlar (deploy edilmiş ve çalışan):**
+   - Prompt 3 — RabbitMQ yönetim (`rabbit:read`, `rabbit:manage`)
+   - Prompt 4 — Email Logs (`emails:read`, `emails:retry`) — auth: JWT Bearer only, X-API-KEY yok
+   - Prompt 5 — Mail Accounts (`mail:read/create/update/delete`)
+   - Prompt 6 — Forms (`forms:read/create/update/delete`)
 
-   **Bekleyenler:**
-   - Prompt 2 — Email Templates (v4 backend yazılınca)
+   **Bekleyenler (backend henüz yazılmadı — 404 döner):**
+   - Prompt 2 — Email Templates (v4 — `/api/v1/email-templates` endpoint'leri implement edilince)
 
 5. **Stack uyuşmazlığı:** Projen shadcn/ui değil MUI kullanıyorsa, Prompt
    sonuna şunu ekle: _"Yukarıdaki örnek kodlar shadcn/ui varsayımıyla yazıldı.
