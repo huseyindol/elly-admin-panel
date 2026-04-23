@@ -74,6 +74,7 @@ const menuItems: MenuItem[] = [
 
 // CMS yönetim menüsü — ayrı bölüm
 const cmsManagementItems: MenuItem[] = [
+  { icon: Icons.AtSign, label: 'Mail Hesapları', href: '/mail-accounts' },
   { icon: Icons.Mail, label: 'Email Templates', href: '/email-templates' },
   { icon: Icons.Inbox, label: 'Email Logları', href: '/email-logs' },
   {

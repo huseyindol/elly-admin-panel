@@ -35,6 +35,10 @@ Verilen entity için admin panel sayfalarını scaffold et.
    - Loading state while fetching
    - Breadcrumb: Dashboard > {Entity Name} > Düzenle
 
-6. Raporda hatırlat:
-   - Sidebar menu entry: `src/app/_components/Sidebar.tsx`
-   - Zod schema yoksa: `@new-service` veya `/new-service` ile oluştur
+6. **Sidebar'a ekle** (`src/app/_components/Sidebar.tsx`) — bu adım zorunludur, atlanmaz:
+   - Sayfa CMS altyapısıyla ilgiliyse (email, mail, rabbitmq, vb.) → `cmsManagementItems` dizisine ekle
+   - Diğer tüm sayfalar → `menuItems` dizisine ekle
+   - Uygun bir `Icons.*` seç; yoksa `Icons.tsx`'e yeni SVG ekle
+   - Hiçbir zaman "ileride eklenecek" olarak bırakma
+
+7. Zod schema yoksa: `@new-service` veya `/new-service` ile oluştur
