@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { requirePermission } from '@/lib/auth/permissions.server'
 import { Permissions } from '@/types/cms'
+import { ClasspathTemplateSection } from './_components/ClasspathTemplateSection'
 import { TemplateListTable } from './_components/TemplateListTable'
 
 export const dynamic = 'force-dynamic'
@@ -33,6 +34,8 @@ export default async function EmailTemplatesPage() {
       </header>
 
       <TemplateListTable />
+
+      <ClasspathTemplateSection />
     </div>
   )
 }
