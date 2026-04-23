@@ -17,14 +17,31 @@ Kayıt formatı:
 
 ## [Unreleased]
 
+### Added
+
+- `src/app/(baseLayout)/settings/page.tsx` — placeholder Ayarlar sayfası (sidebar linki 404 veriyordu)
+- `src/app/(baseLayout)/email-templates/_components/ClasspathTemplateSection.tsx` — `/api/v1/emails/templates` classpath listesi, email-templates sayfasının altında gösteriliyor
+- `src/app/_components/Icons.tsx` → `AtSign` ikonu eklendi
+- `src/types/cms.ts` → `MAIL_*` ve `FORMS_*` permission sabitleri eklendi
+- `.cursor/rules/sidebar-sync.mdc` — yeni sayfa eklenince Sidebar güncellenmesini zorunlu kılan kural
+
 ### Changed
 
-- `docs/elly-admin-panel-integration-prompts.md` güncellendi:
-  - TypeScript interface alanları noktalı virgülle hizalandı (prettier uyumu)
-  - Prompt 2 (Email Templates) üstüne ⚠️ uyarısı eklendi — v4 backend henüz deploy edilmedi, endpoint 404 döner
-  - Email Logs bağlamına auth notu eklendi: JWT Bearer token yeterli, `X-API-KEY` header'ı kaldırıldı
-  - "Hazır promptlar" listesi izin sabitleri (`rabbit:read`, `emails:read`, vb.) ile detaylandırıldı
-  - Beklenen promptlar bölümü açıklandı: Prompt 2 — v4 `/api/v1/email-templates` implement edilince
+- `src/app/_components/Sidebar.tsx` — "CMS Yönetim" bölümüne "Mail Hesapları" (`/mail-accounts`) eklendi
+- `.cursor/rules/new-page.mdc` — Sidebar adımı "zorunlu" olarak güncellendi
+- `src/app/_services/email-templates.services.ts` — v4 hazır: tam CRUD (`/api/v1/email-templates`) + classpath yardımcı
+- `src/app/_hooks/useEmailTemplates.ts` — list, detail, create, update, delete, preview mutation'ları geri getirildi
+- `src/app/(baseLayout)/email-templates/` — tam CRUD (TemplateForm, MonacoBodyEditor, PreviewPanel) restore edildi
+- `src/lib/auth/permissions.server.ts` — `requirePermission()` ve `hasPermissionServer()` bypass edildi (asıl koruma BE'de)
+- `src/providers/Providers.tsx` → `QueryClient` global defaults: `retry: 1`, `refetchOnWindowFocus: false`
+- `src/app/_hooks/useRabbitMQ.ts` → `refetchInterval` hata durumunda `false` döner; `retry: 1`
+- `docs/elly-admin-panel-integration-prompts.md` — Prompt 2 tamamlandı, auth notları, izin sabitleri güncellendi
+
+### Fixed
+
+- `src/utils/services/fetcher.ts` — 3 adet `console.log` kaldırıldı
+- `src/lib/security.ts` — Monaco CSP hataları giderildi: `cdn.jsdelivr.net` (script/style/font/connect), `worker-src blob:`, `font-src data:`
+- TanStack Query retry flooding: başarısız RabbitMQ sorguları artık hata durumunda polling durduruyor
 
 ---
 

@@ -62,19 +62,22 @@
 - **Permission:** `rabbit:read` (guard), `rabbit:manage` (purge/republish buton disable)
 - **Reuse:** `DestructiveConfirmDialog` shared bileşeni
 
-### SKILL-09: Email Templates Yönetim Sayfası ✅ (v0.4.0)
+### SKILL-09: Email Templates Yönetim Sayfası ✅ (v0.4.0 + v4 restore)
 
 - **Route:** `/email-templates`, `/email-templates/new`, `/email-templates/[key]`
-- **Servis:** `src/app/_services/email-templates.services.ts` — CRUD + preview
-- **Hook:** `src/app/_hooks/useEmailTemplates.ts` — list, detail, create, update, delete, preview mutation'ları
+- **Servis:** `src/app/_services/email-templates.services.ts` — tam CRUD (`/api/v1/email-templates`) + classpath yardımcı (`/api/v1/emails/templates`)
+- **Hook:** `src/app/_hooks/useEmailTemplates.ts` — list, detail, create, update, delete, preview + `useEmailClasspathTemplates`
 - **Schema:** `src/schemas/emailTemplateSchema.ts` — templateKey regex, optimisticLockVersion
 - **Bileşenler:**
-  - `TemplateForm` — react-hook-form + zod, readOnly key (edit modda)
-  - `MonacoBodyEditor` — `@monaco-editor/react` dynamic import, HTML mode, tema sync
+  - `TemplateForm` — `mode="create"` / `mode="update"` prop, react-hook-form + zod
+  - `MonacoBodyEditor` — `@monaco-editor/react` dynamic SSR-safe import, HTML mode, tema sync
   - `PreviewPanel` — JSON dummy data → `POST /preview` → iframe `sandbox=""` render
-  - `TemplateListTable` — active badge, updatedAt, permission-aware delete
+  - `TemplateListTable` — `Page<EmailTemplate>` DataTable, active badge, permission-aware delete
+  - `ClasspathTemplateSection` — `/api/v1/emails/templates` salt-okunur liste (sayfanın altında)
 - **Permission:** `email_templates:read` / `email_templates:manage`
 - **Edge case:** 409 Conflict → "Başka biri güncellemiş" toast
+- **CSP:** `cdn.jsdelivr.net` + `worker-src blob:` + `font-src data:` → `src/lib/security.ts`
+- **Not:** Backend `email_templates:read/manage` permission'ları kullanıcıya BE'de atanmalı
 
 ### SKILL-10: Email Logs Yönetim Sayfası ✅ (v0.4.0)
 
@@ -92,23 +95,32 @@
 
 ### SKILL-11: Ortak CMS Altyapısı ✅ (v0.4.0)
 
-- `src/types/cms.ts` — CMS API DTO tipleri (EmailTemplate, EmailLog, RabbitOverview, RabbitQueue, RabbitMessage, Page, Permissions sabitleri)
+- `src/types/cms.ts` — CMS API DTO tipleri + `MAIL_*` / `FORMS_*` permission sabitleri
 - `src/lib/api/api-error.ts` — `ApiError` sınıfı + `unwrapOrThrow()` helper
 - `src/lib/auth/permissions.ts` — `extractPermissionsFromToken()` (JWT decode, çoklu claim desteği)
-- `src/lib/auth/permissions.server.ts` — `requirePermission()` server-only guard
+- `src/lib/auth/permissions.server.ts` — **şu an bypass** (`requirePermission` / `hasPermissionServer` no-op); asıl koruma BE endpoint'lerinde
 - `src/app/_hooks/usePermission.ts` — `usePermission()` + `usePermissions()` client hook'ları
 - `src/app/(baseLayout)/403/page.tsx` — 403 Forbidden sayfası
+- `src/app/(baseLayout)/settings/page.tsx` — placeholder Ayarlar sayfası
 - `src/app/_components/Sheet.tsx` — yan kayan drawer
 - `src/app/_components/DestructiveConfirmDialog.tsx` — "adını yaz ve onayla" UX
-- Sidebar: "CMS Yönetim" bölümü + NavLink helper
+- Sidebar: "CMS Yönetim" bölümü + Mail Hesapları linki + AtSign ikonu
+- `src/lib/security.ts` — `generateCSP()`: Monaco CDN, worker-src blob:, font-src data: eklendi
+
+### SKILL-12: TanStack Query Güvenli Defaults ✅
+
+- `src/providers/Providers.tsx` → `QueryClient` global: `retry: 1`, `refetchOnWindowFocus: false`
+- `useRabbitMQ.ts` → hata durumunda polling durduruluyor: `refetchInterval: query => query.state.error ? false : N`
+- `fetcher.ts` → `console.log` temizlendi
+
+### SKILL-13: Cursor Rules & Automation ✅
+
+- `.cursor/rules/sidebar-sync.mdc` — yeni sayfa `(baseLayout)/*/page.tsx` oluşturulurken Sidebar güncellenmesi zorunlu
+- `.cursor/rules/new-page.mdc` — Sidebar adımı "zorunlu, atlanmaz" olarak güncellendi
 
 ---
 
 ## DEVAM EDEN / PLANLANAN ⚠️
-
-### TODO-01: Production Log Temizliği
-
-- `src/utils/services/fetcher.ts` → `console.log` kaldırılacak
 
 ### TODO-02: Error Monitoring
 
@@ -122,14 +134,19 @@
 
 - `src/proxy.ts` → süresi dolan cookie timezone dönüşümü
 
-### TODO-05: v4 Backend Deploy
+### TODO-05: Permission Kontrolleri (İleride Aktif Edilecek)
 
-- Email Templates endpoint'leri CMS'te hazır olmalı (`/api/v1/email-templates`)
-- RabbitMQ ve Email Logs v3 ile hazır, çalışıyor
+- `src/lib/auth/permissions.server.ts` — `requirePermission()` şu an bypass; ileride JWT claim kontrolü geri alınacak
+- Önce BE'de tüm kullanıcılara doğru roller atanmalı
+- Sonra `_permission` → `permission`, `_options` → `options` parametreleri geri getirilecek
 
 ### TODO-06: Template Versiyonlama (v5 planlı)
 
 - `email_template_revisions` tablosu + "geri al" UI
+
+### TODO-07: Settings Sayfası İçeriği
+
+- `src/app/(baseLayout)/settings/page.tsx` — şu an placeholder; içerik belirlenmeli
 
 ---
 
@@ -180,15 +197,16 @@
 
 ## OTURUM LOGU
 
-| Tarih      | Yapılan                                                                                                                                                                                                                                                                                | Sonraki Adım                             |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| 2026-04-12 | Memory sistemi kuruldu, proje tam snapshot alındı                                                                                                                                                                                                                                      | Skill sistemi genişletme                 |
-| 2026-04-13 | 5 yeni skill eklendi. Bug fix'ler, settings.json genişletildi                                                                                                                                                                                                                          | Cross-platform eşleşme                   |
-| 2026-04-14 | `.cursor/rules/` 14 .mdc dosyası. Claude ↔ Cursor tam eşleşme                                                                                                                                                                                                                          | CMS management sayfaları                 |
-| 2026-04-23 | **v0.4.0 tamamlandı:** RabbitMQ, Email Templates, Email Logs yönetim sayfaları. Ortak altyapı (ApiError, permissions, Sheet, DestructiveConfirmDialog). Sidebar güncellendi. Monaco editor eklendi. CHANGELOG + CMS_MANAGEMENT_PAGES rehberi yazıldı. 43/43 test geçti, build başarılı | TODO-01 (log temizliği) veya v5 planlama |
+| Tarih      | Yapılan                                                                                                                                                                                                                                                                                                                                                                                                     | Sonraki Adım                                                   |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| 2026-04-12 | Memory sistemi kuruldu, proje tam snapshot alındı                                                                                                                                                                                                                                                                                                                                                           | Skill sistemi genişletme                                       |
+| 2026-04-13 | 5 yeni skill eklendi. Bug fix'ler, settings.json genişletildi                                                                                                                                                                                                                                                                                                                                               | Cross-platform eşleşme                                         |
+| 2026-04-14 | `.cursor/rules/` 14 .mdc dosyası. Claude ↔ Cursor tam eşleşme                                                                                                                                                                                                                                                                                                                                               | CMS management sayfaları                                       |
+| 2026-04-23 | **v0.4.0 tamamlandı:** RabbitMQ, Email Templates, Email Logs yönetim sayfaları. Ortak altyapı (ApiError, permissions, Sheet, DestructiveConfirmDialog). Sidebar güncellendi. Monaco editor eklendi. CHANGELOG + CMS_MANAGEMENT_PAGES rehberi yazıldı. 43/43 test geçti, build başarılı                                                                                                                      | TODO-01 (log temizliği) veya v5 planlama                       |
+| 2026-04-24 | **Oturum tamamlandı:** Permission bypass (BE koruması yeterli). Mail Hesapları sidebar'a eklendi + sidebar-sync kuralı. fetcher console.log temizliği. Email Templates v4 backend deploy edildi → tam CRUD restore. TanStack Query retry flooding düzeltildi. Settings placeholder sayfası. Monaco CSP düzeltmeleri (cdn.jsdelivr.net, worker-src blob:, font-src data:). ClasspathTemplateSection eklendi. | TODO-05 (permission aktifleştirme) veya TODO-06 (versiyonlama) |
 
 ---
 
 ## AKTİF BRANCH
 
-`main` — v0.4.0 merge edildi, tüm CMS yönetim sayfaları canlı.
+`main` — v0.4.0 + post-release fixes canlı. Email Templates v4 tam CRUD aktif.
