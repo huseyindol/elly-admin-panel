@@ -4,6 +4,7 @@ import { useAdminTheme } from '@/app/_hooks'
 import {
   getMailAccountByIdService,
   updateMailAccountService,
+  verifyMailAccountService,
 } from '@/app/_services/mail-accounts.services'
 import {
   UpdateMailAccountInput,
@@ -96,6 +97,16 @@ export default function EditMailAccountPage() {
     },
     onError: (err: Error) => {
       toast.error(err.message || 'Mail hesabı güncellenirken bir hata oluştu')
+    },
+  })
+
+  const verifyMutation = useMutation({
+    mutationFn: () => verifyMailAccountService(accountId),
+    onSuccess: () => {
+      toast.success('SMTP bağlantısı başarılı')
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'SMTP doğrulama başarısız')
     },
   })
 
@@ -388,6 +399,45 @@ export default function EditMailAccountPage() {
           </div>
         </div>
 
+        {/* Verify Connection */}
+        <div
+          className={`rounded-2xl p-4 ${
+            isDarkMode
+              ? 'border border-slate-800/50 bg-slate-900/60'
+              : 'border border-gray-200 bg-white'
+          } backdrop-blur-sm`}
+        >
+          <h2
+            className={`mb-2 text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+          >
+            SMTP Bağlantı Doğrulama
+          </h2>
+          <p
+            className={`mb-3 text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}
+          >
+            Mail göndermeden SMTP bağlantısını test eder (sadece handshake).
+          </p>
+          <button
+            type="button"
+            onClick={() => verifyMutation.mutate()}
+            disabled={verifyMutation.isPending}
+            className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+              isDarkMode
+                ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
+                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+            }`}
+          >
+            {verifyMutation.isPending ? (
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Doğrulanıyor...
+              </span>
+            ) : (
+              'Bağlantıyı Doğrula'
+            )}
+          </button>
+        </div>
+
         {/* Actions */}
         <div className="flex gap-3">
           <Link
@@ -403,7 +453,7 @@ export default function EditMailAccountPage() {
           <button
             type="submit"
             disabled={updateMutation.isPending}
-            className="flex-1 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/40 disabled:opacity-50"
+            className="bg-linear-to-r flex-1 rounded-xl from-violet-500 to-purple-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/40 disabled:opacity-50"
           >
             {updateMutation.isPending ? (
               <span className="flex items-center justify-center gap-2">

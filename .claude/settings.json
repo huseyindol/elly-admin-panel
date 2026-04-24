@@ -14,7 +14,13 @@
       "Bash(git pull *)",
       "Bash(git checkout *)",
       "Bash(git branch *)",
-      "Bash(tsc --noEmit)"
+      "Bash(tsc --noEmit)",
+      "Bash(bun run lint *)",
+      "Bash(bun run build *)",
+      "Bash(gh pr *)",
+      "Bash(gh issue *)",
+      "Bash(gh api *)",
+      "Bash(ls *)"
     ],
     "deny": [
       "Bash(rm -rf *)",

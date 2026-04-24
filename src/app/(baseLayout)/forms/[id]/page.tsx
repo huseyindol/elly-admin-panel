@@ -2,7 +2,7 @@
 
 import { Icons } from '@/app/_components'
 import { StepManager } from '@/app/_components/forms'
-import { useAdminTheme } from '@/app/_hooks'
+import { useActiveMailAccounts, useAdminTheme } from '@/app/_hooks'
 import {
   getFormByIdService,
   updateFormService,
@@ -64,6 +64,8 @@ export default function EditFormPage({ params }: PageProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { isDarkMode } = useAdminTheme()
+  const { data: activeMailAccountsData, isLoading: isMailAccountsLoading } =
+    useActiveMailAccounts()
 
   const [fields, setFields] = useState<Field[]>([])
   const [steps, setSteps] = useState<Step[]>([])
@@ -81,12 +83,20 @@ export default function EditFormPage({ params }: PageProps) {
     handleSubmit,
     reset,
     control,
+    watch,
     formState: { errors },
   } = useForm<UpdateFormInput>({
     resolver: zodResolver(UpdateFormSchema),
   })
 
   const layout = useWatch({ control, name: 'schema.config.layout' })
+
+  const activeMailAccounts = activeMailAccountsData?.data ?? []
+  const selectedMailAccountId = watch('senderMailAccountId')
+  const selectedMailAccount = activeMailAccounts.find(
+    a => a.id === selectedMailAccountId,
+  )
+  const notificationEnabled = watch('notificationEnabled')
 
   useEffect(() => {
     if (formData?.data) {
@@ -99,9 +109,11 @@ export default function EditFormPage({ params }: PageProps) {
           config: form.schema.config,
           fields: [],
         },
+        senderMailAccountId: form.senderMailAccountId,
+        recipientEmail: form.recipientEmail,
+        notificationSubject: form.notificationSubject ?? undefined,
+        notificationEnabled: form.notificationEnabled,
       })
-      // Only set fields if not already set or completely necessary to sync
-      // Avoiding direct setFields here if possible, or assume it's one-time init
       if (fields.length === 0 && (form.schema.fields || []).length > 0) {
         setFields((form.schema.fields || []).map(normalizeFieldForApi))
       }
@@ -169,6 +181,11 @@ export default function EditFormPage({ params }: PageProps) {
       return
     }
 
+    if (!data.senderMailAccountId) {
+      toast.error('Gönderici mail hesabı seçilmeli')
+      return
+    }
+
     if (layout === 'wizard') {
       const unassigned = fields.filter(f => !f.stepId)
       if (unassigned.length > 0) {
@@ -193,7 +210,6 @@ export default function EditFormPage({ params }: PageProps) {
       },
     }
 
-    console.log('Form data to send:', JSON.stringify(formData, null, 2))
     updateMutation.mutate(formData)
   }
 
@@ -449,6 +465,161 @@ export default function EditFormPage({ params }: PageProps) {
           )}
         </div>
 
+        {/* Notification Section */}
+        <div className={cardClass}>
+          <h2
+            className={`mb-4 text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+          >
+            Bildirim Ayarları
+          </h2>
+
+          {isMailAccountsLoading ? (
+            <div className="flex items-center gap-2 py-4">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+              <span
+                className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}
+              >
+                Mail hesapları yükleniyor...
+              </span>
+            </div>
+          ) : activeMailAccounts.length === 0 ? (
+            <div
+              className={`rounded-xl p-4 text-sm ${
+                isDarkMode
+                  ? 'border border-amber-500/20 bg-amber-500/10 text-amber-300'
+                  : 'border border-amber-200 bg-amber-50 text-amber-700'
+              }`}
+            >
+              <p className="font-medium">
+                ⚠ Bildirim göndermek için önce aktif bir Mail Account oluştur.
+              </p>
+              <Link
+                href="/mail-accounts/new"
+                className="mt-2 inline-block font-medium underline hover:no-underline"
+              >
+                Yeni Mail Account Oluştur →
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Sender Mail Account */}
+              <div>
+                <label htmlFor="senderMailAccountId" className={labelClass}>
+                  Gönderici Mail Hesabı *
+                </label>
+                <select
+                  id="senderMailAccountId"
+                  {...register('senderMailAccountId', { valueAsNumber: true })}
+                  className={inputClass}
+                >
+                  <option value="">-- Hesap Seçin --</option>
+                  {activeMailAccounts.map(account => (
+                    <option key={account.id} value={account.id}>
+                      {account.id} • {account.name} ({account.fromAddress})
+                    </option>
+                  ))}
+                </select>
+                {errors.senderMailAccountId && (
+                  <p className="mt-1 text-xs text-rose-400">
+                    {errors.senderMailAccountId.message}
+                  </p>
+                )}
+                {selectedMailAccount && (
+                  <p
+                    className={`mt-1 text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}
+                  >
+                    Bu hesaptan gönderilecek:{' '}
+                    <span className="font-mono">
+                      {selectedMailAccount.fromAddress}
+                    </span>
+                  </p>
+                )}
+                {formData?.data?.senderMailAccountName &&
+                  !selectedMailAccount && (
+                    <p
+                      className={`mt-1 text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}
+                    >
+                      Mevcut hesap:{' '}
+                      <span className="font-mono">
+                        {formData.data.senderMailAccountName} (
+                        {formData.data.senderFromAddress})
+                      </span>
+                    </p>
+                  )}
+              </div>
+
+              {/* Recipient Email */}
+              <div>
+                <label htmlFor="recipientEmail" className={labelClass}>
+                  Alıcı E-posta *
+                </label>
+                <input
+                  id="recipientEmail"
+                  type="email"
+                  {...register('recipientEmail')}
+                  className={inputClass}
+                  placeholder="notifications@firma.com"
+                />
+                {errors.recipientEmail && (
+                  <p className="mt-1 text-xs text-rose-400">
+                    {errors.recipientEmail.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Notification Subject */}
+              <div>
+                <label htmlFor="notificationSubject" className={labelClass}>
+                  Konu (opsiyonel)
+                </label>
+                <input
+                  id="notificationSubject"
+                  type="text"
+                  {...register('notificationSubject')}
+                  className={inputClass}
+                  placeholder="Yeni form gönderimi: {title}"
+                />
+                <p
+                  className={`mt-1 text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
+                >
+                  Boş bırakırsan varsayılan kullanılır: &quot;Yeni form
+                  gönderimi: [form başlığı]&quot;
+                </p>
+              </div>
+
+              {/* Notification Enabled */}
+              <div>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="notificationEnabled"
+                    type="checkbox"
+                    {...register('notificationEnabled')}
+                    className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-violet-500"
+                  />
+                  <label
+                    htmlFor="notificationEnabled"
+                    className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}
+                  >
+                    Bildirim mail&apos;i gönder
+                  </label>
+                </div>
+                {!notificationEnabled && (
+                  <p
+                    className={`mt-2 rounded-lg p-2 text-xs ${
+                      isDarkMode
+                        ? 'bg-amber-500/10 text-amber-300'
+                        : 'bg-amber-50 text-amber-700'
+                    }`}
+                  >
+                    ⚠ Bu form submit edildiğinde mail gönderilmeyecek, sadece
+                    DB&apos;ye kaydedilecek.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Actions */}
         <div className="flex gap-3">
           <Link
@@ -463,7 +634,10 @@ export default function EditFormPage({ params }: PageProps) {
           </Link>
           <button
             type="submit"
-            disabled={updateMutation.isPending}
+            disabled={
+              updateMutation.isPending ||
+              (activeMailAccounts.length > 0 && !selectedMailAccountId)
+            }
             className="bg-linear-to-r flex-1 rounded-xl from-violet-500 to-purple-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/40 disabled:opacity-50"
           >
             {updateMutation.isPending ? (
@@ -637,7 +811,7 @@ function FieldEditModal({
           Alan Düzenle
         </h3>
 
-        <div className="max-h-[28rem] space-y-4 overflow-y-auto pr-1">
+        <div className="max-h-112 space-y-4 overflow-y-auto pr-1">
           {/* Field ID */}
           <div>
             <label htmlFor="field-id-input" className={labelClass}>

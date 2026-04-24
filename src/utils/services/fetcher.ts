@@ -34,7 +34,6 @@ const prepareRequestCSROptions = (options: RequestInit) => {
     ...options.headers,
     ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
   }
-  console.log('prepareRequestCSROptions', options)
   return options
 }
 
@@ -42,7 +41,6 @@ export const fetcher = async <T>(
   url: string,
   options: RequestInit = {},
 ): Promise<T> => {
-  console.log('fetcher')
   if (typeof window === 'undefined') {
     options = await prepareRequestSSROptions(options)
   } else {
@@ -51,7 +49,6 @@ export const fetcher = async <T>(
   if (url.includes('/auth/refresh') || url.includes('/auth/login')) {
     delete (options.headers as Record<string, string>)?.Authorization
   }
-  console.log('options', `${process.env.NEXT_PUBLIC_API}${url}`, options)
   let response = await fetch(`${process.env.NEXT_PUBLIC_API}${url}`, options)
   if (!response.ok) {
     if (response.status === 401) {

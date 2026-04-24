@@ -1,6 +1,6 @@
 'use client'
 
-import { BasicInfoSelector, TagsInput } from '@/app/_components'
+import { TagsInput } from '@/app/_components'
 import { useAdminTheme } from '@/app/_hooks'
 import { createContentService } from '@/app/_services/contents.services'
 import {
@@ -31,12 +31,6 @@ export default function NewContentPage() {
   // Selected content type
   const [selectedContentType, setSelectedContentType] =
     useState<ContentType>('skills')
-
-  // Basic Info Mode
-  const [basicInfoMode, setBasicInfoMode] = useState<'create' | 'select'>(
-    'create',
-  )
-  const [selectedBasicInfoId, setSelectedBasicInfoId] = useState<string>('')
 
   // Get content type options
   const contentTypes = getContentTypes()
@@ -87,10 +81,10 @@ export default function NewContentPage() {
     {},
   )
 
-  // Reset form when content type changes
+  // Reset form when content type changes — auto-fill title & sectionKey
   useEffect(() => {
     reset({
-      title: '',
+      title: selectedSchema?.label || '',
       description: '',
       sectionKey: selectedSchema?.sectionKey || '',
       isActive: true,
@@ -123,37 +117,25 @@ export default function NewContentPage() {
       return
     }
 
-    if (basicInfoMode === 'select' && !selectedBasicInfoId) {
-      toast.error('Lütfen mevcut bir temel bilgi seçin')
+    if (!data.title?.trim()) {
+      toast.error('Başlık alanı zorunludur')
       return
     }
-
-    if (basicInfoMode === 'create') {
-      if (!data.title?.trim()) {
-        toast.error('Başlık alanı zorunludur')
-        return
-      }
-      if (!data.sectionKey?.trim()) {
-        toast.error('Section Key alanı zorunludur')
-        return
-      }
+    if (!data.sectionKey?.trim()) {
+      toast.error('Section Key alanı zorunludur')
+      return
     }
 
     const contentData: ContentInput = {
       contentType: selectedContentType,
       metadata: metadataValidation.data,
-    }
-
-    if (basicInfoMode === 'select') {
-      contentData.basicInfoId = selectedBasicInfoId
-    } else {
-      contentData.basicInfo = {
+      basicInfo: {
         title: data.title || '',
         description: data.description,
         sectionKey: data.sectionKey || '',
         isActive: data.isActive,
         sortOrder: data.sortOrder,
-      }
+      },
     }
 
     createMutation.mutate(contentData)
@@ -354,12 +336,16 @@ export default function NewContentPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <BasicInfoSelector
-          mode={basicInfoMode}
-          onModeChange={setBasicInfoMode}
-          selectedBasicInfoId={selectedBasicInfoId}
-          onSelectBasicInfo={setSelectedBasicInfoId}
-        >
+        {/* Temel Bilgiler */}
+        <div className={cardClass}>
+          <h2
+            className={`mb-4 text-lg font-semibold ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}
+          >
+            Temel Bilgiler
+          </h2>
+
           <div className="space-y-4">
             {/* Title */}
             <div>
@@ -448,7 +434,7 @@ export default function NewContentPage() {
               </label>
             </div>
           </div>
-        </BasicInfoSelector>
+        </div>
 
         {/* Dynamic Fields */}
         <div className={cardClass}>

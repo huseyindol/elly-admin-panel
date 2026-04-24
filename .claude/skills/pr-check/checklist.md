@@ -10,7 +10,7 @@
 ## Test
 
 - [ ] Yeni component/fonksiyon için test yazılmış
-- [ ] Mevcut testler bozulmamış (`npm run test:ci` geçiyor)
+- [ ] Mevcut testler bozulmamış (`bun run test:ci` geçiyor)
 - [ ] Edge case'ler test edilmiş (hata, boş, loading durumları)
 
 ## Güvenlik

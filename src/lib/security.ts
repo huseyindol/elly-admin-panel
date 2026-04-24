@@ -87,11 +87,13 @@ export function isAlphanumeric(str: string): boolean {
 export function generateCSP(): string {
   const policies = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com https://www.googletagmanager.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    // cdn.jsdelivr.net: Monaco editor loader — worker-src blob: Monaco worker threads
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com https://www.googletagmanager.com https://cdn.jsdelivr.net",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
+    "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://vercel.live https://*.vercel-insights.com https://www.google-analytics.com https://raw.githubusercontent.com https://avatars.githubusercontent.com http://localhost:8080 https://api.huseyindol.com",
+    "worker-src 'self' blob:",
+    "connect-src 'self' https://vercel.live https://*.vercel-insights.com https://www.google-analytics.com https://raw.githubusercontent.com https://avatars.githubusercontent.com http://localhost:8080 https://api.huseyindol.com https://cdn.jsdelivr.net",
     "frame-src 'self' https://vercel.live",
     "object-src 'none'",
     "base-uri 'self'",

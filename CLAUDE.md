@@ -17,7 +17,7 @@ Huseyin DOL'un modern portföy ve CMS sitesi. Next.js 16 App Router, React 19, T
 
 ## Dizin Yapısı
 
-- `src/app/` — Sayfalar (App Router). `(site)/` public, `(admin)/` yönetim paneli
+- `src/app/` — Sayfalar (App Router). `(baseLayout)/` admin panel sayfaları, `(layoutLess)/` layout-free (login)
 - `src/components/` — React componentleri. `ui/` shadcn, `forms/` formlar, `dynamic/` dinamik içerik
 - `src/lib/` — Yardımcı araçlar (env.ts, rate-limiter.ts, security.ts, utils.ts)
 - `src/services/` — API servisleri (auth, typicode)
@@ -27,6 +27,10 @@ Huseyin DOL'un modern portföy ve CMS sitesi. Next.js 16 App Router, React 19, T
 - `src/context/` — React Context
 - `src/providers/` — React Provider'lar
 - `tests/` — Vitest test dosyaları (components/, lib/, api/)
+
+## Davranış Rehberi
+
+LLM kodlama hatalarını azaltmak için dört ilke her zaman aktiftir: **Düşün → Sor, Basit tut, Cerrahi değiş, Hedef-odaklı ilerle**. Detay için [`.claude/skills/karpathy-guidelines/SKILL.md`](./.claude/skills/karpathy-guidelines/SKILL.md) (Cursor karşılığı `.cursor/rules/karpathy-guidelines.mdc`).
 
 ## Kodlama Kuralları
 
@@ -70,7 +74,9 @@ Huseyin DOL'un modern portföy ve CMS sitesi. Next.js 16 App Router, React 19, T
 
 ## Agent Teams Koordinasyonu
 
-Bu proje `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` ile çalışır. Takım yapısı:
+**Cursor ve diğer asistanlar:** Rol tanımlarının araç-agnostic özeti ve dizin eşlemesi için kökteki [`AGENTS.md`](./AGENTS.md) dosyasına bak. Cursor’da bağlam olarak `@AGENTS.md` veya `@.agents/<rol>.md` kullanılabilir.
+
+Bu proje `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` ile çalışır. Claude Code subagent tanımları `.claude/agents/` altındadır; Cursor ile aynı içerik `.agents/` altında tekrarlanır (model/tools frontmatter hariç). Takım yapısı:
 
 ### Takım Yapısı
 

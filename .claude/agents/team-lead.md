@@ -54,7 +54,7 @@ Sen bu projenin takım liderisin. Büyük görevleri analiz eder, alt görevlere
 4. Agent'ları başlat ve sonuçları bekle
 5. Sonuçları entegre et, `bun run tsc --noEmit` ile type check yap
 6. Test yaz (test-writer) ve review yap (security/ui/perf)
-7. Commit et ve push yap (branch: `claude/ai-article-generation-DZrrK`)
+7. Kullanıcı veya aktif feature branch talimatına göre commit ve push yap
 
 ## Mevcut Dosya Yapısı
 

@@ -1,0 +1,38 @@
+---
+description: "Sistematik hata ayıklama ve düzeltme akışı. @debug-fix ile referans ver ve sorunu açıkla."
+alwaysApply: false
+---
+
+Belirtilen sorunu sistematik şekilde debug et ve düzelt.
+
+## Adımlar
+
+1. **Reproduce** — Sorunu anla
+2. **Locate** — İlgili kodu bul:
+   - Hata mesajlarını, fonksiyon/component adlarını ara
+   - İlgili dosyaları oku
+3. **Analyze** — Kök nedeni belirle:
+   - TypeScript tipleri kontrol et (`bun run tsc --noEmit`)
+   - Import'ları ve bağımlılıkları kontrol et
+   - State management akışını kontrol et
+   - API response shape'lerini kontrol et
+4. **Fix** — Minimal doğru değişikliği uygula:
+   - Sadece etkilenen dosyaları düzenle
+   - Mevcut pattern'lara uy
+   - `any` ekleme, `console.log` ekleme
+5. **Verify** — Kontrol et:
+   - `bun run tsc --noEmit` — type check
+   - `bun run test:ci` — tests pass
+   - `bun run lint` — lint clean
+6. **Report** — Özetle:
+   - Kök neden
+   - Değiştirilen dosyalar
+   - Ne düzeltildi ve neden
+
+## Projede Sık Karşılaşılan Hatalar
+
+- **Cookie type error** → `String()` ile dönüştür
+- **API response shape mismatch** → `src/types/` kontrol et
+- **Auth token expired** → `fetcher.ts` token refresh mekanizması
+- **Client/server boundary** → `'use client'` directive eksik olabilir
+- **Zod validation fail** → schema ile gönderilen veriyi karşılaştır

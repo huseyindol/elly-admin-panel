@@ -1,0 +1,29 @@
+---
+description: "Sidebar.tsx düzenlenirken veya yeni sayfa eklenirken menü öğelerini senkronize et."
+globs: src/app/_components/Sidebar.tsx, src/app/(baseLayout)/*/page.tsx
+alwaysApply: false
+---
+
+# Sidebar Senkronizasyonu
+
+`src/app/(baseLayout)/` altına yeni bir `page.tsx` eklendiğinde **aynı işlemde** `Sidebar.tsx` de güncellenmek zorundadır.
+
+## Kural
+
+Yeni sayfa eklendiğinde:
+
+1. Route'u belirle: `src/app/(baseLayout)/{route}/page.tsx`
+2. Menü grubunu seç:
+   - Email / mail / rabbitmq / altyapı sayfaları → `cmsManagementItems`
+   - Diğerleri → `menuItems`
+3. `Icons.tsx`'den uygun bir ikon seç; yoksa yeni SVG ekle
+4. Diziye ekle:
+   ```ts
+   { icon: Icons.XxxIcon, label: 'Türkçe Başlık', href: '/route' }
+   ```
+
+## ❌ Yasak
+
+- Sidebar güncellemesini "sonraya bırakmak"
+- Kullanıcıya "Sidebar'ı manuel ekleyin" demek
+- Yeni sayfa oluşturup Sidebar'ı güncellemeden işi bitirmek

@@ -1,13 +1,14 @@
 // Admin Dashboard Components
 export { ActivityFeed } from './ActivityFeed'
-export { BasicInfoSelector } from './BasicInfoSelector'
 export { ConfirmDialog } from './ConfirmDialog'
 export { CopyButton } from './CopyButton'
 export { DataTable } from './DataTable'
 export type { Column } from './DataTable'
+export { DestructiveConfirmDialog } from './DestructiveConfirmDialog'
 export { DualListbox } from './DualListbox'
 export { Header } from './Header'
 export { Icons } from './Icons'
+export { Modal } from './Modal'
 export {
   ImageUploadBox,
   initialImageState,
@@ -21,6 +22,7 @@ export type {
 export { RecentOrders } from './RecentOrders'
 export { RevenueChart } from './RevenueChart'
 export { SearchInput } from './SearchInput'
+export { Sheet } from './Sheet'
 export { Sidebar } from './Sidebar'
 export { StatsCard, StatsGrid } from './StatsCard'
 export { StatusBadge } from './StatusBadge'

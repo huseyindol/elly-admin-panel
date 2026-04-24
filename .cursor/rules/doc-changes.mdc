@@ -1,0 +1,113 @@
+---
+description: >
+  Tamamlanan bir geliştirmeyi otomatik dokümante eder. Her commit öncesi/sonrası
+  @doc-changes ile çağır. docs/CHANGELOG.md [Unreleased] günceller,
+  gerekirse docs/{FEATURE}.md rehber dosyası oluşturur.
+alwaysApply: false
+---
+
+## Ne Zaman Kullan
+
+- Yeni bir sayfa, modül veya özellik tamamlandığında
+- Commit yapmadan hemen önce veya hemen sonra
+- Birden fazla dosya değiştiyse ve belgelenmesi gerekiyorsa
+
+Örnek çağrı: `@doc-changes RabbitMQ yönetim sayfası eklendi`
+
+---
+
+## Adım 1 — Değişiklikleri Keşfet
+
+Şu komutları çalıştır ve çıktıları analiz et:
+
+```bash
+git log --oneline -1
+git diff HEAD~1 --name-only 2>/dev/null || git status --short
+```
+
+---
+
+## Adım 2 — Dosyaları Sınıflandır
+
+| Değişen dosya pattern | CHANGELOG etiketi |
+|---|---|
+| `src/app/(baseLayout)/*/page.tsx` (yeni) | **Added** |
+| `src/app/_services/*.ts` (yeni) | **Added** |
+| `src/app/_hooks/*.ts` (yeni) | **Added** |
+| `src/app/_components/*.tsx` (yeni) | **Added** |
+| `src/types/*.ts`, `src/schemas/*.ts` (yeni) | **Added** |
+| Mevcut dosya düzenleme | **Changed** |
+| Hata düzeltme | **Fixed** |
+| `package.json`, `bun.lock` | **Infra** |
+| `.github/workflows/*.yml` | **Infra** |
+
+---
+
+## Adım 3 — docs/CHANGELOG.md Güncelle
+
+`docs/CHANGELOG.md` dosyasını oku. `[Unreleased]` bölümünün altına uygun
+kategori başlığına (`### Added`, `### Changed` vb.) madde ekle.
+
+**Format kuralları:**
+
+```markdown
+## [Unreleased]
+
+### Added
+
+- Kısa açıklama — `src/path/to/file.ts` veya bileşen adı
+```
+
+- Max 2 satır per madde
+- İmplementasyon detayı değil, ne kazanıldığını yaz
+- Türkçe
+- `[Unreleased]` bölümü yoksa başa ekle
+
+---
+
+## Adım 4 — Rehber Dosyası (Koşullu)
+
+**Yeni `docs/{FEATURE_NAME}.md` oluştur**, eğer:
+- 5+ yeni dosya eklendiyse
+- Yeni backend entegrasyonu/API varsa
+- Kullanım örneği olmadan anlaşılması zor ise
+
+Şablonu:
+
+```markdown
+# {Feature} — Kullanım Rehberi
+
+> Kısa açıklama.
+
+## Genel Bakış
+## Dosya Yapısı
+## API / Servis Referansı
+## Kullanım Örnekleri
+## Önemli Davranışlar / Edge Case'ler
+## Kontrol Listesi (Bu modülü tekrar eklerken)
+```
+
+---
+
+## Adım 5 — Çıktı Raporu
+
+```
+## Dökümantasyon Güncellendi ✅
+
+### docs/CHANGELOG.md
+[Unreleased] bölümüne X madde eklendi.
+
+### docs/{FEATURE}.md
+(oluşturulduysa veya güncellendiyse)
+
+### Not
+Release hazırsa: [Unreleased] bölümünü [X.Y.Z] — YYYY-MM-DD olarak dön.
+```
+
+---
+
+## Kısıtlar
+
+- `docs/` dışındaki dosyalara dokunma
+- Mevcut CHANGELOG formatını bozma
+- Sadece son commit'in veya kullanıcının belirttiği değişikliği kaydet
