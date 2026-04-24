@@ -164,19 +164,45 @@
     }
   }
 
-  .animate-slide-infinite {
-    animation: slideInfinite 20s linear infinite;
-  }
-
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
   .animate-fade-in-up {
     animation: fade-in-up 0.6s ease-out forwards;
   }
 
   .shadow-elegant {
     box-shadow: var(--shadow-elegant);
+  }
+
+  /* Notification badge — CSS-only, GPU-composited (opacity + transform only) */
+  @keyframes notification-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+
+  .notification-badge {
+    animation: notification-pulse 2s ease-in-out infinite;
+    will-change: opacity;
+    contain: layout style;
+  }
+
+  /* Active nav dot — CSS-only fade */
+  @keyframes nav-dot-fade {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+  }
+
+  .nav-active-dot {
+    animation: nav-dot-fade 2.4s ease-in-out infinite;
+    will-change: opacity;
+    contain: layout style;
   }
 }

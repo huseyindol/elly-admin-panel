@@ -10,7 +10,14 @@ import {
 } from '@/actions/generate-field'
 import AiArticlePanel from '@/components/posts/AiArticlePanel'
 import AiFieldButton from '@/components/ui/AiFieldButton'
-import RichTextEditor from '@/components/ui/RichTextEditor'
+import dynamic from 'next/dynamic'
+
+const RichTextEditor = dynamic(() => import('@/components/ui/RichTextEditor'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-64 w-full animate-pulse rounded-lg bg-muted" />
+  ),
+})
 import { CreatePostInput, CreatePostSchema } from '@/schemas/post.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'

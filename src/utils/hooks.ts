@@ -43,7 +43,7 @@ export const useScrollHeader = (scrollThreshold = 10) => {
       setIsScrolled(window.scrollY > scrollThreshold)
     }
 
-    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [scrollThreshold])
 
