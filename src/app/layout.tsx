@@ -1,5 +1,4 @@
 import Providers from '@/providers/Providers'
-import { ThemeProvider } from 'next-themes'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { cookies } from 'next/headers'
 import './globals.css'
@@ -38,15 +37,7 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem={true}
-          themes={['light', 'dark']}
-          disableTransitionOnChange
-        >
-          <Providers cookiesData={cookiesData}>{children}</Providers>
-        </ThemeProvider>
+        <Providers cookiesData={cookiesData}>{children}</Providers>
       </body>
     </html>
   )

@@ -136,7 +136,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   </span>
                   <span className="font-medium">{item.label}</span>
                   {active && (
-                    <span className="ml-auto h-2 w-2 animate-pulse rounded-full bg-violet-400" />
+                    <span className="nav-active-dot ml-auto h-2 w-2 rounded-full bg-violet-400" />
                   )}
                 </Link>
               )

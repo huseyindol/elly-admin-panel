@@ -100,7 +100,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
             }`}
           >
             <Icons.Bell />
-            <span className="absolute -right-1 -top-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-rose-500 text-xs font-medium text-white">
+            <span className="notification-badge absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-xs font-medium text-white">
               5
             </span>
           </button>
