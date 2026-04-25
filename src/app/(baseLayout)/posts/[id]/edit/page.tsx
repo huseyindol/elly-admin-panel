@@ -25,7 +25,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
@@ -72,6 +72,11 @@ export default function EditPostPage() {
   })
 
   const title = watch('title')
+
+  const filteredPostTemplates = useMemo(
+    () => postTemplates.filter(t => t.value !== ''),
+    [postTemplates],
+  )
 
   const handleAiSlug = async () => {
     if (!title) return
@@ -389,13 +394,11 @@ export default function EditPostPage() {
                 className={inputClass}
               >
                 <option value="">Template Seçin</option>
-                {postTemplates
-                  .filter(t => t.value !== '')
-                  .map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
+                {filteredPostTemplates.map(t => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
               </select>
             </div>
 

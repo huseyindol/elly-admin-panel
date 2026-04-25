@@ -108,7 +108,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {isOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-40 h-full w-full cursor-default border-0 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 h-full w-full cursor-default border-0 bg-black/60 lg:hidden"
           onClick={onClose}
           aria-label="Menüyü kapat"
         />
@@ -120,9 +120,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         } ${
           isDarkMode
-            ? 'border-r border-slate-800/50 bg-slate-900/80'
-            : 'border-r border-gray-200/50 bg-white/80'
-        } backdrop-blur-xl`}
+            ? 'border-r border-slate-800/50 bg-slate-900'
+            : 'border-r border-gray-200/50 bg-white'
+        }`}
       >
         <div
           className="flex h-full flex-col p-6"

@@ -13,10 +13,8 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   return (
     <header
       className={`sticky top-0 z-30 px-6 py-4 ${
-        isDarkMode ? 'bg-slate-950/80' : 'bg-gray-50/80'
-      } border-b backdrop-blur-xl ${
-        isDarkMode ? 'border-slate-800/50' : 'border-gray-200/50'
-      }`}
+        isDarkMode ? 'bg-slate-950' : 'bg-gray-50'
+      } border-b ${isDarkMode ? 'border-slate-800/50' : 'border-gray-200/50'}`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

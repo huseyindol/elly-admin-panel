@@ -22,7 +22,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 export default function EditPagePage() {
@@ -53,7 +53,8 @@ export default function EditPagePage() {
     handleSubmit,
     setValue,
     reset,
-    watch,
+    control,
+    getValues,
     formState: { errors, isDirty },
   } = useForm<UpdatePageInput>({
     resolver: zodResolver(UpdatePageSchema),
@@ -74,9 +75,15 @@ export default function EditPagePage() {
     },
   })
 
-  // Watch fields
-  const selectedComponentIds = watch('componentIds')
-  const title = watch('title')
+  const [selectedComponentIds, title] = useWatch({
+    control,
+    name: ['componentIds', 'title'],
+  })
+
+  const filteredPageTemplates = useMemo(
+    () => pageTemplates.filter(t => t.value !== ''),
+    [pageTemplates],
+  )
 
   // Fetch Components Summary
   const { data: componentsData } = useQuery({
@@ -123,8 +130,6 @@ export default function EditPagePage() {
   useEffect(() => {
     if (pageData?.data) {
       const page = pageData.data
-      console.log('page', page)
-      console.log('pageTemplates', pageTemplates)
       reset({
         title: page.title,
         description: page.description || '',
@@ -205,7 +210,7 @@ export default function EditPagePage() {
         shouldDirty: true,
       })
       setValue('seoInfo.keywords', res.data.seoKeywords, { shouldDirty: true })
-      const currentSlug = watch('slug')
+      const currentSlug = getValues('slug')
       if (currentSlug) {
         setValue('seoInfo.canonicalUrl', `/${currentSlug}`, {
           shouldDirty: true,
@@ -439,13 +444,11 @@ export default function EditPagePage() {
                 className={inputClass}
               >
                 <option value="">Template Seçin</option>
-                {pageTemplates
-                  .filter(t => t.value !== '')
-                  .map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
+                {filteredPageTemplates.map(t => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
               </select>
             </div>
 

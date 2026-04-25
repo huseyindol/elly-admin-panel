@@ -23,7 +23,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 export default function EditWidgetPage() {
@@ -33,8 +33,6 @@ export default function EditWidgetPage() {
   const { isDarkMode } = useAdminTheme()
   const [selectedBanners, setSelectedBanners] = useState<BannerSummary[]>([])
   const [selectedPosts, setSelectedPosts] = useState<PostSummary[]>([])
-  const [initialBannerIds, setInitialBannerIds] = useState<number[]>([])
-  const [initialPostIds, setInitialPostIds] = useState<number[]>([])
   const { templates: widgetTemplates } = useTemplates('widgets')
 
   // Selected sub-folder for banner filtering
@@ -73,6 +71,20 @@ export default function EditWidgetPage() {
     staleTime: 5 * 60 * 1000,
   })
 
+  const initialBannerIds = useMemo(
+    () => widgetData?.data?.banners?.map(b => Number(b.id)) ?? [],
+    [widgetData],
+  )
+  const initialPostIds = useMemo(
+    () => widgetData?.data?.posts?.map(p => Number(p.id)) ?? [],
+    [widgetData],
+  )
+
+  const filteredWidgetTemplates = useMemo(
+    () => widgetTemplates.filter(t => t.value !== ''),
+    [widgetTemplates],
+  )
+
   // Available banners (filtered by sub-folder, excluding already selected ones)
   const availableBanners = useMemo(() => {
     const filteredBanners = filteredBannersData?.data ?? []
@@ -93,7 +105,7 @@ export default function EditWidgetPage() {
     register,
     handleSubmit,
     reset,
-    watch,
+    control,
     setValue,
     formState: { errors, isDirty },
   } = useForm<UpdateWidgetInput>({
@@ -111,9 +123,7 @@ export default function EditWidgetPage() {
     },
   })
 
-  // Watch type field for conditional rendering
-  const selectedType = watch('type')
-  const name = watch('name')
+  const [selectedType, name] = useWatch({ control, name: ['type', 'name'] })
 
   const handleAiDescription = async () => {
     if (!name) return
@@ -144,25 +154,23 @@ export default function EditWidgetPage() {
         postIds: [],
       })
 
-      // Set selected banners from widget data using allBannersData
+      /* eslint-disable react-hooks/set-state-in-effect -- one-time init from server data */
       if (widget.banners && allBannersData?.data) {
         const bannerIds = widget.banners.map(b => Number(b.id))
-        setInitialBannerIds(bannerIds)
         const selectedBannerItems = allBannersData.data.filter(b =>
           bannerIds.includes(b.id),
         )
         setSelectedBanners(selectedBannerItems)
       }
 
-      // Set selected posts from widget data
       if (widget.posts && postsData?.data) {
         const postIds = widget.posts.map(p => Number(p.id))
-        setInitialPostIds(postIds)
         const selectedPostItems = postsData.data.filter(p =>
           postIds.includes(p.id),
         )
         setSelectedPosts(selectedPostItems)
       }
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [widgetData, allBannersData, postsData, reset])
 
@@ -384,13 +392,11 @@ export default function EditWidgetPage() {
                 className={inputClass}
               >
                 <option value="">Template Seçin</option>
-                {widgetTemplates
-                  .filter(t => t.value !== '')
-                  .map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
+                {filteredWidgetTemplates.map(t => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
               </select>
             </div>
 

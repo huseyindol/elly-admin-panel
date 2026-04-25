@@ -28,7 +28,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 export default function EditComponentPage() {
@@ -41,9 +41,6 @@ export default function EditComponentPage() {
   const [selectedWidgets, setSelectedWidgets] = useState<WidgetSummary[]>([])
   const [selectedForms, setSelectedForms] = useState<FormSchema[]>([])
   const { templates: componentTemplates } = useTemplates('components')
-  const [initialBannerIds, setInitialBannerIds] = useState<number[]>([])
-  const [initialWidgetIds, setInitialWidgetIds] = useState<number[]>([])
-  const [initialFormIds, setInitialFormIds] = useState<number[]>([])
 
   // Selected sub-folder for banner filtering
   const [selectedSubFolder, setSelectedSubFolder] = useState<string>('all')
@@ -93,6 +90,32 @@ export default function EditComponentPage() {
     queryFn: getFormsSummaryService,
   })
 
+  const initialBannerIds = useMemo(
+    () => componentData?.data?.banners?.map(b => Number(b.id)) ?? [],
+    [componentData],
+  )
+  const initialWidgetIds = useMemo(
+    () => componentData?.data?.widgets?.map(w => Number(w.id)) ?? [],
+    [componentData],
+  )
+  const initialFormIds = useMemo(
+    () => componentData?.data?.forms?.map(f => Number(f.id)) ?? [],
+    [componentData],
+  )
+
+  const filteredComponentTemplates = useMemo(
+    () => componentTemplates.filter(t => t.value !== ''),
+    [componentTemplates],
+  )
+
+  const availableForms = useMemo(
+    () =>
+      (formsData?.data || []).filter(
+        f => !selectedForms.some(sf => sf.id === f.id),
+      ),
+    [formsData, selectedForms],
+  )
+
   // Available banners (filtered by sub-folder, excluding already selected ones)
   const availableBanners = useMemo(() => {
     const filteredBanners = filteredBannersData?.data ?? []
@@ -107,7 +130,7 @@ export default function EditComponentPage() {
     register,
     handleSubmit,
     reset,
-    watch,
+    control,
     setValue,
     formState: { errors, isDirty },
   } = useForm<UpdateComponentInput>({
@@ -127,9 +150,7 @@ export default function EditComponentPage() {
     },
   })
 
-  // Watch type field for conditional rendering
-  const selectedType = watch('type')
-  const name = watch('name')
+  const [selectedType, name] = useWatch({ control, name: ['type', 'name'] })
 
   const handleAiDescription = async () => {
     if (!name) return
@@ -165,35 +186,31 @@ export default function EditComponentPage() {
         formIds: [],
       })
 
-      // Set selected banners from component data using allBannersData
+      /* eslint-disable react-hooks/set-state-in-effect -- one-time init from server data */
       if (component.banners && allBannersData?.data) {
         const bannerIds = component.banners.map(b => Number(b.id))
-        setInitialBannerIds(bannerIds)
         const selectedBannerItems = allBannersData.data.filter(b =>
           bannerIds.includes(b.id),
         )
         setSelectedBanners(selectedBannerItems)
       }
 
-      // Set selected widgets from component data
       if (component.widgets && widgetsData?.data) {
         const widgetIds = component.widgets.map(w => Number(w.id))
-        setInitialWidgetIds(widgetIds)
         const selectedWidgetItems = widgetsData.data.filter(w =>
           widgetIds.includes(w.id),
         )
         setSelectedWidgets(selectedWidgetItems)
       }
 
-      // Set selected forms from component data
       if (component.forms && formsData?.data) {
         const formIds = component.forms.map(f => Number(f.id))
-        setInitialFormIds(formIds)
         const selectedFormItems = formsData.data.filter(f =>
           formIds.includes(f.id),
         )
         setSelectedForms(selectedFormItems)
       }
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [componentData, allBannersData, widgetsData, formsData, reset])
 
@@ -420,13 +437,11 @@ export default function EditComponentPage() {
                 className={inputClass}
               >
                 <option value="">Template Seçin</option>
-                {componentTemplates
-                  .filter(t => t.value !== '')
-                  .map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
+                {filteredComponentTemplates.map(t => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -601,9 +616,7 @@ export default function EditComponentPage() {
               Form Ataması
             </h2>
             <DualListbox<FormSchema>
-              available={(formsData?.data || []).filter(
-                f => !selectedForms.some(sf => sf.id === f.id),
-              )}
+              available={availableForms}
               selected={selectedForms}
               onChange={setSelectedForms}
               getItemLabel={item => item.title}

@@ -18,7 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
@@ -94,6 +94,11 @@ export default function NewPagePage() {
   })
 
   const title = watch('title')
+
+  const filteredPageTemplates = useMemo(
+    () => pageTemplates.filter(t => t.value !== ''),
+    [pageTemplates],
+  )
 
   // Auto-generate slug from title
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -329,13 +334,11 @@ export default function NewPagePage() {
                 className={inputClass}
               >
                 <option value="">Template Seçin</option>
-                {pageTemplates
-                  .filter(t => t.value !== '')
-                  .map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
+                {filteredPageTemplates.map(t => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
               </select>
             </div>
 
