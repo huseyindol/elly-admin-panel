@@ -33,8 +33,6 @@ export default function EditWidgetPage() {
   const { isDarkMode } = useAdminTheme()
   const [selectedBanners, setSelectedBanners] = useState<BannerSummary[]>([])
   const [selectedPosts, setSelectedPosts] = useState<PostSummary[]>([])
-  const [initialBannerIds, setInitialBannerIds] = useState<number[]>([])
-  const [initialPostIds, setInitialPostIds] = useState<number[]>([])
   const { templates: widgetTemplates } = useTemplates('widgets')
 
   // Selected sub-folder for banner filtering
@@ -72,6 +70,15 @@ export default function EditWidgetPage() {
     queryFn: () => getBannersSummaryBySubFolderService(selectedSubFolder),
     staleTime: 5 * 60 * 1000,
   })
+
+  const initialBannerIds = useMemo(
+    () => widgetData?.data?.banners?.map(b => Number(b.id)) ?? [],
+    [widgetData],
+  )
+  const initialPostIds = useMemo(
+    () => widgetData?.data?.posts?.map(p => Number(p.id)) ?? [],
+    [widgetData],
+  )
 
   const filteredWidgetTemplates = useMemo(
     () => widgetTemplates.filter(t => t.value !== ''),
@@ -147,25 +154,23 @@ export default function EditWidgetPage() {
         postIds: [],
       })
 
-      // Set selected banners from widget data using allBannersData
+      /* eslint-disable react-hooks/set-state-in-effect -- one-time init from server data */
       if (widget.banners && allBannersData?.data) {
         const bannerIds = widget.banners.map(b => Number(b.id))
-        setInitialBannerIds(bannerIds)
         const selectedBannerItems = allBannersData.data.filter(b =>
           bannerIds.includes(b.id),
         )
         setSelectedBanners(selectedBannerItems)
       }
 
-      // Set selected posts from widget data
       if (widget.posts && postsData?.data) {
         const postIds = widget.posts.map(p => Number(p.id))
-        setInitialPostIds(postIds)
         const selectedPostItems = postsData.data.filter(p =>
           postIds.includes(p.id),
         )
         setSelectedPosts(selectedPostItems)
       }
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [widgetData, allBannersData, postsData, reset])
 
