@@ -23,8 +23,11 @@ export function FieldRenderer({ field, form, className }: FieldRendererProps) {
     formState: { errors },
   } = form
 
-  // Watch all form values to evaluate conditions
-  const formValues = useWatch({ control }) as Record<string, unknown>
+  // Watch only the specific field referenced in the condition (not all form values).
+  // When no condition exists, watch a non-existent key — it never changes, no re-render.
+  const conditionFieldId = field.condition?.field ?? '__no_condition__'
+  const watchedValue = useWatch({ control, name: conditionFieldId })
+  const formValues = field.condition ? { [conditionFieldId]: watchedValue } : {}
 
   // Conditional visibility check
   if (field.condition) {

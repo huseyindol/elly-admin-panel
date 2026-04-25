@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
@@ -91,11 +91,14 @@ export default function NewFormPage() {
   })
 
   const activeMailAccounts = activeMailAccountsData?.data ?? []
-  const selectedMailAccountId = watch('senderMailAccountId')
+
+  const [selectedMailAccountId, notificationEnabled] = useWatch({
+    control,
+    name: ['senderMailAccountId', 'notificationEnabled'],
+  })
   const selectedMailAccount = activeMailAccounts.find(
     a => a.id === selectedMailAccountId,
   )
-  const notificationEnabled = watch('notificationEnabled')
 
   const layout = useWatch({ control, name: 'schema.config.layout' })
 
@@ -142,6 +145,21 @@ export default function NewFormPage() {
     setShowFieldModal(false)
     setEditingField(null)
   }
+
+  const handleModalClose = useCallback(() => {
+    setShowFieldModal(false)
+    setEditingField(null)
+  }, [])
+
+  const modalExistingFieldIds = useMemo(
+    () => fields.filter(f => f.id !== editingField?.id).map(f => f.id),
+    [fields, editingField?.id],
+  )
+
+  const modalOtherFields = useMemo(
+    () => fields.filter(f => f.id !== editingField?.id),
+    [fields, editingField?.id],
+  )
 
   const removeField = (fieldId: string) => {
     setFields(fields.filter(f => f.id !== fieldId))
@@ -620,15 +638,10 @@ export default function NewFormPage() {
         <FieldEditModal
           field={editingField}
           steps={layout === 'wizard' ? steps : undefined}
-          existingFieldIds={fields
-            .filter(f => f.id !== editingField.id)
-            .map(f => f.id)}
-          otherFields={fields.filter(f => f.id !== editingField.id)}
+          existingFieldIds={modalExistingFieldIds}
+          otherFields={modalOtherFields}
           onSave={saveField}
-          onClose={() => {
-            setShowFieldModal(false)
-            setEditingField(null)
-          }}
+          onClose={handleModalClose}
           isDarkMode={isDarkMode}
         />
       )}
