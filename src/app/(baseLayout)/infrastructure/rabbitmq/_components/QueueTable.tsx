@@ -9,7 +9,8 @@ import { QueueDetailSheet } from './QueueDetailSheet'
 
 export function QueueTable() {
   const { isDarkMode } = useAdminTheme()
-  const { data, isLoading, isError, error } = useRabbitQueues()
+  const { data, isLoading, isError, error, refetch, isFetching } =
+    useRabbitQueues()
   const canManage = usePermission(Permissions.RABBIT_MANAGE)
   const purge = usePurgeQueue()
 
@@ -124,6 +125,39 @@ export function QueueTable() {
 
   return (
     <>
+      <div className="flex items-center justify-between">
+        <h2
+          className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+        >
+          Kuyruklar
+        </h2>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+            isDarkMode
+              ? 'bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50'
+          }`}
+        >
+          <svg
+            className={`h-3 w-3 ${isFetching ? 'animate-spin' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+          Yenile
+        </button>
+      </div>
+
       <DataTable
         data={queues}
         columns={columns}

@@ -5,7 +5,8 @@ import { useRabbitOverview } from '@/app/_hooks/useRabbitMQ'
 
 export function OverviewCard() {
   const { isDarkMode } = useAdminTheme()
-  const { data, isLoading, isError, error } = useRabbitOverview()
+  const { data, isLoading, isError, error, refetch, isFetching } =
+    useRabbitOverview()
 
   const cardClass = `rounded-2xl p-6 ${
     isDarkMode
@@ -68,16 +69,43 @@ export function OverviewCard() {
             {data.erlangVersion ?? '—'}
           </p>
         </div>
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
-            isDarkMode
-              ? 'bg-emerald-500/10 text-emerald-400'
-              : 'bg-emerald-50 text-emerald-700'
-          }`}
-        >
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-          Canlı
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+              isDarkMode
+                ? 'bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50'
+            }`}
+          >
+            <svg
+              className={`h-3 w-3 ${isFetching ? 'animate-spin' : ''}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            Yenile
+          </button>
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+              isDarkMode
+                ? 'bg-emerald-500/10 text-emerald-400'
+                : 'bg-emerald-50 text-emerald-700'
+            }`}
+          >
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+            Canlı
+          </span>
+        </div>
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
