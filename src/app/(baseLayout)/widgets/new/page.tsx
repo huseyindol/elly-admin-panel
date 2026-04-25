@@ -18,7 +18,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 export default function NewWidgetPage() {
@@ -37,7 +37,7 @@ export default function NewWidgetPage() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { errors },
   } = useForm<CreateWidgetInput>({
@@ -55,9 +55,7 @@ export default function NewWidgetPage() {
     },
   })
 
-  // Watch type field for conditional rendering
-  const selectedType = watch('type')
-  const name = watch('name')
+  const [selectedType, name] = useWatch({ control, name: ['type', 'name'] })
 
   const handleAiDescription = async () => {
     if (!name) return
@@ -85,6 +83,11 @@ export default function NewWidgetPage() {
     queryFn: () => getBannersSummaryBySubFolderService(selectedSubFolder),
     staleTime: 5 * 60 * 1000,
   })
+
+  const filteredWidgetTemplates = useMemo(
+    () => widgetTemplates.filter(t => t.value !== ''),
+    [widgetTemplates],
+  )
 
   // Available banners (exclude already selected ones)
   const availableBanners = useMemo(() => {
@@ -267,13 +270,11 @@ export default function NewWidgetPage() {
                 className={inputClass}
               >
                 <option value="">Template Seçin</option>
-                {widgetTemplates
-                  .filter(t => t.value !== '')
-                  .map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
+                {filteredWidgetTemplates.map(t => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
               </select>
             </div>
 

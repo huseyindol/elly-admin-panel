@@ -23,7 +23,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 export default function EditWidgetPage() {
@@ -73,6 +73,11 @@ export default function EditWidgetPage() {
     staleTime: 5 * 60 * 1000,
   })
 
+  const filteredWidgetTemplates = useMemo(
+    () => widgetTemplates.filter(t => t.value !== ''),
+    [widgetTemplates],
+  )
+
   // Available banners (filtered by sub-folder, excluding already selected ones)
   const availableBanners = useMemo(() => {
     const filteredBanners = filteredBannersData?.data ?? []
@@ -93,7 +98,7 @@ export default function EditWidgetPage() {
     register,
     handleSubmit,
     reset,
-    watch,
+    control,
     setValue,
     formState: { errors, isDirty },
   } = useForm<UpdateWidgetInput>({
@@ -111,9 +116,7 @@ export default function EditWidgetPage() {
     },
   })
 
-  // Watch type field for conditional rendering
-  const selectedType = watch('type')
-  const name = watch('name')
+  const [selectedType, name] = useWatch({ control, name: ['type', 'name'] })
 
   const handleAiDescription = async () => {
     if (!name) return
@@ -384,13 +387,11 @@ export default function EditWidgetPage() {
                 className={inputClass}
               >
                 <option value="">Template Seçin</option>
-                {widgetTemplates
-                  .filter(t => t.value !== '')
-                  .map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
+                {filteredWidgetTemplates.map(t => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
               </select>
             </div>
 

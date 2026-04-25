@@ -28,7 +28,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 export default function EditComponentPage() {
@@ -93,6 +93,19 @@ export default function EditComponentPage() {
     queryFn: getFormsSummaryService,
   })
 
+  const filteredComponentTemplates = useMemo(
+    () => componentTemplates.filter(t => t.value !== ''),
+    [componentTemplates],
+  )
+
+  const availableForms = useMemo(
+    () =>
+      (formsData?.data || []).filter(
+        f => !selectedForms.some(sf => sf.id === f.id),
+      ),
+    [formsData, selectedForms],
+  )
+
   // Available banners (filtered by sub-folder, excluding already selected ones)
   const availableBanners = useMemo(() => {
     const filteredBanners = filteredBannersData?.data ?? []
@@ -107,7 +120,7 @@ export default function EditComponentPage() {
     register,
     handleSubmit,
     reset,
-    watch,
+    control,
     setValue,
     formState: { errors, isDirty },
   } = useForm<UpdateComponentInput>({
@@ -127,9 +140,7 @@ export default function EditComponentPage() {
     },
   })
 
-  // Watch type field for conditional rendering
-  const selectedType = watch('type')
-  const name = watch('name')
+  const [selectedType, name] = useWatch({ control, name: ['type', 'name'] })
 
   const handleAiDescription = async () => {
     if (!name) return
@@ -420,13 +431,11 @@ export default function EditComponentPage() {
                 className={inputClass}
               >
                 <option value="">Template Seçin</option>
-                {componentTemplates
-                  .filter(t => t.value !== '')
-                  .map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
+                {filteredComponentTemplates.map(t => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -601,9 +610,7 @@ export default function EditComponentPage() {
               Form Ataması
             </h2>
             <DualListbox<FormSchema>
-              available={(formsData?.data || []).filter(
-                f => !selectedForms.some(sf => sf.id === f.id),
-              )}
+              available={availableForms}
               selected={selectedForms}
               onChange={setSelectedForms}
               getItemLabel={item => item.title}
