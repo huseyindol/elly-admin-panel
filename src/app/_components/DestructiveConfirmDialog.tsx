@@ -48,7 +48,7 @@ export function DestructiveConfirmDialog({
         type="button"
         aria-label="Diyaloğu kapat"
         onClick={handleClose}
-        className="absolute inset-0 h-full w-full cursor-default border-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 h-full w-full cursor-default border-0 bg-black/60"
       />
       <div
         className={`relative w-full max-w-md rounded-2xl p-6 shadow-2xl ${

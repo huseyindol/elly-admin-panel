@@ -222,7 +222,7 @@ export default function NewFormPage() {
     isDarkMode
       ? 'border border-slate-800/50 bg-slate-900/60'
       : 'border border-gray-200 bg-white'
-  } backdrop-blur-sm`
+  }`
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
@@ -780,7 +780,7 @@ function FieldEditModal({
   }`
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div
         className={`w-full max-w-lg rounded-2xl p-6 ${
           isDarkMode

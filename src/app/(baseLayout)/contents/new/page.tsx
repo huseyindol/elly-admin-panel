@@ -166,7 +166,7 @@ export default function NewContentPage() {
     isDarkMode
       ? 'border border-slate-800/50 bg-slate-900/60'
       : 'border border-gray-200 bg-white'
-  } backdrop-blur-sm`
+  }`
 
   // Render dynamic field based on type
   const renderDynamicField = (field: DynamicField) => {

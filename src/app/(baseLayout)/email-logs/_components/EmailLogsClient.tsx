@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Column, DataTable } from '@/app/_components'
 import { useAdminTheme } from '@/app/_hooks'
@@ -33,6 +33,11 @@ export function EmailLogsClient() {
 
   const [selected, setSelected] = useState<EmailLog | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
+
+  const handleRowClick = useCallback((log: EmailLog) => {
+    setSelected(log)
+    setSheetOpen(true)
+  }, [])
 
   const logs = useMemo(() => data?.content ?? [], [data])
   const totalElements = data?.totalElements ?? 0
@@ -166,10 +171,7 @@ export function EmailLogsClient() {
         columns={columns}
         isLoading={isLoading}
         keyExtractor={l => String(l.id)}
-        onRowClick={l => {
-          setSelected(l)
-          setSheetOpen(true)
-        }}
+        onRowClick={handleRowClick}
         emptyMessage={
           status
             ? `"${status}" durumunda kayıt yok`

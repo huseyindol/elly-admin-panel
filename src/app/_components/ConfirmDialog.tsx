@@ -54,7 +54,7 @@ export function ConfirmDialog({
       {/* Backdrop */}
       <button
         type="button"
-        className="absolute inset-0 h-full w-full cursor-default border-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 h-full w-full cursor-default border-0 bg-black/60"
         onClick={onClose}
         aria-label="Diyaloğu kapat"
       />

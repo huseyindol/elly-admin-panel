@@ -389,7 +389,7 @@ export default function EditBannerPage() {
             isDarkMode
               ? 'border border-slate-800/50 bg-slate-900/60'
               : 'border border-gray-200 bg-white'
-          } backdrop-blur-sm`}
+          }`}
         >
           <div className="mb-4 flex items-center justify-between">
             <h2
@@ -507,7 +507,7 @@ export default function EditBannerPage() {
             isDarkMode
               ? 'border border-slate-800/50 bg-slate-900/60'
               : 'border border-gray-200 bg-white'
-          } backdrop-blur-sm`}
+          }`}
         >
           <h2
             className={`mb-4 text-lg font-semibold ${

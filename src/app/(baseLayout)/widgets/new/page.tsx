@@ -205,7 +205,7 @@ export default function NewWidgetPage() {
             isDarkMode
               ? 'border border-slate-800/50 bg-slate-900/60'
               : 'border border-gray-200 bg-white'
-          } backdrop-blur-sm`}
+          }`}
         >
           <h2
             className={`mb-4 text-lg font-semibold ${
@@ -333,7 +333,7 @@ export default function NewWidgetPage() {
               isDarkMode
                 ? 'border border-slate-800/50 bg-slate-900/60'
                 : 'border border-gray-200 bg-white'
-            } backdrop-blur-sm`}
+            }`}
           >
             <h2
               className={`mb-4 text-lg font-semibold ${
@@ -410,7 +410,7 @@ export default function NewWidgetPage() {
               isDarkMode
                 ? 'border border-slate-800/50 bg-slate-900/60'
                 : 'border border-gray-200 bg-white'
-            } backdrop-blur-sm`}
+            }`}
           >
             <h2
               className={`mb-4 text-lg font-semibold ${

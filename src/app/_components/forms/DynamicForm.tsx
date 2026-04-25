@@ -39,7 +39,7 @@ export function DynamicForm({
     isDarkMode
       ? 'border border-slate-800/50 bg-slate-900/60'
       : 'border border-gray-200 bg-white'
-  } backdrop-blur-sm`
+  }`
 
   const buttonPrimaryClass =
     'flex-1 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/40 disabled:opacity-50'

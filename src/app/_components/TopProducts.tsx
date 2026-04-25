@@ -17,7 +17,7 @@ export function TopProducts({ products }: TopProductsProps) {
         isDarkMode
           ? 'border border-slate-800/50 bg-slate-900/60'
           : 'border border-gray-200 bg-white'
-      } backdrop-blur-sm`}
+      }`}
     >
       <div className="mb-6 flex items-center justify-between">
         <div>

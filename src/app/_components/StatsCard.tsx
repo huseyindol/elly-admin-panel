@@ -18,7 +18,7 @@ export function StatsCard({ stat, index }: StatsCardProps) {
         isDarkMode
           ? 'border border-slate-800/50 bg-slate-900/60 hover:border-slate-700/50 hover:shadow-violet-500/10'
           : 'border border-gray-200 bg-white hover:border-gray-300 hover:shadow-violet-500/20'
-      } backdrop-blur-sm`}
+      }`}
       style={{ animationDelay: `${index * 100}ms` }}
     >
       {/* Gradient Accent */}

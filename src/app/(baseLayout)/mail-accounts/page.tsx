@@ -68,7 +68,7 @@ export default function MailAccountsPage() {
     isDarkMode
       ? 'border border-slate-800/50 bg-slate-900/60'
       : 'border border-gray-200 bg-white'
-  } backdrop-blur-sm`
+  }`
 
   const accounts = data?.data ?? []
 
@@ -279,7 +279,7 @@ export default function MailAccountsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <button
             type="button"
-            className="absolute inset-0 h-full w-full cursor-default border-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 h-full w-full cursor-default border-0 bg-black/60"
             onClick={() => setConfirmState(null)}
             aria-label="Kapat"
           />

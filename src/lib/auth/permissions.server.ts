@@ -1,7 +1,6 @@
 import 'server-only'
 
 import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
 import { CookieEnum } from '@/utils/constant/cookieConstant'
 import type { Permission } from '@/types/cms'
 import { extractPermissionsFromToken } from './permissions'

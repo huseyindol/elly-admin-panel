@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Column, DataTable, DestructiveConfirmDialog } from '@/app/_components'
 import { useAdminTheme, usePermission } from '@/app/_hooks'
 import { usePurgeQueue, useRabbitQueues } from '@/app/_hooks/useRabbitMQ'
@@ -18,10 +18,10 @@ export function QueueTable() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [purgeTarget, setPurgeTarget] = useState<RabbitQueue | null>(null)
 
-  const openDetail = (q: RabbitQueue) => {
+  const openDetail = useCallback((q: RabbitQueue) => {
     setSelected(q)
     setSheetOpen(true)
-  }
+  }, [])
 
   const openPurge = (q: RabbitQueue) => {
     setPurgeTarget(q)

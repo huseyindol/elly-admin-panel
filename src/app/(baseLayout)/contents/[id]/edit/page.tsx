@@ -175,7 +175,7 @@ export default function EditContentPage() {
     isDarkMode
       ? 'border border-slate-800/50 bg-slate-900/60'
       : 'border border-gray-200 bg-white'
-  } backdrop-blur-sm`
+  }`
 
   // Render dynamic field
   const renderDynamicField = (field: DynamicField) => {

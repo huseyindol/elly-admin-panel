@@ -18,7 +18,7 @@ interface SheetProps {
  * Yandan kayan drawer — RabbitMQ queue detayları, email log detayı gibi
  * "sayfa değiştirmeden detay göster" akışları için.
  *
- * Tasarım Modal.tsx ile tutarlıdır: aynı blur backdrop, aynı koyu/açık tema.
+ * Tasarım Modal.tsx ile tutarlıdır: yarı saydam backdrop (blur yok, GPU yükü düşük).
  * Shadcn `sheet` paketi yerine projenin mevcut stiline uyum öncelikli.
  */
 export function Sheet({
@@ -50,14 +50,13 @@ export function Sheet({
     }
   }, [isOpen])
 
-  const sideClasses =
-    side === 'right'
-      ? `right-0 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`
-      : `left-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
+  const sideClasses = side === 'right' ? 'right-0' : 'left-0'
+
+  if (!isOpen) return null
 
   return (
     <div
-      className={`fixed inset-0 z-50 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      className="pointer-events-auto fixed inset-0 z-50"
       aria-hidden={!isOpen}
     >
       {/* Backdrop */}
@@ -65,14 +64,12 @@ export function Sheet({
         type="button"
         onClick={onClose}
         aria-label="Paneli kapat"
-        className={`absolute inset-0 cursor-default border-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="absolute inset-0 cursor-default border-0 bg-black/50"
       />
 
       {/* Panel */}
       <aside
-        className={`absolute top-0 flex h-full ${width} max-w-full transform flex-col shadow-2xl transition-transform duration-300 ease-out ${sideClasses} ${
+        className={`absolute top-0 flex h-full ${width} max-w-full flex-col shadow-2xl ${sideClasses} ${
           isDarkMode
             ? 'border-l border-slate-800/60 bg-slate-900'
             : 'border-l border-gray-200 bg-white'
