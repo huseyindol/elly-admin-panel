@@ -16,7 +16,7 @@ Prompt sırası (baştan sona):
 - **Prompt 3:** RabbitMQ yönetim sayfası
 - **Prompt 4:** Email Logs sayfası (v3 retry için)
 - **Prompt 5:** Mail Accounts sayfası (SMTP profil CRUD + test/verify — v2 DB-based)
-- **Prompt 6:** Forms sayfası (FormDefinition CRUD + Submissions + Mail+Form v2 bildirim alanları)
+- **Prompt 6:** Forms sayfası (FormDefinition CRUD + Submissions + Mail+Form v4 — opsiyonel bildirim, çoklu alıcı)
 
 Her prompt'un bağlamı **aynı CMS API**'ye dayanır — endpoint listeleri her promptta tekrar veriliyor ki agent diğer dokümanlara bakmak zorunda kalmasın.
 
@@ -245,6 +245,13 @@ CMS endpoint'leri:
 | POST   | `/api/v1/email-templates/{key}/preview`  | `email_templates:read`   | Dummy data ile render |
 
 Request/Response tipleri: `EmailTemplate` (zaten `types/cms.ts`'de tanımlı).
+
+**Mevcut seed template'leri (DB'de hazır):**
+| templateKey | Subject | Değişkenler |
+|-------------|---------|-------------|
+| `form-notification` | `Yeni Form Gönderimi: [[${formTitle}]]` | `formTitle`, `submittedAt`, `formFields` |
+| `welcome` | `Hoş Geldin, [[${userName}]]!` | `userName`, `dashboardUrl` |
+| `password-reset` | `Şifre Sıfırlama Talebiniz` | `userName`, `resetUrl`, `resetCode`, `expiresIn` |
 
 Preview endpoint'i şu body bekler:
 
@@ -849,31 +856,49 @@ Invalidation kuralları:
 
 ---
 
-## Prompt 6 — Forms Sayfası (FormDefinition + Submissions + Mail+Form v2 bildirim alanları)
+## Prompt 6 — Forms Sayfası (FormDefinition + Submissions + Mail+Form v4 — opsiyonel bildirim)
 
 **Ön koşul:** Prompt 1 + **Prompt 5 tamamlanmalı** (form sender dropdown'u aktif mail hesaplarına bağlı). Bu endpoint'ler **CMS'te canlı**.
 
 ```
 
 elly-admin-panel'e "Forms" admin sayfası ekle. FormDefinition CRUD + submission
-görüntüleme. Mail+Form v2 ile her form submit'i otomatik bildirim maili tetikler
-— bu yüzden form tanımında **senderMailAccountId** ve **recipientEmail** zorunlu.
+görüntüleme. Mail+Form v4 ile bildirim **opsiyonel**: form submit edildiğinde
+mail gönderilebilir veya tamamen devre dışı bırakılabilir. Buna göre form tanım
+formu, bildirim alanlarını switch'e bağlı conditional required olarak göstermelidir.
 
-## Bağlam — Mail+Form v2 Entegrasyonu
+## Bağlam — Mail+Form v4 Entegrasyonu (bildirim opsiyonel)
 
-Form oluşturulurken artık zorunlu iki yeni alan:
+Form oluşturulurken bildirim alanları:
 
-1. **senderMailAccountId** (Long) — MailAccount tablosundan bir hesap seçilir.
-   Pasif hesap seçilirse backend 422 döner.
-2. **recipientEmail** (string, email) — Submit sonrası bildirimin gideceği adres
-   (v2'de tek adres; çoklu TO/CC/BCC v3'e ertelendi).
+1. **notificationEnabled** (boolean, **default true**) — Mail gönderilsin mi?
+   - `true` (varsayılan): submit sonrası bildirim maili tetiklenir → sender/recipient zorunlu.
+   - `false`: form submit yine 200 döner, sadece DB'ye kaydedilir, mail tetiklenmez,
+     sender/recipient null/boş kalabilir.
 
-Opsiyonel iki alan: 3. **notificationSubject** (string) — Bildirim maili konusu. Boş ise backend
-default değeri kullanır: `"Yeni form gönderimi: {form.title}"`. 4. **notificationEnabled** (boolean, default true) — false ise form submit
-yine 200 döner ama mail gönderilmez.
+2. **senderMailAccountId** (Long | null) — Hangi MailAccount'tan gönderilecek.
+   - `notificationEnabled=true` iken **zorunlu**, pasif hesap seçilirse 422.
+   - `notificationEnabled=false` iken null bırakılabilir.
 
-Akış: Submit → FormSubmission kaydı + EmailLog(PENDING) + RabbitMQ'ya job →
-EmailQueueService consumer → `senderMailAccount`'tan AES-decrypt → Gmail SMTP.
+3. **recipientEmail** (string | null, max 1000) — Bildirim alıcı adres(ler).
+   - `notificationEnabled=true` iken **zorunlu** ve format validate edilir.
+   - **v3 itibarıyla çoklu alıcı destekli**: virgülle ayrılmış email listesi
+     (`a@x.com, b@y.com`). Tek adres de olabilir.
+   - `notificationEnabled=false` iken null/boş bırakılabilir.
+
+4. **notificationSubject** (string | null, max 255) — Mail konusu.
+   - Boş bırakılırsa backend default: `"Yeni form gonderimi: {form.title}"`.
+
+**Backend dogrulamasi (FormDefinitionService.validateNotificationConfig):**
+
+- `notificationEnabled` null gelirse default true atanır.
+- Disabled iken: hiç validation yapılmaz.
+- Enabled iken: sender atanmış ve aktif olmalı, recipient boş olmamalı,
+  format `^email(,email)*$` ile uyumlu olmalı. Aksi halde 422.
+
+Akış (enabled iken): Submit → FormSubmission kaydı + EmailLog(PENDING) +
+RabbitMQ'ya job → EmailQueueService consumer → `senderMailAccount`'tan
+AES-decrypt → Gmail SMTP. Disabled iken yalnızca FormSubmission kaydı.
 
 ## CMS Endpoint'leri — FormDefinition
 
@@ -955,11 +980,11 @@ export interface FormDefinition {
   schema: FormSchema
   active: boolean
 
-  // Mail+Form v2 alanları
-  senderMailAccountId: number
-  senderMailAccountName: string // readonly — UI display
-  senderFromAddress: string // readonly — UI display
-  recipientEmail: string
+  // Mail+Form v4 alanları — bildirim opsiyonel
+  senderMailAccountId: number | null // notificationEnabled=false iken null olabilir
+  senderMailAccountName: string | null // readonly — UI display
+  senderFromAddress: string | null // readonly — UI display
+  recipientEmail: string | null // virgülle ayrılmış email listesi de olabilir
   notificationSubject: string | null
   notificationEnabled: boolean
 
@@ -972,9 +997,11 @@ export interface FormDefinitionRequest {
   version?: number
   schema: FormSchema
   active?: boolean
-  senderMailAccountId: number // zorunlu
-  recipientEmail: string // zorunlu
-  notificationSubject?: string // opsiyonel
+  // Mail+Form v4: senderMailAccountId ve recipientEmail conditional required —
+  // notificationEnabled=true (default) iken zorunlu, false iken opsiyonel.
+  senderMailAccountId?: number | null
+  recipientEmail?: string | null // tek adres veya "a@x.com, b@y.com"
+  notificationSubject?: string
   notificationEnabled?: boolean // default true
 }
 
@@ -1034,9 +1061,10 @@ lib/hooks/forms/
   - ID
   - Başlık (title)
   - Versiyon
-  - Gönderici (senderMailAccountName — "Satış Hesabı")
-  - Alıcı (recipientEmail — mono font)
-  - Bildirim (notificationEnabled → "Açık/Kapalı" badge)
+  - Bildirim (notificationEnabled → "Açık/Kapalı" badge — Kapalı ise muted/gri)
+  - Gönderici (senderMailAccountName veya `—` ; bildirim kapalıysa muted)
+  - Alıcı (recipientEmail mono font; çoklu adres varsa "a@x.com +2" şeklinde
+    kısalt, hover'da tooltip ile tam liste; null ise `—`)
   - Durum (active badge)
   - Güncelleme
   - Actions: edit | sil
@@ -1046,34 +1074,68 @@ lib/hooks/forms/
 
 **Oluşturma formu (`/new`)**
 
-- react-hook-form + zod:
+- react-hook-form + zod (v4 — conditional required):
+
   ```typescript
-  const schema = z.object({
-    title: z.string().min(1).max(255),
-    version: z.number().int().optional(),
-    schema: z.object({
-      config: z.record(z.unknown()).optional(),
-      fields: z
-        .array(
-          z.object({
-            id: z.string().min(1),
-            type: z.string().min(1),
-            label: z.string().min(1),
-            required: z.boolean().optional(),
-            // ...
-          }),
-        )
-        .min(1, 'En az 1 alan olmalı'),
-      steps: z
-        .array(z.object({ id: z.string(), title: z.string() }))
-        .optional(),
-    }),
-    active: z.boolean().default(true),
-    senderMailAccountId: z.number().int().positive('Bir gönderici seç'),
-    recipientEmail: z.string().email(),
-    notificationSubject: z.string().max(255).optional(),
-    notificationEnabled: z.boolean().default(true),
-  })
+  // Tek/çoklu email: "a@b.com" veya "a@b.com, c@d.com"
+  const RECIPIENT_REGEX =
+    /^\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(\s*,\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})*\s*$/
+
+  const schema = z
+    .object({
+      title: z.string().min(1).max(255),
+      version: z.number().int().optional(),
+      schema: z.object({
+        config: z.record(z.unknown()).optional(),
+        fields: z
+          .array(
+            z.object({
+              id: z.string().min(1),
+              type: z.string().min(1),
+              label: z.string().min(1),
+              required: z.boolean().optional(),
+              // ...
+            }),
+          )
+          .min(1, 'En az 1 alan olmalı'),
+        steps: z
+          .array(z.object({ id: z.string(), title: z.string() }))
+          .optional(),
+      }),
+      active: z.boolean().default(true),
+      // Conditional required — superRefine içinde notificationEnabled'a göre kontrol
+      senderMailAccountId: z.number().int().positive().nullable().optional(),
+      recipientEmail: z.string().max(1000).nullable().optional(),
+      notificationSubject: z.string().max(255).optional(),
+      notificationEnabled: z.boolean().default(true),
+    })
+    .superRefine((data, ctx) => {
+      // notificationEnabled undefined ise default true kabul et
+      const enabled = data.notificationEnabled !== false
+      if (!enabled) return // Bildirim kapalı — sender/recipient opsiyonel.
+
+      if (!data.senderMailAccountId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['senderMailAccountId'],
+          message: 'Bildirim açıkken bir gönderici seç',
+        })
+      }
+      const recipient = data.recipientEmail?.trim() ?? ''
+      if (!recipient) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['recipientEmail'],
+          message: 'Bildirim açıkken alıcı zorunludur',
+        })
+      } else if (!RECIPIENT_REGEX.test(recipient)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['recipientEmail'],
+          message: 'Geçersiz e-posta formatı. Birden fazla için virgülle ayır.',
+        })
+      }
+    })
   ```
 
 **FormDefinitionForm layout** — iki sütun:
@@ -1087,18 +1149,36 @@ Sol sütun (form tanımı):
 
 Sağ sütun — **NotificationSection** (kart içinde, "Bildirim Ayarları" başlığı):
 
+- **`notificationEnabled` switch en üstte, default ON** — diğer alanların
+  enabled/disabled durumunu kontrol eder.
+  - OFF durumunda kart muted background ve içerideki sender/recipient/subject
+    inputları **disabled** olur (değerler korunur, sadece düzenlenemez).
+    Üstte info banner: "ℹ Bildirim kapalı — submit sonrası mail gönderilmeyecek,
+    yalnızca FormSubmission DB'ye kaydedilecek. Bu alanlar opsiyonel."
+  - ON durumunda alanlar required işaretiyle (kırmızı yıldız) gösterilir.
+
 - `SenderMailAccountSelect` — `useActiveMailAccounts()` hook'undan dropdown
   - Opsiyonlar: `{id} • {name} ({fromAddress})`
-  - Eğer hiç aktif hesap yoksa: kart yerine empty state gösterilir:
+  - **Yalnızca notificationEnabled=true iken** validation aktif. False iken
+    placeholder "—" gösterilir, seçim opsiyoneldir.
+  - Eğer notificationEnabled=true ve hiç aktif hesap yoksa empty state:
     > ⚠ "Bildirim göndermek için önce aktif bir Mail Account oluştur."
     > [Yeni Mail Account Oluştur] butonu → `/admin/mail-accounts/new`
+    > veya alternatif: "Bildirimi devre dışı bırak" → switch'i OFF yapar
   - Seçim değişince UI altında preview: "Bu hesaptan gönderilecek: sales@firma.com"
-- `recipientEmail` — text input, email validation, placeholder `notifications@firma.com`
-- `notificationSubject` — text input (opsiyonel)
-  - Placeholder: `"Yeni form gönderimi: {title}"`
-  - Helper text: "Boş bırakırsan varsayılan kullanılır: Yeni form gönderimi: [form başlığı]"
-- `notificationEnabled` — switch, default ON
-  - Off durumunda uyarı: "⚠ Bu form submit edildiğinde mail gönderilmeyecek, sadece DB'ye kaydedilecek."
+
+- `recipientEmail` — text input, **çoklu adres destekli**
+  - Placeholder: `notifications@firma.com, alt@firma.com`
+  - Helper text: "Birden fazla adres için araya virgül koy (a@x.com, b@y.com)"
+  - notificationEnabled=true iken zorunlu; format zod superRefine içinde kontrol
+  - notificationEnabled=false iken disabled, boş bırakılabilir
+  - Görsel ipucu: alanın altında badge ile "Tahmini alıcı sayısı: 3" göster
+    (virgüle göre split edip count) — kullanıcının yanlışlıkla noktalı virgül
+    kullanmasını fark etmesine yardımcı olur
+
+- `notificationSubject` — text input (her durumda opsiyonel)
+  - Placeholder: `"Yeni form gönderimi: {title}"` (literal)
+  - Helper text: "Boş bırakırsan default kullanılır: Yeni form gönderimi: [form başlığı]"
 
 **SchemaEditor**
 
@@ -1212,16 +1292,23 @@ export const formsKeys = {
 1. **SenderMailAccountSelect** her zaman `/mail-accounts/active` kullansın
    (tüm liste değil). Pasif hesaplar dropdown'da görünmesin.
 
-2. **Form kaydederken senderMailAccountId yoksa** → submit disabled. Hata
-   mesajı: "Gönderici mail hesabı seçilmeli — Yeni Mail Account Oluştur"
-   (link ile).
+2. **notificationEnabled switch'i tek karar noktası** —
+   bildirim alanlarının zorunluluğunu kontrol eder:
+   - ON (default): senderMailAccountId + recipientEmail required, format validate
+   - OFF: ikisi de opsiyonel; inputlar disabled görünür (değer korunur ki
+     kullanıcı tekrar ON yaparsa veriyi kaybetmesin)
+   - Backend de aynı semantik: `notificationEnabled=false` iken DB'de null kabul edilir.
 
-3. **notificationEnabled=false iken recipientEmail validate etme** —
-   yine gir zorunlu ama vurgula: "Bildirim kapalı; gönderim iletilmeyecek."
-   (Backend her durumda recipientEmail bekliyor — boş bırakılamaz.)
+3. **Çoklu alıcı gösterimi** — `recipientEmail` virgülle ayrılmış string olarak
+   tutuluyor. Liste tablosunda çok adres varsa "a@x.com **+2**" şeklinde kısalt
+   ve hover'da tooltip ile tam liste göster. Form input'unda comma-split badge ile
+   tahmini alıcı sayısı gösterilebilir.
 
-4. **422 Unprocessable Entity** → toast "Seçilen mail hesabı pasif —
-   başka bir hesap seç veya hesabı aktifleştir" + MailAccountEdit link'i
+4. **422 Unprocessable Entity** olası sebepler ve toast mesajları:
+   - "notificationEnabled=true ise senderMailAccountId zorunludur" → "Gönderici seç veya bildirimi kapat"
+   - "Secilen mail hesabi aktif degil" → "Hesap pasif, başka birini seç veya aktifleştir" + edit link
+   - "notificationEnabled=true ise recipientEmail zorunludur" → "Alıcı zorunlu veya bildirimi kapat"
+   - "Gecersiz e-posta formati" → "Format hatası — `a@b.com, c@d.com` şeklinde gir"
 
 5. **Optimistic invalidation:** Form update sonrası `formsKeys.all` ve
    `formsKeys.detail(id)` invalidate; submit sonrası `submissions` ve
@@ -1229,11 +1316,17 @@ export const formsKeys = {
 
 ### Doğrulama
 
-- Aktif mail hesabı yokken form oluşturma → empty-state + yönlendirme çalışıyor
-- Form create + submit test → Email Logs sayfasında PENDING olarak görünüyor
-- notificationEnabled=false ile submit → EmailLog oluşmuyor, FormSubmission oluşuyor
+- **notificationEnabled=true (default) + sender/recipient dolu** → form oluşur,
+  submit'te EmailLog PENDING'e düşer, Email Logs sayfasında görünür
+- **notificationEnabled=false + sender/recipient boş** → form oluşur (200),
+  submit edildiğinde **EmailLog oluşmaz**, sadece FormSubmission kaydı atar
+- **notificationEnabled=true ama sender boş** → 422 toast "Gönderici seç veya bildirimi kapat"
+- **Çoklu alıcı (`a@x.com, b@y.com`)** → form oluşur, submit'te tek EmailLog
+  oluşur ama mail her iki adrese gider (backend `helper.setTo(addresses[])`)
+- **Pasif hesap seçildi** → 422 + UX yönlendirme link'i
+- **notificationEnabled toggle ON→OFF→ON** → input değerleri korunur (sadece disabled görünüm)
+- Aktif mail hesabı yokken bildirim açık form oluşturma → empty-state + yönlendirme
 - Submissions tab → sayaç ve tablo eş zamanlı gelir
-- 422 (pasif hesap) hatası düzgün UX ile handle ediliyor
 - Permission 403 → /403 redirect
 - `npm run build` hatasız
 
@@ -1284,14 +1377,14 @@ export const formsKeys = {
 
 Her tenant DB'sinde bu migration'ı çalıştır.
 
-4. **v4 backend henüz yazılmadıysa:** Prompt 2 (Email Templates) çalışmaz —
-   endpoint 404 döner. Önce elly repo'sunda v4 endpoint'lerini yazdırmalısın.
-   **Hazır promptlar (deploy edilmiş ve çalışan):**
-   - Prompt 2 — Email Templates (`email_templates:read`, `email_templates:manage`) — v4 backend deploy edildi
+4. **Backend hazır — tüm endpoint'ler canlı (2026-04-23 itibarıyla):**
+   - Prompt 2 — Email Templates (`email_templates:read`, `email_templates:manage`) — v4 DB-hosted, 3 seed template (`form-notification`, `welcome`, `password-reset`) bootstrap runner ile idempotent gelir
    - Prompt 3 — RabbitMQ yönetim (`rabbit:read`, `rabbit:manage`)
-   - Prompt 4 — Email Logs (`emails:read`, `emails:retry`) — auth: JWT Bearer only, X-API-KEY yok
+   - Prompt 4 — Email Logs (`emails:read`, `emails:retry`) — auth: JWT Bearer only, **`X-API-KEY` header'ı yok** (legacy `ApiKeyFilter` kaldırıldı)
    - Prompt 5 — Mail Accounts (`mail:read/create/update/delete`)
    - Prompt 6 — Forms (`forms:read/create/update/delete`)
+
+   Panel agent'ı 404 ile karşılaşırsa path'i kontrol et (`/api/v1/...` prefix'i şart) — backend eksikliği değil, path yazım hatası ihtimali yüksek.
 
 5. **Stack uyuşmazlığı:** Projen shadcn/ui değil MUI kullanıyorsa, Prompt
    sonuna şunu ekle: _"Yukarıdaki örnek kodlar shadcn/ui varsayımıyla yazıldı.

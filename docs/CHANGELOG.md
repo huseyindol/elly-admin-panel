@@ -42,6 +42,21 @@ Kayıt formatı:
 - `src/utils/services/fetcher.ts` — 3 adet `console.log` kaldırıldı
 - `src/lib/security.ts` — Monaco CSP hataları giderildi: `cdn.jsdelivr.net` (script/style/font/connect), `worker-src blob:`, `font-src data:`
 - TanStack Query retry flooding: başarısız RabbitMQ sorguları artık hata durumunda polling durduruyor
+- `src/components/mail-accounts/MailAccountSelect.tsx` — `smtpUsername` gösterimi düzeltildi (`fromAddress` yerine)
+- `react-hooks/set-state-in-effect` lint hataları düzeltildi (banners, components, mail-accounts, pages, posts, widgets edit sayfaları)
+
+### Performance
+
+- **GPU lag fix:** `backdrop-blur-xl` kaldırıldı (`Header.tsx`, `Sidebar.tsx`) — çoklu sekme açıkken GPU stutter önlendi
+- **CSS animasyon optimizasyonu:** `will-change`, `transform: translateZ(0)` GPU hint'leri, `globals.css` sadeleştirildi
+- **Re-render azaltma:** Birden fazla `watch()` çağrısı → `useWatch([...])` array formuna dönüştürüldü
+- **Forms sayfası lag fix:** `useWatch` targeted, memoized modal props
+- **Template filter memoization:** `useWatch` array + `useMemo` ile filtre hesaplamaları optimize
+- **Sheet scroll fix:** Body scroll kilidi ve animasyonlar iyileştirildi
+- **Dashboard card'ları:** `ActivityFeed`, `RecentOrders`, `RevenueChart`, `StatsCard`, `TopProducts` re-render azaltıldı
+- **Email Logs:** `EmailLogsClient` gereksiz re-render önlendi
+- **OverviewCard + QueueTable:** Manuel refetch butonu eklendi, auto-refresh hata durumunda durduruluyor
+- **useDebounce hook:** Temiz reimplementation
 
 ---
 

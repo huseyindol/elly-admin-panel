@@ -118,6 +118,30 @@
 - `.cursor/rules/sidebar-sync.mdc` — yeni sayfa `(baseLayout)/*/page.tsx` oluşturulurken Sidebar güncellenmesi zorunlu
 - `.cursor/rules/new-page.mdc` — Sidebar adımı "zorunlu, atlanmaz" olarak güncellendi
 
+### SKILL-14: Performance Optimizasyonları ✅ (2026-04-25)
+
+- **GPU lag fix:** `backdrop-blur-xl` kaldırıldı (Header, Sidebar) — çoklu sekme açıkken GPU stutter'ı engellendi
+- **CSS animasyon optimizasyonu:** `will-change`, `transform: translateZ(0)` GPU hint'leri, gereksiz animasyonlar sadeleştirildi
+- **Re-render azaltma:** `watch()` → `useWatch([...])` (array form) dönüşümü, memoized modal props
+- **Forms sayfası lag fix:** `useWatch` targeted, memoized modal props ile gereksiz render engellendi
+- **Template filter memoization:** `useWatch` array + `useMemo` ile filtre hesaplamaları optimize
+- **Lazy loading:** Ağır bileşenler (Monaco, Sheet içerikleri) lazy yükleniyor
+- **Sheet scroll fix:** Body scroll kilidi geliştirildi
+- **Dashboard card'ları:** Gereksiz re-render azaltıldı
+- **Email Logs:** `EmailLogsClient` re-render optimizasyonu
+- **OverviewCard + QueueTable:** Manuel refetch butonu eklendi, auto-refresh iyileştirildi
+- **MailAccountSelect:** `smtpUsername` gösterimi düzeltildi (fromAddress yerine)
+- **react-hooks/set-state-in-effect:** 2 lint hatası düzeltildi (edit sayfaları)
+- **CI lint fixes:** Tüm lint hataları giderildi
+
+### SKILL-15: Integration Prompts v2 ✅ (2026-04-25)
+
+- `.claude/agent-memory/team-lead/elly-admin-panel-integration-prompts.md` güncellendi
+- **Prompt 5 eklendi:** Mail Accounts sayfası (SMTP profil CRUD + test/verify)
+- **Prompt 6 eklendi:** Forms sayfası (FormDefinition CRUD + Submissions + Mail+Form v4 — opsiyonel bildirim, çoklu alıcı)
+- Tüm DTO tipleri semicolon formatına standardize edildi
+- Permission seed SQL güncellendi (mail:_, forms:_ eklendi)
+
 ---
 
 ## DEVAM EDEN / PLANLANAN ⚠️
@@ -147,6 +171,10 @@
 ### TODO-07: Settings Sayfası İçeriği
 
 - `src/app/(baseLayout)/settings/page.tsx` — şu an placeholder; içerik belirlenmeli
+
+### TODO-08: Visual Form Builder (v5 planlı)
+
+- Forms sayfasında raw JSON editor yerine drag-and-drop form builder UI
 
 ---
 
@@ -197,16 +225,17 @@
 
 ## OTURUM LOGU
 
-| Tarih      | Yapılan                                                                                                                                                                                                                                                                                                                                                                                                     | Sonraki Adım                                                   |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| 2026-04-12 | Memory sistemi kuruldu, proje tam snapshot alındı                                                                                                                                                                                                                                                                                                                                                           | Skill sistemi genişletme                                       |
-| 2026-04-13 | 5 yeni skill eklendi. Bug fix'ler, settings.json genişletildi                                                                                                                                                                                                                                                                                                                                               | Cross-platform eşleşme                                         |
-| 2026-04-14 | `.cursor/rules/` 14 .mdc dosyası. Claude ↔ Cursor tam eşleşme                                                                                                                                                                                                                                                                                                                                               | CMS management sayfaları                                       |
-| 2026-04-23 | **v0.4.0 tamamlandı:** RabbitMQ, Email Templates, Email Logs yönetim sayfaları. Ortak altyapı (ApiError, permissions, Sheet, DestructiveConfirmDialog). Sidebar güncellendi. Monaco editor eklendi. CHANGELOG + CMS_MANAGEMENT_PAGES rehberi yazıldı. 43/43 test geçti, build başarılı                                                                                                                      | TODO-01 (log temizliği) veya v5 planlama                       |
-| 2026-04-24 | **Oturum tamamlandı:** Permission bypass (BE koruması yeterli). Mail Hesapları sidebar'a eklendi + sidebar-sync kuralı. fetcher console.log temizliği. Email Templates v4 backend deploy edildi → tam CRUD restore. TanStack Query retry flooding düzeltildi. Settings placeholder sayfası. Monaco CSP düzeltmeleri (cdn.jsdelivr.net, worker-src blob:, font-src data:). ClasspathTemplateSection eklendi. | TODO-05 (permission aktifleştirme) veya TODO-06 (versiyonlama) |
+| Tarih      | Yapılan                                                                                                                                                                                                                                                                                                                                                                                                     | Sonraki Adım                             |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| 2026-04-12 | Memory sistemi kuruldu, proje tam snapshot alındı                                                                                                                                                                                                                                                                                                                                                           | Skill sistemi genişletme                 |
+| 2026-04-13 | 5 yeni skill eklendi. Bug fix'ler, settings.json genişletildi                                                                                                                                                                                                                                                                                                                                               | Cross-platform eşleşme                   |
+| 2026-04-14 | `.cursor/rules/` 14 .mdc dosyası. Claude ↔ Cursor tam eşleşme                                                                                                                                                                                                                                                                                                                                               | CMS management sayfaları                 |
+| 2026-04-23 | **v0.4.0 tamamlandı:** RabbitMQ, Email Templates, Email Logs yönetim sayfaları. Ortak altyapı (ApiError, permissions, Sheet, DestructiveConfirmDialog). Sidebar güncellendi. Monaco editor eklendi. CHANGELOG + CMS_MANAGEMENT_PAGES rehberi yazıldı. 43/43 test geçti, build başarılı                                                                                                                      | TODO-01 (log temizliği) veya v5 planlama |
+| 2026-04-24 | **Oturum tamamlandı:** Permission bypass (BE koruması yeterli). Mail Hesapları sidebar'a eklendi + sidebar-sync kuralı. fetcher console.log temizliği. Email Templates v4 backend deploy edildi → tam CRUD restore. TanStack Query retry flooding düzeltildi. Settings placeholder sayfası. Monaco CSP düzeltmeleri (cdn.jsdelivr.net, worker-src blob:, font-src data:). ClasspathTemplateSection eklendi. | Performance optimizasyonları             |
+| 2026-04-25 | **Performance sprint:** GPU lag fix (backdrop-blur kaldırıldı), CSS animasyon optimizasyonu, watch→useWatch dönüşümü, forms/template sayfaları lag fix, OverviewCard/QueueTable refetch butonu, MailAccountSelect smtpUsername fix, lint hataları giderildi. Integration prompts v2: Prompt 5 (Mail Accounts) + Prompt 6 (Forms + Mail+Form v4) eklendi.                                                    | v5 planlama veya TODO-02 (Sentry)        |
 
 ---
 
 ## AKTİF BRANCH
 
-`main` — v0.4.0 + post-release fixes canlı. Email Templates v4 tam CRUD aktif.
+`main` — v0.4.0+ canlı. Tüm CMS modülleri (Prompt 1-6) tamamlandı, performans optimizasyonları uygulandı.
