@@ -37,9 +37,13 @@ export default function EditComponentPage() {
   const queryClient = useQueryClient()
   const { isDarkMode } = useAdminTheme()
   const [showAdvanced, setShowAdvanced] = useState(false)
-  const [selectedBanners, setSelectedBanners] = useState<BannerSummary[]>([])
-  const [selectedWidgets, setSelectedWidgets] = useState<WidgetSummary[]>([])
-  const [selectedForms, setSelectedForms] = useState<FormSchema[]>([])
+  const [bannerOverride, setBannerOverride] = useState<BannerSummary[] | null>(
+    null,
+  )
+  const [widgetOverride, setWidgetOverride] = useState<WidgetSummary[] | null>(
+    null,
+  )
+  const [formOverride, setFormOverride] = useState<FormSchema[] | null>(null)
   const { templates: componentTemplates } = useTemplates('components')
 
   // Selected sub-folder for banner filtering
@@ -90,23 +94,31 @@ export default function EditComponentPage() {
     queryFn: getFormsSummaryService,
   })
 
-  const initialBannerIds = useMemo(
-    () => componentData?.data?.banners?.map(b => Number(b.id)) ?? [],
-    [componentData],
-  )
-  const initialWidgetIds = useMemo(
-    () => componentData?.data?.widgets?.map(w => Number(w.id)) ?? [],
-    [componentData],
-  )
-  const initialFormIds = useMemo(
-    () => componentData?.data?.forms?.map(f => Number(f.id)) ?? [],
-    [componentData],
-  )
-
   const filteredComponentTemplates = useMemo(
     () => componentTemplates.filter(t => t.value !== ''),
     [componentTemplates],
   )
+
+  const selectedBanners = useMemo(() => {
+    if (bannerOverride !== null) return bannerOverride
+    if (!componentData?.data?.banners || !allBannersData?.data) return []
+    const ids = componentData.data.banners.map(b => Number(b.id))
+    return allBannersData.data.filter(b => ids.includes(b.id))
+  }, [bannerOverride, componentData, allBannersData])
+
+  const selectedWidgets = useMemo(() => {
+    if (widgetOverride !== null) return widgetOverride
+    if (!componentData?.data?.widgets || !widgetsData?.data) return []
+    const ids = componentData.data.widgets.map(w => Number(w.id))
+    return widgetsData.data.filter(w => ids.includes(w.id))
+  }, [widgetOverride, componentData, widgetsData])
+
+  const selectedForms = useMemo(() => {
+    if (formOverride !== null) return formOverride
+    if (!componentData?.data?.forms || !formsData?.data) return []
+    const ids = componentData.data.forms.map(f => Number(f.id))
+    return formsData.data.filter(f => ids.includes(f.id))
+  }, [formOverride, componentData, formsData])
 
   const availableForms = useMemo(
     () =>
@@ -185,34 +197,8 @@ export default function EditComponentPage() {
         widgetIds: [],
         formIds: [],
       })
-
-      /* eslint-disable react-hooks/set-state-in-effect -- one-time init from server data */
-      if (component.banners && allBannersData?.data) {
-        const bannerIds = component.banners.map(b => Number(b.id))
-        const selectedBannerItems = allBannersData.data.filter(b =>
-          bannerIds.includes(b.id),
-        )
-        setSelectedBanners(selectedBannerItems)
-      }
-
-      if (component.widgets && widgetsData?.data) {
-        const widgetIds = component.widgets.map(w => Number(w.id))
-        const selectedWidgetItems = widgetsData.data.filter(w =>
-          widgetIds.includes(w.id),
-        )
-        setSelectedWidgets(selectedWidgetItems)
-      }
-
-      if (component.forms && formsData?.data) {
-        const formIds = component.forms.map(f => Number(f.id))
-        const selectedFormItems = formsData.data.filter(f =>
-          formIds.includes(f.id),
-        )
-        setSelectedForms(selectedFormItems)
-      }
-      /* eslint-enable react-hooks/set-state-in-effect */
     }
-  }, [componentData, allBannersData, widgetsData, formsData, reset])
+  }, [componentData, reset])
 
   // Update mutation
   const updateMutation = useMutation({
@@ -230,18 +216,17 @@ export default function EditComponentPage() {
     },
   })
 
-  // Check if banner or widget selections changed using utility
-  const hasBannerChanges = () =>
-    hasIdArrayChanges(selectedBanners, initialBannerIds)
-
-  const hasWidgetChanges = () =>
-    hasIdArrayChanges(selectedWidgets, initialWidgetIds)
-
-  const hasFormChanges = () => hasIdArrayChanges(selectedForms, initialFormIds)
-
   const onSubmit = (data: UpdateComponentInput) => {
+    const initialBannerIds =
+      componentData?.data?.banners?.map(b => Number(b.id)) ?? []
+    const initialWidgetIds =
+      componentData?.data?.widgets?.map(w => Number(w.id)) ?? []
+    const initialFormIds =
+      componentData?.data?.forms?.map(f => Number(f.id)) ?? []
     const hasAssignmentChanges =
-      hasBannerChanges() || hasWidgetChanges() || hasFormChanges()
+      hasIdArrayChanges(selectedBanners, initialBannerIds) ||
+      hasIdArrayChanges(selectedWidgets, initialWidgetIds) ||
+      hasIdArrayChanges(selectedForms, initialFormIds)
 
     if (!isDirty && !hasAssignmentChanges) {
       toast.info('Herhangi bir değişiklik yapılmadı')
@@ -555,7 +540,7 @@ export default function EditComponentPage() {
               <DualListbox<BannerSummary>
                 available={availableBanners}
                 selected={selectedBanners}
-                onChange={setSelectedBanners}
+                onChange={items => setBannerOverride(items)}
                 getItemLabel={item => item.title}
                 getItemSubLabel={item =>
                   `${item.subFolder || 'Genel'} • ${item.status ? 'Aktif' : 'Pasif'}`
@@ -590,7 +575,7 @@ export default function EditComponentPage() {
             <DualListbox<WidgetSummary>
               available={widgetsData?.data || []}
               selected={selectedWidgets}
-              onChange={setSelectedWidgets}
+              onChange={items => setWidgetOverride(items)}
               getItemLabel={item => item.name}
               getItemSubLabel={item => item.type}
               emptyLeftText="Widget bulunamadı"
@@ -618,7 +603,7 @@ export default function EditComponentPage() {
             <DualListbox<FormSchema>
               available={availableForms}
               selected={selectedForms}
-              onChange={setSelectedForms}
+              onChange={items => setFormOverride(items)}
               getItemLabel={item => item.title}
               getItemSubLabel={item =>
                 `v${item.version} • ${item.active ? 'Aktif' : 'Pasif'}`

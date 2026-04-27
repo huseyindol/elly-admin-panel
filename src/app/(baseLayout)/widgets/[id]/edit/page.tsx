@@ -31,8 +31,10 @@ export default function EditWidgetPage() {
   const widgetId = params.id as string
   const queryClient = useQueryClient()
   const { isDarkMode } = useAdminTheme()
-  const [selectedBanners, setSelectedBanners] = useState<BannerSummary[]>([])
-  const [selectedPosts, setSelectedPosts] = useState<PostSummary[]>([])
+  const [bannerOverride, setBannerOverride] = useState<BannerSummary[] | null>(
+    null,
+  )
+  const [postOverride, setPostOverride] = useState<PostSummary[] | null>(null)
   const { templates: widgetTemplates } = useTemplates('widgets')
 
   // Selected sub-folder for banner filtering
@@ -71,19 +73,17 @@ export default function EditWidgetPage() {
     staleTime: 5 * 60 * 1000,
   })
 
-  const initialBannerIds = useMemo(
-    () => widgetData?.data?.banners?.map(b => Number(b.id)) ?? [],
-    [widgetData],
-  )
-  const initialPostIds = useMemo(
-    () => widgetData?.data?.posts?.map(p => Number(p.id)) ?? [],
-    [widgetData],
-  )
-
   const filteredWidgetTemplates = useMemo(
     () => widgetTemplates.filter(t => t.value !== ''),
     [widgetTemplates],
   )
+
+  const selectedBanners = useMemo(() => {
+    if (bannerOverride !== null) return bannerOverride
+    if (!widgetData?.data?.banners || !allBannersData?.data) return []
+    const ids = widgetData.data.banners.map(b => Number(b.id))
+    return allBannersData.data.filter(b => ids.includes(b.id))
+  }, [bannerOverride, widgetData, allBannersData])
 
   // Available banners (filtered by sub-folder, excluding already selected ones)
   const availableBanners = useMemo(() => {
@@ -100,6 +100,13 @@ export default function EditWidgetPage() {
     queryKey: ['posts-summary'],
     queryFn: getPostsSummaryService,
   })
+
+  const selectedPosts = useMemo(() => {
+    if (postOverride !== null) return postOverride
+    if (!widgetData?.data?.posts || !postsData?.data) return []
+    const ids = widgetData.data.posts.map(p => Number(p.id))
+    return postsData.data.filter(p => ids.includes(p.id))
+  }, [postOverride, widgetData, postsData])
 
   const {
     register,
@@ -153,26 +160,8 @@ export default function EditWidgetPage() {
         bannerIds: [],
         postIds: [],
       })
-
-      /* eslint-disable react-hooks/set-state-in-effect -- one-time init from server data */
-      if (widget.banners && allBannersData?.data) {
-        const bannerIds = widget.banners.map(b => Number(b.id))
-        const selectedBannerItems = allBannersData.data.filter(b =>
-          bannerIds.includes(b.id),
-        )
-        setSelectedBanners(selectedBannerItems)
-      }
-
-      if (widget.posts && postsData?.data) {
-        const postIds = widget.posts.map(p => Number(p.id))
-        const selectedPostItems = postsData.data.filter(p =>
-          postIds.includes(p.id),
-        )
-        setSelectedPosts(selectedPostItems)
-      }
-      /* eslint-enable react-hooks/set-state-in-effect */
     }
-  }, [widgetData, allBannersData, postsData, reset])
+  }, [widgetData, reset])
 
   // Update mutation
   const updateMutation = useMutation({
@@ -190,14 +179,13 @@ export default function EditWidgetPage() {
     },
   })
 
-  // Check if banner or post selections changed using utility
-  const hasBannerChanges = () =>
-    hasIdArrayChanges(selectedBanners, initialBannerIds)
-
-  const hasPostChanges = () => hasIdArrayChanges(selectedPosts, initialPostIds)
-
   const onSubmit = (data: UpdateWidgetInput) => {
-    const hasAssignmentChanges = hasBannerChanges() || hasPostChanges()
+    const initialBannerIds =
+      widgetData?.data?.banners?.map(b => Number(b.id)) ?? []
+    const initialPostIds = widgetData?.data?.posts?.map(p => Number(p.id)) ?? []
+    const hasAssignmentChanges =
+      hasIdArrayChanges(selectedBanners, initialBannerIds) ||
+      hasIdArrayChanges(selectedPosts, initialPostIds)
 
     if (!isDirty && !hasAssignmentChanges) {
       toast.info('Herhangi bir değişiklik yapılmadı')
@@ -509,7 +497,7 @@ export default function EditWidgetPage() {
               <DualListbox<BannerSummary>
                 available={availableBanners}
                 selected={selectedBanners}
-                onChange={setSelectedBanners}
+                onChange={items => setBannerOverride(items)}
                 getItemLabel={item => item.title}
                 getItemSubLabel={item =>
                   `${item.subFolder || 'Genel'} • ${item.status ? 'Aktif' : 'Pasif'}`
@@ -544,7 +532,7 @@ export default function EditWidgetPage() {
             <DualListbox<PostSummary>
               available={postsData?.data || []}
               selected={selectedPosts}
-              onChange={setSelectedPosts}
+              onChange={items => setPostOverride(items)}
               getItemLabel={item => item.title}
               getItemSubLabel={item => `/${item.slug}`}
               emptyLeftText="Post bulunamadı"
