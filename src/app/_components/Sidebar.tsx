@@ -166,6 +166,12 @@ const menuGroups: MenuGroup[] = [
     title: 'Sistem',
     items: [
       {
+        icon: Icons.Users,
+        label: 'Kullanıcılar',
+        href: '/users',
+        permission: `${MODULES.USERS}:manage`,
+      },
+      {
         icon: Icons.Activity,
         label: 'RabbitMQ',
         href: '/infrastructure/rabbitmq',
@@ -386,12 +392,13 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
             </button>
           </nav>
 
-          {/* User Profile */}
-          <div
-            className={`mt-4 rounded-2xl p-4 ${
+          {/* User Profile — Profil sayfasına link */}
+          <Link
+            href="/profile"
+            className={`mt-4 block rounded-2xl p-4 transition-colors ${
               isDarkMode
-                ? 'border border-slate-700/50 bg-slate-800/50'
-                : 'border border-gray-200 bg-gray-100'
+                ? 'border border-slate-700/50 bg-slate-800/50 hover:bg-slate-700/50'
+                : 'border border-gray-200 bg-gray-100 hover:bg-gray-200'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -414,8 +421,9 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
                   {roleLabel}
                 </p>
               </div>
+              <Icons.ChevronRight />
             </div>
-          </div>
+          </Link>
         </div>
       </aside>
     </>
