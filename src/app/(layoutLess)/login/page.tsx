@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { updateGlobalCookie, useCookie } from '@/context/CookieContext'
 import { LoginInput, LoginSchema } from '@/schemas/user'
 import { LoginResponseType } from '@/types/AuthResponse'
+import { usePermissionStore } from '@/stores/permission-store'
 import { CookieEnum } from '@/utils/constant/cookieConstant'
 import { fetcher } from '@/utils/services/fetcher'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -91,9 +92,14 @@ const AdminLoginPage = () => {
         updateCookie(CookieEnum.TENANT_ID, formData.tenantId)
       }
 
-      // Full navigation: server action set-cookie header'larının browser'da işlenmesini garanti eder
+      // İzinleri Zustand store'a yaz (persist → localStorage)
+      usePermissionStore
+        .getState()
+        .setPermissions(
+          response.data.roles ?? [],
+          response.data.permissions ?? [],
+        )
 
-      // window.location.href = '/dashboard'
       router.push('/dashboard')
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)

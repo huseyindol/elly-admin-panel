@@ -51,6 +51,14 @@ export const fetcher = async <T>(
   }
   let response = await fetch(`${process.env.NEXT_PUBLIC_API}${url}`, options)
   if (!response.ok) {
+    // 403 — Yetkisiz erişim
+    if (response.status === 403) {
+      if (typeof window !== 'undefined') {
+        const { toast } = await import('sonner')
+        toast.error('Bu işlem için yetkiniz bulunmuyor.')
+      }
+    }
+
     if (response.status === 401) {
       // In CSR: try to refresh token if fetchOngoing is enabled
       if (typeof window !== 'undefined') {
@@ -104,6 +112,12 @@ const csrRefreshToken = async (refreshToken: string) => {
   }
   if (data?.token) {
     updateGlobalCookie(CookieEnum.ACCESS_TOKEN, data.token)
+  }
+
+  // Refresh response'unda roles/permissions varsa Zustand store'u güncelle
+  if (typeof window !== 'undefined' && data?.roles && data?.permissions) {
+    const { usePermissionStore } = await import('@/stores/permission-store')
+    usePermissionStore.getState().setPermissions(data.roles, data.permissions)
   }
 
   return response

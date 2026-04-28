@@ -5,6 +5,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 import { logout } from '@/actions/auth/logout'
+import { PermissionGate } from '@/components/PermissionGate'
+import { usePermission } from '@/hooks/usePermission'
+import { usePermissionStore } from '@/stores/permission-store'
+import { MODULES } from '@/types/permissions'
 import { useAdminTheme } from '../_hooks'
 import { Icons } from './Icons'
 
@@ -12,6 +16,13 @@ interface MenuItem {
   icon: () => React.ReactNode
   label: string
   href: string
+  /** Bu menü öğesinin görünmesi için gerekli permission (module:action) */
+  permission?: string
+}
+
+interface MenuGroup {
+  title: string
+  items: MenuItem[]
 }
 
 function NavLink({
@@ -19,12 +30,12 @@ function NavLink({
   active,
   isDarkMode,
   onClick,
-}: {
+}: Readonly<{
   item: MenuItem
   active: boolean
   isDarkMode: boolean
   onClick: () => void
-}) {
+}>) {
   let linkClass: string
   if (active) {
     linkClass = `bg-gradient-to-r from-violet-500/20 to-purple-500/20 ${
@@ -54,39 +65,209 @@ function NavLink({
   )
 }
 
+/** Menü gruplarını izin tabanlı olarak tanımla */
+const menuGroups: MenuGroup[] = [
+  {
+    title: '',
+    items: [{ icon: Icons.Home, label: 'Gösterge Paneli', href: '/dashboard' }],
+  },
+  {
+    title: 'İçerik Yönetimi',
+    items: [
+      {
+        icon: Icons.File,
+        label: 'Yazılar',
+        href: '/posts',
+        permission: `${MODULES.POSTS}:read`,
+      },
+      {
+        icon: Icons.BarChart,
+        label: 'Sayfalar',
+        href: '/pages',
+        permission: `${MODULES.PAGES}:read`,
+      },
+      {
+        icon: Icons.Layers,
+        label: 'İçerikler',
+        href: '/contents',
+        permission: `${MODULES.CONTENTS}:read`,
+      },
+    ],
+  },
+  {
+    title: 'Bileşenler',
+    items: [
+      {
+        icon: Icons.Package,
+        label: 'Componentler',
+        href: '/components',
+        permission: `${MODULES.COMPONENTS}:read`,
+      },
+      {
+        icon: Icons.Grid,
+        label: 'Widgetlar',
+        href: '/widgets',
+        permission: `${MODULES.WIDGETS}:read`,
+      },
+      {
+        icon: Icons.Eye,
+        label: 'Bannerlar',
+        href: '/banners',
+        permission: `${MODULES.BANNERS}:read`,
+      },
+    ],
+  },
+  {
+    title: 'Medya',
+    items: [
+      {
+        icon: Icons.Image,
+        label: 'Assetler',
+        href: '/assets',
+        permission: `${MODULES.ASSETS}:read`,
+      },
+    ],
+  },
+  {
+    title: 'Etkileşim',
+    items: [
+      {
+        icon: Icons.ClipboardList,
+        label: 'Formlar',
+        href: '/forms',
+        permission: `${MODULES.FORMS}:read`,
+      },
+    ],
+  },
+  {
+    title: 'İletişim',
+    items: [
+      {
+        icon: Icons.AtSign,
+        label: 'Mail Hesapları',
+        href: '/mail-accounts',
+        permission: `${MODULES.MAIL}:read`,
+      },
+      {
+        icon: Icons.Mail,
+        label: 'Email Templates',
+        href: '/email-templates',
+        permission: `${MODULES.EMAIL_TEMPLATES}:read`,
+      },
+      {
+        icon: Icons.Inbox,
+        label: 'Email Logları',
+        href: '/email-logs',
+        permission: `${MODULES.EMAILS}:read`,
+      },
+    ],
+  },
+  {
+    title: 'Sistem',
+    items: [
+      {
+        icon: Icons.Activity,
+        label: 'RabbitMQ',
+        href: '/infrastructure/rabbitmq',
+        permission: `${MODULES.RABBIT}:read`,
+      },
+      {
+        icon: Icons.Settings,
+        label: 'Ayarlar',
+        href: '/settings',
+      },
+    ],
+  },
+]
+
 interface SidebarProps {
   isOpen: boolean
   onClose: () => void
 }
 
-const menuItems: MenuItem[] = [
-  { icon: Icons.Home, label: 'Gösterge Paneli', href: '/dashboard' },
-  { icon: Icons.BarChart, label: 'Sayfalar', href: '/pages' },
-  { icon: Icons.Package, label: 'Componentler', href: '/components' },
-  { icon: Icons.Grid, label: 'Widgetlar', href: '/widgets' },
-  { icon: Icons.File, label: 'Postlar', href: '/posts' },
-  { icon: Icons.Eye, label: 'Bannerlar', href: '/banners' },
-  { icon: Icons.Layers, label: 'İçerikler', href: '/contents' },
-  { icon: Icons.Image, label: 'Assetler', href: '/assets' },
-  { icon: Icons.ClipboardList, label: 'Formlar', href: '/forms' },
-  { icon: Icons.Settings, label: 'Ayarlar', href: '/settings' },
-]
+/** Menü öğesini PermissionGate ile saran yardımcı bileşen */
+function PermissionMenuItem({
+  item,
+  active,
+  isDarkMode,
+  onClick,
+}: Readonly<{
+  item: MenuItem
+  active: boolean
+  isDarkMode: boolean
+  onClick: () => void
+}>) {
+  const navLink = (
+    <NavLink
+      item={item}
+      active={active}
+      isDarkMode={isDarkMode}
+      onClick={onClick}
+    />
+  )
 
-// CMS yönetim menüsü — ayrı bölüm
-const cmsManagementItems: MenuItem[] = [
-  { icon: Icons.AtSign, label: 'Mail Hesapları', href: '/mail-accounts' },
-  { icon: Icons.Mail, label: 'Email Templates', href: '/email-templates' },
-  { icon: Icons.Inbox, label: 'Email Logları', href: '/email-logs' },
-  {
-    icon: Icons.Activity,
-    label: 'RabbitMQ',
-    href: '/infrastructure/rabbitmq',
-  },
-]
+  // permission tanımlı değilse (Dashboard, Ayarlar vb.) doğrudan göster
+  if (!item.permission) return navLink
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  return <PermissionGate permission={item.permission}>{navLink}</PermissionGate>
+}
+
+/** Bir grubun herhangi bir öğesine erişim var mı kontrol eden bileşen */
+function MenuGroupSection({
+  group,
+  isDarkMode,
+  isActive,
+  onClose,
+}: Readonly<{
+  group: MenuGroup
+  isDarkMode: boolean
+  isActive: (href: string) => boolean
+  onClose: () => void
+}>) {
+  const { hasPermission, isSuperAdmin } = usePermission()
+
+  // Gruptaki görünür öğe sayısını hesapla
+  const visibleItems = group.items.filter(
+    item =>
+      !item.permission || isSuperAdmin() || hasPermission(item.permission),
+  )
+
+  // Hiçbir öğe görünmüyorsa grubu gizle
+  if (visibleItems.length === 0) return null
+
+  return (
+    <>
+      {group.title && (
+        <>
+          <div
+            className={`my-2 border-t ${isDarkMode ? 'border-slate-700/50' : 'border-gray-200'}`}
+          />
+          <p
+            className={`px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest ${
+              isDarkMode ? 'text-slate-600' : 'text-gray-400'
+            }`}
+          >
+            {group.title}
+          </p>
+        </>
+      )}
+      {group.items.map(item => (
+        <PermissionMenuItem
+          key={item.href}
+          item={item}
+          active={isActive(item.href)}
+          isDarkMode={isDarkMode}
+          onClick={onClose}
+        />
+      ))}
+    </>
+  )
+}
+
+export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
   const pathname = usePathname()
   const { isDarkMode } = useAdminTheme()
+  const { roles } = usePermission()
 
   const isActive = (href: string) => {
     if (href === '/dashboard') {
@@ -98,9 +279,24 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const queryClient = useQueryClient()
 
   const onLogout = () => {
+    // Zustand store'u temizle (localStorage'dan da silinir)
+    usePermissionStore.getState().clearPermissions()
     queryClient.clear()
     logout()
   }
+
+  // Kullanıcı rol etiketini belirle
+  const roleLabel = roles.includes('SUPER_ADMIN')
+    ? 'Süper Admin'
+    : roles.includes('ADMIN')
+      ? 'Admin'
+      : roles.includes('EDITOR')
+        ? 'Editör'
+        : roles.includes('VIEWER')
+          ? 'Görüntüleyici'
+          : roles.length > 0
+            ? roles[0]
+            : 'Kullanıcı'
 
   return (
     <>
@@ -159,36 +355,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </button>
           </div>
 
-          {/* Navigation */}
+          {/* Navigation — İzin tabanlı gruplar */}
           <nav className="flex-1 space-y-1 overflow-y-auto">
-            {menuItems.map(item => (
-              <NavLink
-                key={item.href}
-                item={item}
-                active={isActive(item.href)}
+            {menuGroups.map(group => (
+              <MenuGroupSection
+                key={group.title || '__dashboard'}
+                group={group}
                 isDarkMode={isDarkMode}
-                onClick={onClose}
-              />
-            ))}
-
-            {/* CMS Yönetim — Separator */}
-            <div
-              className={`my-2 border-t ${isDarkMode ? 'border-slate-700/50' : 'border-gray-200'}`}
-            />
-            <p
-              className={`px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest ${
-                isDarkMode ? 'text-slate-600' : 'text-gray-400'
-              }`}
-            >
-              CMS Yönetim
-            </p>
-            {cmsManagementItems.map(item => (
-              <NavLink
-                key={item.href}
-                item={item}
-                active={isActive(item.href)}
-                isDarkMode={isDarkMode}
-                onClick={onClose}
+                isActive={isActive}
+                onClose={onClose}
               />
             ))}
 
@@ -197,7 +372,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               className={`my-2 border-t ${isDarkMode ? 'border-slate-700/50' : 'border-gray-200'}`}
             />
 
-            {/* Logout Button — nav içinde, kolay erişilebilir */}
+            {/* Logout Button */}
             <button
               onClick={onLogout}
               className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
@@ -211,7 +386,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </button>
           </nav>
 
-          {/* User Profile — sadece bilgi, logout buradan kaldırıldı */}
+          {/* User Profile */}
           <div
             className={`mt-4 rounded-2xl p-4 ${
               isDarkMode
@@ -236,7 +411,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     isDarkMode ? 'text-slate-400' : 'text-gray-500'
                   }`}
                 >
-                  Süper Admin
+                  {roleLabel}
                 </p>
               </div>
             </div>

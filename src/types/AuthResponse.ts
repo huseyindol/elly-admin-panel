@@ -9,6 +9,8 @@ export interface LoginResponse {
   email: string
   userCode: string
   expiredDate: number
+  roles: string[]
+  permissions: string[]
 }
 
 export type LoginResponseType = BaseResponse<LoginResponse>
@@ -22,6 +24,8 @@ export interface RefreshTokenResponse {
   email: string
   userCode: string
   expiredDate: number
+  roles: string[]
+  permissions: string[]
 }
 
 export type RefreshTokenResponseType = BaseResponse<RefreshTokenResponse>
