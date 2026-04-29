@@ -13,8 +13,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { updateGlobalCookie, useCookie } from '@/context/CookieContext'
 import { LoginInput, LoginSchema } from '@/schemas/user'
-import { LoginResponseType } from '@/types/AuthResponse'
 import { usePermissionStore } from '@/stores/permission-store'
+import { LoginResponseType } from '@/types/AuthResponse'
 import { CookieEnum } from '@/utils/constant/cookieConstant'
 import { fetcher } from '@/utils/services/fetcher'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -66,7 +66,7 @@ const AdminLoginPage = () => {
           usernameOrEmail: formData.usernameOrEmail,
           password: formData.password,
           ...(formData.tenantId
-            ? { tenantId: formData.tenantId, loginType: 'tenant' }
+            ? { tenantId: formData.tenantId, loginType: 'admin' }
             : { loginType: 'admin' }),
         }),
       })
