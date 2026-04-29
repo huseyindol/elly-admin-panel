@@ -17,9 +17,9 @@ import {
   useTenantUsers,
   useUpdateTenantUser,
   useUpdateTenantUserStatus,
+  useUserProfile,
   useUsers,
 } from '@/app/_hooks/useUsers'
-import { useUserProfile } from '@/app/_hooks/useUsers'
 import { usePermission } from '@/hooks/usePermission'
 import type { AdminRole, AdminUser, TenantUser } from '@/types/user-management'
 import { redirect } from 'next/navigation'
@@ -320,8 +320,7 @@ function TenantUsersTab() {
   const { data: profileData } = useUserProfile()
   const managedTenants = profileData?.data?.managedTenants ?? []
 
-  const [tenantId, setTenantId] = useState<string>('')
-  const [activeTenantId, setActiveTenantId] = useState<string | null>(null)
+  const activeTenantId = managedTenants[0] ?? null
 
   const [createOpen, setCreateOpen] = useState(false)
   const [editUser, setEditUser] = useState<TenantUser | null>(null)
@@ -351,10 +350,6 @@ function TenantUsersTab() {
   })
 
   const tenantUsers = tenantUsersData?.data ?? []
-
-  const handleSearch = () => {
-    if (tenantId.trim()) setActiveTenantId(tenantId.trim())
-  }
 
   const handleCreateSubmit = (data: TenantUserFormData) => {
     createMutation.mutate(data, {
@@ -459,50 +454,6 @@ function TenantUsersTab() {
 
   return (
     <div className="space-y-4">
-      {/* Tenant seçimi */}
-      <div
-        className={`rounded-2xl p-5 ${isDarkMode ? 'border border-slate-800/50 bg-slate-900/60' : 'border border-gray-200 bg-white'}`}
-      >
-        <p
-          className={`mb-3 text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}
-        >
-          Tenant Seç
-        </p>
-        <div className="flex gap-2">
-          {managedTenants.length > 0 ? (
-            <select
-              value={tenantId}
-              onChange={e => setTenantId(e.target.value)}
-              className={`flex-1 ${inputClass}`}
-            >
-              <option value="">Tenant seçin...</option>
-              {managedTenants.map(t => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              type="text"
-              value={tenantId}
-              onChange={e => setTenantId(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              placeholder="Tenant ID girin (ör. tenant1)"
-              className={`flex-1 ${inputClass}`}
-            />
-          )}
-          <button
-            type="button"
-            onClick={handleSearch}
-            disabled={!tenantId.trim()}
-            className="rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow disabled:opacity-50"
-          >
-            Listele
-          </button>
-        </div>
-      </div>
-
       {/* Kullanıcı listesi */}
       {activeTenantId && (
         <>
