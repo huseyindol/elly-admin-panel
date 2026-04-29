@@ -2,9 +2,9 @@
 
 Elly CMS'de iki ayrı kullanıcı tipi ve iki ayrı DB vardır:
 
-| Tip | DB | Login Türü | Kullanım |
-|-----|----|-----------|---------|
-| **Panel admin** | `basedb` | `loginType: "admin"` | CMS panelini yönetenler |
+| Tip                         | DB                        | Login Türü            | Kullanım                  |
+| --------------------------- | ------------------------- | --------------------- | ------------------------- |
+| **Panel admin**             | `basedb`                  | `loginType: "admin"`  | CMS panelini yönetenler   |
 | **Tenant site kullanıcısı** | `tenant1`, `tenant2`, ... | `loginType: "tenant"` | Sitenin son kullanıcıları |
 
 ---
@@ -12,6 +12,7 @@ Elly CMS'de iki ayrı kullanıcı tipi ve iki ayrı DB vardır:
 ## 1. Kimlik Doğrulama (Auth)
 
 ### Panel Admin Girişi → basedb
+
 ```http
 POST /api/auth/login
 Content-Type: application/json
@@ -24,6 +25,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "token": "eyJ...",
@@ -40,6 +42,7 @@ Content-Type: application/json
 ---
 
 ### Tenant Site Kullanıcısı Girişi → tenant1 DB
+
 ```http
 POST /api/auth/login
 Content-Type: application/json
@@ -55,6 +58,7 @@ Content-Type: application/json
 ---
 
 ### Tenant Site Kullanıcısı Kayıt → tenant1 DB
+
 ```http
 POST /api/auth/register
 Content-Type: application/json
@@ -78,12 +82,14 @@ Content-Type: application/json
 **Gerekli:** `Authorization: Bearer {admin_token}` + `users:manage` yetkisi
 
 ### Tüm Admin Kullanıcılarını Listele
+
 ```http
 GET /api/v1/users
 Authorization: Bearer {admin_token}
 ```
 
 **Response:**
+
 ```json
 {
   "result": true,
@@ -105,12 +111,14 @@ Authorization: Bearer {admin_token}
 ```
 
 ### Tek Admin Kullanıcı Getir
+
 ```http
 GET /api/v1/users/{id}
 Authorization: Bearer {admin_token}
 ```
 
 ### Kendi Profilini Güncelle (giriş yapan admin)
+
 ```http
 PUT /api/v1/users/me
 Authorization: Bearer {admin_token}
@@ -132,6 +140,7 @@ Content-Type: application/json
 > Tüm endpoint'ler `AdminLoginInterceptor` tarafından korunur — sadece admin panel token'ı ile çalışır.
 
 ### Yeni Tenant Kullanıcısı Oluştur
+
 ```http
 POST /api/v1/admin/tenants/{tenantId}/users
 Authorization: Bearer {admin_token}
@@ -147,6 +156,7 @@ Content-Type: application/json
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "result": true,
@@ -165,18 +175,21 @@ Content-Type: application/json
 ```
 
 ### Tenant Kullanıcılarını Listele
+
 ```http
 GET /api/v1/admin/tenants/tenant1/users
 Authorization: Bearer {admin_token}
 ```
 
 ### Tek Tenant Kullanıcısı Getir
+
 ```http
 GET /api/v1/admin/tenants/tenant1/users/{id}
 Authorization: Bearer {admin_token}
 ```
 
 ### Tenant Kullanıcısını Güncelle
+
 ```http
 PUT /api/v1/admin/tenants/tenant1/users/{id}
 Authorization: Bearer {admin_token}
@@ -193,6 +206,7 @@ Content-Type: application/json
 > Sadece gönderilen alanlar güncellenir. Boş bırakılanlar değişmez.
 
 ### Tenant Kullanıcısını Sil
+
 ```http
 DELETE /api/v1/admin/tenants/tenant1/users/{id}
 Authorization: Bearer {admin_token}
@@ -201,12 +215,14 @@ Authorization: Bearer {admin_token}
 **Response:** `204 No Content`
 
 ### Tenant Kullanıcısını Aktif / Pasif Yap
+
 ```http
 PATCH /api/v1/admin/tenants/tenant1/users/{id}/status?isActive=false
 Authorization: Bearer {admin_token}
 ```
 
 **Response:**
+
 ```json
 {
   "result": true,
@@ -226,12 +242,14 @@ Authorization: Bearer {admin_token}
 > Roller basedb'de tutulur. Tenant kullanıcıları için rol atama şu an desteklenmiyor.
 
 ### Tüm Rolleri Listele
+
 ```http
 GET /api/v1/roles
 Authorization: Bearer {admin_token}
 ```
 
 **Response:**
+
 ```json
 {
   "result": true,
@@ -245,12 +263,14 @@ Authorization: Bearer {admin_token}
 ```
 
 ### Tüm İzinleri Listele
+
 ```http
 GET /api/v1/roles/permissions
 Authorization: Bearer {admin_token}
 ```
 
 ### Modüle Göre İzinleri Listele
+
 ```http
 GET /api/v1/roles/permissions/module/posts
 Authorization: Bearer {admin_token}
@@ -259,6 +279,7 @@ Authorization: Bearer {admin_token}
 > Modül adları: `posts`, `pages`, `components`, `widgets`, `banners`, `assets`, `comments`, `forms`, `ratings`, `contents`, `basic_infos`, `mail`, `emails`, `cache`, `tenants`, `users`, `roles`, `rabbit`, `email_templates`
 
 ### Admin Kullanıcısına Rol Ata
+
 ```http
 PUT /api/v1/roles/users/{userId}/roles
 Authorization: Bearer {admin_token}
@@ -272,6 +293,7 @@ Content-Type: application/json
 > `roleIds` tam listedir — mevcut roller silinip bu liste atanır.
 
 ### Yeni Rol Oluştur
+
 ```http
 POST /api/v1/roles
 Authorization: Bearer {admin_token}
@@ -284,6 +306,7 @@ Content-Type: application/json
 ```
 
 ### Role İzin Ata
+
 ```http
 PUT /api/v1/roles/{roleId}/permissions
 Authorization: Bearer {admin_token}
@@ -306,6 +329,7 @@ Authorization: Bearer {admin_token}
 ```
 
 **Response:**
+
 ```json
 {
   "result": true,
@@ -326,18 +350,19 @@ Authorization: Bearer {admin_token}
 
 ## 6. Varsayılan Roller ve İzinler
 
-| Rol | Açıklama | Anahtar İzinler |
-|-----|---------|-----------------|
-| `SUPER_ADMIN` | Tüm yetkiler | Hepsi (40+) |
-| `ADMIN` | Yönetici | `roles:*` ve `users:manage` hariç hepsi |
-| `EDITOR` | İçerik editörü | posts, pages, components, widgets, banners, assets, comments, forms, ratings, contents, basic_infos |
-| `VIEWER` | Salt okuma | Tüm `*:read` izinleri |
+| Rol           | Açıklama       | Anahtar İzinler                                                                                     |
+| ------------- | -------------- | --------------------------------------------------------------------------------------------------- |
+| `SUPER_ADMIN` | Tüm yetkiler   | Hepsi (40+)                                                                                         |
+| `ADMIN`       | Yönetici       | `roles:*` ve `users:manage` hariç hepsi                                                             |
+| `EDITOR`      | İçerik editörü | posts, pages, components, widgets, banners, assets, comments, forms, ratings, contents, basic_infos |
+| `VIEWER`      | Salt okuma     | Tüm `*:read` izinleri                                                                               |
 
 ---
 
 ## 7. Sık Kullanılan İş Akışları
 
 ### Panel'de yeni admin ekle
+
 ```
 1. POST /api/auth/register   → { username, email, password }   (tenantId yok → basedb)
 2. GET  /api/v1/users        → yeni kullanıcının id'sini bul
@@ -345,17 +370,20 @@ Authorization: Bearer {admin_token}
 ```
 
 ### Panel'den tenant1'e yeni site kullanıcısı ekle
+
 ```
 1. POST /api/v1/admin/tenants/tenant1/users  → { username, email, password, firstName, lastName }
 2. Başarı → kullanıcı tenant1 DB'sine kayıt edildi, panel listesinde görünür
 ```
 
 ### Tenant kullanıcısını pasif yap (hesap askıya al)
+
 ```
 PATCH /api/v1/admin/tenants/tenant1/users/{id}/status?isActive=false
 ```
 
 ### Admin kullanıcısını pasif yap
+
 ```
 PUT /api/v1/admin/tenants/tenant1/users/{id}   → { "isActive": false }
 ```
@@ -364,11 +392,11 @@ PUT /api/v1/admin/tenants/tenant1/users/{id}   → { "isActive": false }
 
 ## 8. Hata Kodları
 
-| HTTP | errorCode | Açıklama |
-|------|-----------|---------|
-| 401 | `BAD_CREDENTIALS` | Token geçersiz veya süresi dolmuş |
-| 403 | `ACCESS_DENIED` | Yetersiz yetki (permission yok) |
-| 403 | `FORBIDDEN` | Admin token gerektiren endpoint'e tenant token ile erişim |
-| 404 | `RESOURCE_NOT_FOUND` | Kullanıcı veya tenant bulunamadı |
-| 409 | `CONFLICT` | Username veya email zaten kullanımda |
-| 400 | `BAD_REQUEST` | Geçersiz tenantId veya eksik alan |
+| HTTP | errorCode            | Açıklama                                                  |
+| ---- | -------------------- | --------------------------------------------------------- |
+| 401  | `BAD_CREDENTIALS`    | Token geçersiz veya süresi dolmuş                         |
+| 403  | `ACCESS_DENIED`      | Yetersiz yetki (permission yok)                           |
+| 403  | `FORBIDDEN`          | Admin token gerektiren endpoint'e tenant token ile erişim |
+| 404  | `RESOURCE_NOT_FOUND` | Kullanıcı veya tenant bulunamadı                          |
+| 409  | `CONFLICT`           | Username veya email zaten kullanımda                      |
+| 400  | `BAD_REQUEST`        | Geçersiz tenantId veya eksik alan                         |
