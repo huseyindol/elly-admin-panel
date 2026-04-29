@@ -1,10 +1,12 @@
 'use client'
 
 import { useAdminTheme } from '@/app/_hooks'
-import { useUserProfile } from '@/app/_hooks/useUsers'
+import { useUpdateUserProfile, useUserProfile } from '@/app/_hooks/useUsers'
 import { Icons } from '@/app/_components/Icons'
 import { usePermissionStore } from '@/stores/permission-store'
 import { MODULES } from '@/types/permissions'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 
 /** Modül adını Türkçe'ye çeviren yardımcı */
 const moduleLabels: Record<string, string> = {
@@ -59,11 +61,21 @@ function getRoleBadgeClass(role: string): string {
   return classMap[role] ?? 'bg-slate-500/20 text-slate-300'
 }
 
+interface EditProfileForm {
+  firstName: string
+  lastName: string
+  email: string
+}
+
 export default function ProfilePage() {
   const { isDarkMode } = useAdminTheme()
   const { data, isLoading, isError } = useUserProfile()
+  const updateProfile = useUpdateUserProfile()
   const permissions = usePermissionStore(s => s.permissions)
   const roles = usePermissionStore(s => s.roles)
+  const [isEditing, setIsEditing] = useState(false)
+
+  const { register, handleSubmit, reset } = useForm<EditProfileForm>()
 
   const profile = data?.data
 
@@ -102,6 +114,19 @@ export default function ProfilePage() {
     )
   }
 
+  const handleEditOpen = () => {
+    reset({
+      firstName: profile.firstName ?? '',
+      lastName: profile.lastName ?? '',
+      email: profile.email ?? '',
+    })
+    setIsEditing(true)
+  }
+
+  const handleEditSubmit = (formData: EditProfileForm) => {
+    updateProfile.mutate(formData, { onSuccess: () => setIsEditing(false) })
+  }
+
   const roleLabel = getRoleLabel(roles)
 
   const initials =
@@ -111,17 +136,33 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6 p-6">
       {/* Page Header */}
-      <div>
-        <h1
-          className={`text-2xl font-bold ${
-            isDarkMode ? 'text-white' : 'text-gray-900'
-          }`}
-        >
-          Profilim
-        </h1>
-        <p className={isDarkMode ? 'text-slate-400' : 'text-gray-500'}>
-          Hesap bilgileriniz ve izinleriniz
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1
+            className={`text-2xl font-bold ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}
+          >
+            Profilim
+          </h1>
+          <p className={isDarkMode ? 'text-slate-400' : 'text-gray-500'}>
+            Hesap bilgileriniz ve izinleriniz
+          </p>
+        </div>
+        {!isEditing && (
+          <button
+            type="button"
+            onClick={handleEditOpen}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+              isDarkMode
+                ? 'border border-slate-700/50 bg-slate-800/50 text-slate-300 hover:bg-slate-700'
+                : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <Icons.Settings />
+            Düzenle
+          </button>
+        )}
       </div>
 
       {/* Profile Card */}
@@ -168,6 +209,102 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Form */}
+      {isEditing && (
+        <div
+          className={`rounded-2xl p-6 ${
+            isDarkMode
+              ? 'border border-violet-500/30 bg-slate-900/60'
+              : 'border border-violet-200 bg-white'
+          }`}
+        >
+          <h3
+            className={`mb-4 text-sm font-semibold ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}
+          >
+            Profil Bilgilerini Güncelle
+          </h3>
+          <form onSubmit={handleSubmit(handleEditSubmit)} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label
+                  className={`mb-1.5 block text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}
+                >
+                  Ad
+                </label>
+                <input
+                  {...register('firstName')}
+                  className={`w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors ${
+                    isDarkMode
+                      ? 'border border-slate-700/50 bg-slate-800/50 text-white placeholder-slate-500 focus:border-violet-500'
+                      : 'border border-gray-200 bg-gray-50 text-gray-900 focus:border-violet-500'
+                  }`}
+                />
+              </div>
+              <div>
+                <label
+                  className={`mb-1.5 block text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}
+                >
+                  Soyad
+                </label>
+                <input
+                  {...register('lastName')}
+                  className={`w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors ${
+                    isDarkMode
+                      ? 'border border-slate-700/50 bg-slate-800/50 text-white placeholder-slate-500 focus:border-violet-500'
+                      : 'border border-gray-200 bg-gray-50 text-gray-900 focus:border-violet-500'
+                  }`}
+                />
+              </div>
+            </div>
+            <div>
+              <label
+                className={`mb-1.5 block text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}
+              >
+                E-posta
+              </label>
+              <input
+                type="email"
+                {...register('email')}
+                className={`w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors ${
+                  isDarkMode
+                    ? 'border border-slate-700/50 bg-slate-800/50 text-white placeholder-slate-500 focus:border-violet-500'
+                    : 'border border-gray-200 bg-gray-50 text-gray-900 focus:border-violet-500'
+                }`}
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                  isDarkMode
+                    ? 'text-slate-400 hover:bg-slate-800'
+                    : 'text-gray-500 hover:bg-gray-100'
+                }`}
+              >
+                İptal
+              </button>
+              <button
+                type="submit"
+                disabled={updateProfile.isPending}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/30 disabled:opacity-50"
+              >
+                {updateProfile.isPending ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Kaydediliyor...
+                  </>
+                ) : (
+                  'Kaydet'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Info Grid */}
       <div className="grid gap-6 md:grid-cols-2">

@@ -49,8 +49,47 @@ export interface UserProfile {
   createdAt: string
 }
 
+/** PUT /api/v1/users/me request body */
+export interface UpdateProfileRequest {
+  firstName: string
+  lastName: string
+  email: string
+}
+
+/** Tenant kullanıcısı (GET /api/v1/admin/tenants/{tenantId}/users) */
+export interface TenantUser {
+  id: number
+  username: string
+  email: string
+  firstName: string
+  lastName: string
+  isActive: boolean
+  provider: string
+  roles: string[]
+  createdAt: string
+}
+
+/** POST /api/v1/admin/tenants/{tenantId}/users request body */
+export interface CreateTenantUserRequest {
+  username: string
+  email: string
+  password: string
+  firstName: string
+  lastName: string
+}
+
+/** PUT /api/v1/admin/tenants/{tenantId}/users/{id} request body */
+export interface UpdateTenantUserRequest {
+  firstName?: string
+  lastName?: string
+  email?: string
+  isActive?: boolean
+}
+
 // Response type aliases
 export type AdminUserListResponse = BaseResponse<AdminUser[]>
 export type AdminUserResponse = BaseResponse<AdminUser>
 export type AdminRoleListResponse = BaseResponse<AdminRole[]>
 export type UserProfileResponse = BaseResponse<UserProfile>
+export type TenantUserListResponse = BaseResponse<TenantUser[]>
+export type TenantUserResponse = BaseResponse<TenantUser>
