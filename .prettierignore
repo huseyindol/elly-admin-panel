@@ -41,6 +41,7 @@ next-env.d.ts
 .parcel-cache/
 
 # API and documentation
+public/docs/
 public/openapi-generated.json
 next.openapi.json
 next.openapi.temp.json
