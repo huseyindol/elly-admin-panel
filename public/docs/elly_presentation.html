@@ -705,29 +705,196 @@
     <div class="two-col">
       <div class="def-block">
         <div class="def-label">Core Purpose</div>
-        <p>Elly is a headless CMS that lets teams rapidly configure full websites. It manages pages, components, banners, widgets, posts, comments, and ratings — all wired through a flexible composition model.</p>
+        <p>Elly is a headless CMS and rapid MVP platform built on Spring Boot 3.5. It manages pages, components, dynamic forms, async email, and user auth — all isolated per tenant. Teams go from zero to a full website in hours, not weeks.</p>
+        <div style="margin-top:20px;">
+          <div class="def-label">Four Pillars</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+            <div style="font-size:24px;color:var(--muted);"><span style="font-family:'DM Mono',monospace;color:var(--accent);">Content</span> — Page → Component → Banner / Widget → Post → Comment / Rating</div>
+            <div style="font-size:24px;color:var(--muted);"><span style="font-family:'DM Mono',monospace;color:var(--accent2);">Auth</span> — User → Role → Permission · Login · Register · RefreshToken · OAuth2</div>
+            <div style="font-size:24px;color:var(--muted);"><span style="font-family:'DM Mono',monospace;color:var(--accent3);">Forms</span> — FormDefinition (JSONB schema) → ConditionEvaluator → FormSubmission</div>
+            <div style="font-size:24px;color:var(--muted);"><span style="font-family:'DM Mono',monospace;color:var(--accent);">Email</span> — MailAccount (per tenant) → async queue → Thymeleaf → Gmail SMTP</div>
+          </div>
+        </div>
       </div>
       <div class="def-block" style="display:flex;flex-direction:column;gap:16px;">
-        <div class="def-label">Domain Entities</div>
+        <div class="def-label">All Domain Entities</div>
         <div class="entity-grid">
           <span class="entity-pill hi">Page</span>
           <span class="entity-pill hi">Component</span>
           <span class="entity-pill hi">Banner</span>
           <span class="entity-pill hi">Widget</span>
           <span class="entity-pill hi">Post</span>
+          <span class="entity-pill hi">Form</span>
+          <span class="entity-pill hi">User</span>
+          <span class="entity-pill hi">Permission</span>
           <span class="entity-pill">Comment</span>
           <span class="entity-pill">Rating</span>
+          <span class="entity-pill">Assets</span>
+          <span class="entity-pill">Email</span>
+          <span class="entity-pill">MailAccount</span>
+          <span class="entity-pill">RefreshToken</span>
           <span class="entity-pill">SeoInfo</span>
+          <span class="entity-pill">Role</span>
+          <span class="entity-pill">FormDefinition</span>
+          <span class="entity-pill">FormSubmission</span>
         </div>
-        <div style="font-size: 24px;color:var(--muted);line-height:1.6;">
-          Pages nest Components → Components hold Banners &amp; Widgets → Widgets hold Posts. Every layer is typed and composable.
+        <div style="font-size:24px;color:var(--muted);line-height:1.6;">
+          Quick MVP: deploy Pages, attach Components, publish Posts in minutes. Extend with dynamic Forms and async Email without restructuring core CMS.
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ── SLIDE 3: ARCHITECTURE ── -->
-  <section class="s-arch" data-screen-label="03 Architecture">
+  <!-- ── SLIDE 3: AUTH ARCHITECTURE ── -->
+  <section class="s-what" data-screen-label="03 Auth Architecture">
+    <div class="slide-label">Identity &amp; Access</div>
+    <div class="slide-title">Auth Architecture</div>
+    <div class="three-col" style="flex:1;margin-top:8px;">
+      <div class="def-block" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="def-label">JWT Login Flow</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);margin-bottom:6px;">POST /api/auth/login</div>
+            <div style="font-size:24px;color:var(--muted);">AdminLoginInterceptor · TenantLoginInterceptor · tenantId from JWT claim</div>
+          </div>
+          <div style="text-align:center;font-size:24px;color:var(--accent);">↓</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);margin-bottom:6px;">JWT Issued</div>
+            <div style="font-size:24px;color:var(--muted);">Access + Refresh token pair · loginSource &amp; tenantId claims embedded</div>
+          </div>
+          <div style="text-align:center;font-size:24px;color:var(--accent);">↓</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);margin-bottom:6px;">POST /api/auth/refresh</div>
+            <div style="font-size:24px;color:var(--muted);">RefreshToken validated · revoked check · new Access token issued</div>
+          </div>
+        </div>
+      </div>
+      <div class="def-block" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="def-label">Register &amp; OAuth2</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--accent2);margin-bottom:6px;">POST /api/auth/register</div>
+            <div style="font-size:24px;color:var(--muted);">User created · Role assigned · verification email dispatched via RabbitMQ</div>
+          </div>
+          <div style="text-align:center;font-size:24px;color:var(--accent2);">↓</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--accent2);margin-bottom:6px;">OAuth2 Providers</div>
+            <div style="font-size:24px;color:var(--muted);">Google · Facebook · GitHub → OAuth2AuthenticationSuccessHandler → JWT</div>
+          </div>
+          <div style="text-align:center;font-size:24px;color:var(--accent2);">↓</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--accent2);margin-bottom:6px;">Redis Auth Cache</div>
+            <div style="font-size:24px;color:var(--muted);">auth:user:{username} · TTL 30 min · 3 SQL → 1 Redis GET · GracefulCacheErrorHandler fallback</div>
+          </div>
+        </div>
+      </div>
+      <div class="def-block" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="def-label">RefreshToken Entity</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+          <table style="width:100%;border-collapse:collapse;">
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);">token</td><td style="padding:10px 14px;font-size:24px;color:var(--muted);">UUID · unique per session</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);">expiryDate</td><td style="padding:10px 14px;font-size:24px;color:var(--muted);">LocalDateTime</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);">revoked</td><td style="padding:10px 14px;font-size:24px;color:var(--muted);">Boolean · logout flag</td></tr>
+            <tr><td style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);">user</td><td style="padding:10px 14px;font-size:24px;color:var(--muted);">ManyToOne → User</td></tr>
+          </table>
+        </div>
+        <div style="font-size:24px;color:var(--muted);line-height:1.55;margin-top:4px;">
+          User → ManyToMany → Role → ManyToMany → Permission<br>
+          SUPER_ADMIN · ADMIN · EDITOR · VIEWER + 40+ permissions<br>
+          @PreAuthorize + @EnableMethodSecurity
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 4: FORM SYSTEM ── -->
+  <section class="s-what" data-screen-label="04 Form System">
+    <div class="slide-label">Schema-Driven UI</div>
+    <div class="slide-title">Form &amp; Dynamic Fields</div>
+    <div class="two-col" style="flex:1;margin-top:8px;">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="def-block">
+          <div class="def-label">FormDefinition (JSONB)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:130px;flex-shrink:0;">id</span><span style="color:var(--muted);">UUID · Primary Key</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:130px;flex-shrink:0;">version</span><span style="color:var(--muted);">Integer · schema versioning</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:130px;flex-shrink:0;">schema</span><span style="color:var(--muted);">JSONB → FormSchema POJO (fields + config)</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:130px;flex-shrink:0;">active</span><span style="color:var(--muted);">Boolean · published flag</span></div>
+          </div>
+        </div>
+        <div class="def-block">
+          <div class="def-label">FieldDefinition Schema</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent2);width:130px;flex-shrink:0;">type</span><span style="color:var(--muted);">text · select · number</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent2);width:130px;flex-shrink:0;">validation</span><span style="color:var(--muted);">min · max · regex pattern</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent2);width:130px;flex-shrink:0;">condition</span><span style="color:var(--muted);">ConditionRule: field · operator · value</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent2);width:130px;flex-shrink:0;">operators</span><span style="color:var(--muted);">EQUALS · NOT_EQUALS · GT · LT</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="def-block">
+          <div class="def-label">Validator Strategy Pattern</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent3);">TextFieldValidator</span><span style="color:var(--muted);"> → min/max length, regex</span></div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent3);">NumberFieldValidator</span><span style="color:var(--muted);"> → range, integer check</span></div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent3);">SelectFieldValidator</span><span style="color:var(--muted);"> → allowed values list</span></div>
+          </div>
+        </div>
+        <div class="def-block">
+          <div class="def-label">ConditionEvaluator + Submit Flow</div>
+          <div style="font-size:24px;color:var(--muted);line-height:1.7;margin-top:10px;">
+            1. Fetch <span style="font-family:'DM Mono',monospace;color:var(--accent);">FormDefinition</span><br>
+            2. Iterate fields → <span style="font-family:'DM Mono',monospace;color:var(--accent);">ConditionEvaluator</span><br>
+            3. Not visible → sanitize payload (remove key)<br>
+            4. Visible → run <span style="font-family:'DM Mono',monospace;color:var(--accent3);">FieldValidator</span> strategy<br>
+            5. Save sanitized → <span style="font-family:'DM Mono',monospace;color:var(--accent);">FormSubmission</span> (JSONB)
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 5: EMAIL SYSTEM ── -->
+  <section class="s-what" data-screen-label="05 Email System">
+    <div class="slide-label">Async Messaging</div>
+    <div class="slide-title">Email System</div>
+    <div class="two-col" style="flex:1;margin-top:8px;">
+      <div class="def-block" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="def-label">Async Mail Flow</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-size:24px;font-family:'DM Mono',monospace;color:var(--accent);">POST /api/v1/emails/send</div>
+        <div style="text-align:center;font-size:24px;color:var(--muted);">↓</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-size:24px;color:var(--muted);">EmailLog <span style="font-family:'DM Mono',monospace;color:var(--accent);">PENDING</span> → saved to DB · 202 Accepted returned immediately</div>
+        <div style="text-align:center;font-size:24px;color:var(--muted);">↓</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-size:24px;color:var(--muted);">RabbitMQ <span style="font-family:'DM Mono',monospace;color:var(--accent2);">email-queue</span> → only emailLogId published</div>
+        <div style="text-align:center;font-size:24px;color:var(--muted);">↓</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-size:24px;color:var(--muted);">Consumer: fetch log → Thymeleaf render → <span style="font-family:'DM Mono',monospace;color:var(--accent2);">TenantMailSenderFactory</span> → Gmail SMTP</div>
+        <div style="text-align:center;font-size:24px;color:var(--muted);">↓</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-size:24px;color:var(--muted);">Success → <span style="font-family:'DM Mono',monospace;color:var(--accent2);">SENT</span> · Fail → retry-queue TTL 30s · max 3× → <span style="font-family:'DM Mono',monospace;color:oklch(65% 0.18 25);">FAILED</span> + DLQ</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="def-block">
+          <div class="def-label">MailAccount (per Tenant)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:140px;flex-shrink:0;">smtpHost</span><span style="color:var(--muted);">smtp.gmail.com</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:140px;flex-shrink:0;">smtpPort</span><span style="color:var(--muted);">587 (TLS)</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:140px;flex-shrink:0;">password</span><span style="color:var(--muted);"><strong>AES-256</strong> encrypted at rest</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:140px;flex-shrink:0;">verify</span><span style="color:var(--muted);">SMTP check without sending</span></div>
+          </div>
+        </div>
+        <div class="def-block">
+          <div class="def-label">EmailLog + Rescue Job</div>
+          <div style="font-size:24px;color:var(--muted);line-height:1.65;margin-top:10px;">
+            <strong style="color:var(--text);">EmailLog:</strong> recipient · subject · templateName · payloadJson (Map) · status · retryCount · errorMessage · sentAt<br><br>
+            <strong style="color:var(--text);">EmailRescueJob:</strong> @Scheduled every 5 min · finds PENDING logs older than 5 min · batch 50 → re-queues to RabbitMQ automatically
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 6: ARCHITECTURE ── -->
+  <section class="s-arch" data-screen-label="06 Architecture">
     <div class="slide-label">Architecture</div>
     <div class="slide-title">Layered Monolith</div>
     <div class="arch-stack">
@@ -772,8 +939,8 @@
     </div>
   </section>
 
-  <!-- ── SLIDE 4: MULTI-TENANCY ── -->
-  <section class="s-tenant" data-screen-label="04 Multi-Tenancy">
+  <!-- ── SLIDE 7: MULTI-TENANCY ── -->
+  <section class="s-tenant" data-screen-label="07 Multi-Tenancy">
     <div class="slide-label">Core Architecture</div>
     <div class="slide-title">Database-per-Tenant</div>
     <div style="display:flex;align-items:center;gap:16px;padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:16px;">
@@ -827,8 +994,8 @@
     </div>
   </section>
 
-  <!-- ── SLIDE 5: SECURITY ── -->
-  <section class="s-sec" data-screen-label="05 Security &amp; Auth">
+  <!-- ── SLIDE 8: SECURITY ── -->
+  <section class="s-sec" data-screen-label="08 Security &amp; Auth">
     <div class="slide-label">Identity &amp; Access</div>
     <div class="slide-title">Security &amp; Auth</div>
     <div class="sec-grid">
@@ -876,8 +1043,8 @@
     </div>
   </section>
 
-  <!-- ── SLIDE 6: PERFORMANCE ── -->
-  <section class="s-perf" data-screen-label="06 Performance">
+  <!-- ── SLIDE 9: PERFORMANCE ── -->
+  <section class="s-perf" data-screen-label="09 Performance">
     <div class="slide-label">Optimization</div>
     <div class="slide-title">Performance Profile</div>
     <div class="perf-row">
@@ -966,8 +1133,8 @@
     </div>
   </section>
 
-  <!-- ── SLIDE 7: INFRA ── -->
-  <section class="s-infra" data-screen-label="07 Infrastructure">
+  <!-- ── SLIDE 10: INFRA ── -->
+  <section class="s-infra" data-screen-label="10 Infrastructure">
     <div class="slide-label">DevOps &amp; Infra</div>
     <div class="slide-title">Deployment &amp; Infrastructure</div>
     <div class="infra-grid">
@@ -1019,8 +1186,8 @@
     </div>
   </section>
 
-  <!-- ── SLIDE 8: CLOSING ── -->
-  <section class="s-close" data-screen-label="08 Summary">
+  <!-- ── SLIDE 11: CLOSING ── -->
+  <section class="s-close" data-screen-label="11 Summary">
     <div class="slide-label">Summary</div>
     <div class="slide-title">Where We Stand</div>
     <div class="stat-strip">

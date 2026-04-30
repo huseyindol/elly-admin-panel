@@ -699,35 +699,202 @@
   </section>
 
   <!-- ── SLIDE 2: WHAT IS ELLY ── -->
-  <section class="s-what" data-screen-label="02 What is Elly">
+  <section class="s-what" data-screen-label="02 Elly Nedir">
     <div class="slide-label">Genel Bakış</div>
     <div class="slide-title">Elly Nedir?</div>
     <div class="two-col">
       <div class="def-block">
         <div class="def-label">Temel Amaç</div>
-        <p>Elly, ekiplerin tam web sitelerini hızlıca yapılandırmasını sağlayan bir headless CMS'dir. Sayfalar, bileşenler, bannerlar, widget'lar, yazılar, yorumlar ve puanlamalar — hepsi esnek bir kompozisyon modeliyle birbirine bağlı.</p>
+        <p>Elly, Spring Boot 3.5 üzerine inşa edilmiş headless bir CMS ve hızlı MVP platformudur. Sayfalar, bileşenler, dinamik formlar, asenkron e-posta ve kullanıcı kimlik doğrulaması — hepsi kiracı bazında izole. Ekipler saatlerce çalışarak tam bir web sitesi oluşturabilir.</p>
+        <div style="margin-top:20px;">
+          <div class="def-label">Dört Temel</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+            <div style="font-size:24px;color:var(--muted);"><span style="font-family:'DM Mono',monospace;color:var(--accent);">İçerik</span> — Page → Component → Banner / Widget → Post → Comment / Rating</div>
+            <div style="font-size:24px;color:var(--muted);"><span style="font-family:'DM Mono',monospace;color:var(--accent2);">Auth</span> — User → Role → Permission · Login · Register · RefreshToken · OAuth2</div>
+            <div style="font-size:24px;color:var(--muted);"><span style="font-family:'DM Mono',monospace;color:var(--accent3);">Form</span> — FormDefinition (JSONB şema) → ConditionEvaluator → FormSubmission</div>
+            <div style="font-size:24px;color:var(--muted);"><span style="font-family:'DM Mono',monospace;color:var(--accent);">E-posta</span> — MailAccount (kiracı bazlı) → asenkron kuyruk → Thymeleaf → Gmail SMTP</div>
+          </div>
+        </div>
       </div>
       <div class="def-block" style="display:flex;flex-direction:column;gap:16px;">
-        <div class="def-label">Alan Varlıkları</div>
+        <div class="def-label">Tüm Alan Varlıkları</div>
         <div class="entity-grid">
           <span class="entity-pill hi">Page</span>
           <span class="entity-pill hi">Component</span>
           <span class="entity-pill hi">Banner</span>
           <span class="entity-pill hi">Widget</span>
           <span class="entity-pill hi">Post</span>
+          <span class="entity-pill hi">Form</span>
+          <span class="entity-pill hi">User</span>
+          <span class="entity-pill hi">Permission</span>
           <span class="entity-pill">Comment</span>
           <span class="entity-pill">Rating</span>
+          <span class="entity-pill">Assets</span>
+          <span class="entity-pill">Email</span>
+          <span class="entity-pill">MailAccount</span>
+          <span class="entity-pill">RefreshToken</span>
           <span class="entity-pill">SeoInfo</span>
+          <span class="entity-pill">Role</span>
+          <span class="entity-pill">FormDefinition</span>
+          <span class="entity-pill">FormSubmission</span>
         </div>
-        <div style="font-size: 24px;color:var(--muted);line-height:1.6;">
-          Sayfalar → Bileşenler → Banner &amp; Widget → Yazı hiyerarşisi. Her katman tiplendirilmiş ve birleştirilebilir.
+        <div style="font-size:24px;color:var(--muted);line-height:1.6;">
+          Hızlı MVP: Sayfaları dağıt, Bileşenler ekle, Post'ları yayınla — dakikalar içinde. Dinamik Form ve asenkron E-posta ile temel CMS yapısını bozmadan genişlet.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 3: AUTH MİMARİSİ ── -->
+  <section class="s-what" data-screen-label="03 Auth Mimarisi">
+    <div class="slide-label">Kimlik &amp; Erişim</div>
+    <div class="slide-title">Auth Mimarisi</div>
+    <div class="three-col" style="flex:1;margin-top:8px;">
+      <div class="def-block" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="def-label">JWT Giriş Akışı</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);margin-bottom:6px;">POST /api/auth/login</div>
+            <div style="font-size:24px;color:var(--muted);">AdminLoginInterceptor · TenantLoginInterceptor · JWT'den tenantId alınır</div>
+          </div>
+          <div style="text-align:center;font-size:24px;color:var(--accent);">↓</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);margin-bottom:6px;">JWT Üretimi</div>
+            <div style="font-size:24px;color:var(--muted);">Access + Refresh token çifti · loginSource &amp; tenantId claim içerir</div>
+          </div>
+          <div style="text-align:center;font-size:24px;color:var(--accent);">↓</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);margin-bottom:6px;">POST /api/auth/refresh</div>
+            <div style="font-size:24px;color:var(--muted);">RefreshToken doğrulanır · revoke kontrolü · yeni Access token üretilir</div>
+          </div>
+        </div>
+      </div>
+      <div class="def-block" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="def-label">Kayıt &amp; OAuth2</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--accent2);margin-bottom:6px;">POST /api/auth/register</div>
+            <div style="font-size:24px;color:var(--muted);">Kullanıcı oluşturulur · Rol atanır · RabbitMQ ile doğrulama maili gönderilir</div>
+          </div>
+          <div style="text-align:center;font-size:24px;color:var(--accent2);">↓</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--accent2);margin-bottom:6px;">OAuth2 Sağlayıcılar</div>
+            <div style="font-size:24px;color:var(--muted);">Google · Facebook · GitHub → OAuth2AuthenticationSuccessHandler → JWT</div>
+          </div>
+          <div style="text-align:center;font-size:24px;color:var(--accent2);">↓</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;">
+            <div style="font-family:'DM Mono',monospace;font-size:24px;color:var(--accent2);margin-bottom:6px;">Redis Auth Önbelleği</div>
+            <div style="font-size:24px;color:var(--muted);">auth:user:{username} · TTL 30dk · 3 SQL → 1 Redis GET · GracefulCacheErrorHandler</div>
+          </div>
+        </div>
+      </div>
+      <div class="def-block" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="def-label">RefreshToken Varlığı</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+          <table style="width:100%;border-collapse:collapse;">
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);">token</td><td style="padding:10px 14px;font-size:24px;color:var(--muted);">UUID · oturum başına benzersiz</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);">expiryDate</td><td style="padding:10px 14px;font-size:24px;color:var(--muted);">LocalDateTime</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);">revoked</td><td style="padding:10px 14px;font-size:24px;color:var(--muted);">Boolean · çıkış işareti</td></tr>
+            <tr><td style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:24px;color:var(--accent);">user</td><td style="padding:10px 14px;font-size:24px;color:var(--muted);">ManyToOne → User</td></tr>
+          </table>
+        </div>
+        <div style="font-size:24px;color:var(--muted);line-height:1.55;margin-top:4px;">
+          User → ManyToMany → Role → ManyToMany → Permission<br>
+          SUPER_ADMIN · ADMIN · EDITOR · VIEWER + 40+ izin<br>
+          @PreAuthorize + @EnableMethodSecurity
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 4: FORM SİSTEMİ ── -->
+  <section class="s-what" data-screen-label="04 Form Sistemi">
+    <div class="slide-label">Şema Güdümlü UI</div>
+    <div class="slide-title">Form &amp; Dinamik Alanlar</div>
+    <div class="two-col" style="flex:1;margin-top:8px;">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="def-block">
+          <div class="def-label">FormDefinition (JSONB)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:130px;flex-shrink:0;">id</span><span style="color:var(--muted);">UUID · Birincil Anahtar</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:130px;flex-shrink:0;">version</span><span style="color:var(--muted);">Integer · şema versiyonlama</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:130px;flex-shrink:0;">schema</span><span style="color:var(--muted);">JSONB → FormSchema POJO (alanlar + config)</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:130px;flex-shrink:0;">active</span><span style="color:var(--muted);">Boolean · yayın durumu</span></div>
+          </div>
+        </div>
+        <div class="def-block">
+          <div class="def-label">FieldDefinition Şeması</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent2);width:130px;flex-shrink:0;">type</span><span style="color:var(--muted);">text · select · number</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent2);width:130px;flex-shrink:0;">validation</span><span style="color:var(--muted);">min · max · regex deseni</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent2);width:130px;flex-shrink:0;">condition</span><span style="color:var(--muted);">ConditionRule: alan · operatör · değer</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent2);width:130px;flex-shrink:0;">operatörler</span><span style="color:var(--muted);">EQUALS · NOT_EQUALS · GT · LT</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="def-block">
+          <div class="def-label">Doğrulama Strateji Deseni</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent3);">TextFieldValidator</span><span style="color:var(--muted);"> → min/max uzunluk, regex</span></div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent3);">NumberFieldValidator</span><span style="color:var(--muted);"> → aralık, tam sayı kontrolü</span></div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent3);">SelectFieldValidator</span><span style="color:var(--muted);"> → izin verilen değerler</span></div>
+          </div>
+        </div>
+        <div class="def-block">
+          <div class="def-label">ConditionEvaluator + Gönderim Akışı</div>
+          <div style="font-size:24px;color:var(--muted);line-height:1.7;margin-top:10px;">
+            1. <span style="font-family:'DM Mono',monospace;color:var(--accent);">FormDefinition</span> çek<br>
+            2. Alanları iterate et → <span style="font-family:'DM Mono',monospace;color:var(--accent);">ConditionEvaluator</span><br>
+            3. Görünmez → payload'dan anahtarı temizle<br>
+            4. Görünür → <span style="font-family:'DM Mono',monospace;color:var(--accent3);">FieldValidator</span> stratejisini çalıştır<br>
+            5. Temizlenmiş → <span style="font-family:'DM Mono',monospace;color:var(--accent);">FormSubmission</span> kaydet (JSONB)
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 5: E-POSTA SİSTEMİ ── -->
+  <section class="s-what" data-screen-label="05 E-posta Sistemi">
+    <div class="slide-label">Asenkron Mesajlaşma</div>
+    <div class="slide-title">E-posta Sistemi</div>
+    <div class="two-col" style="flex:1;margin-top:8px;">
+      <div class="def-block" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="def-label">Asenkron Mail Akışı</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-size:24px;font-family:'DM Mono',monospace;color:var(--accent);">POST /api/v1/emails/send</div>
+        <div style="text-align:center;font-size:24px;color:var(--muted);">↓</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-size:24px;color:var(--muted);">EmailLog <span style="font-family:'DM Mono',monospace;color:var(--accent);">PENDING</span> → DB'ye kaydedilir · 202 Accepted hemen döner</div>
+        <div style="text-align:center;font-size:24px;color:var(--muted);">↓</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-size:24px;color:var(--muted);">RabbitMQ <span style="font-family:'DM Mono',monospace;color:var(--accent2);">email-queue</span> → sadece emailLogId yayınlanır</div>
+        <div style="text-align:center;font-size:24px;color:var(--muted);">↓</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-size:24px;color:var(--muted);">Consumer: log çek → Thymeleaf render → <span style="font-family:'DM Mono',monospace;color:var(--accent2);">TenantMailSenderFactory</span> → Gmail SMTP</div>
+        <div style="text-align:center;font-size:24px;color:var(--muted);">↓</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-size:24px;color:var(--muted);">Başarı → <span style="font-family:'DM Mono',monospace;color:var(--accent2);">SENT</span> · Hata → retry-queue TTL 30sn · max 3× → <span style="font-family:'DM Mono',monospace;color:oklch(65% 0.18 25);">FAILED</span> + DLQ</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="def-block">
+          <div class="def-label">MailAccount (Kiracı Başına)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:140px;flex-shrink:0;">smtpHost</span><span style="color:var(--muted);">smtp.gmail.com</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:140px;flex-shrink:0;">smtpPort</span><span style="color:var(--muted);">587 (TLS)</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:140px;flex-shrink:0;">password</span><span style="color:var(--muted);"><strong>AES-256</strong> ile şifreli saklanır</span></div>
+            <div style="display:flex;gap:12px;font-size:24px;"><span style="font-family:'DM Mono',monospace;color:var(--accent);width:140px;flex-shrink:0;">verify</span><span style="color:var(--muted);">Göndermeden SMTP doğrulaması</span></div>
+          </div>
+        </div>
+        <div class="def-block">
+          <div class="def-label">EmailLog + Kurtarma İşi</div>
+          <div style="font-size:24px;color:var(--muted);line-height:1.65;margin-top:10px;">
+            <strong style="color:var(--text);">EmailLog alanları:</strong> recipient · subject · templateName · payloadJson · status · retryCount · errorMessage · sentAt<br><br>
+            <strong style="color:var(--text);">EmailRescueJob:</strong> @Scheduled her 5 dakika · 5 dakikadan eski PENDING kayıtlar · parti 50 → RabbitMQ'ya otomatik yeniden kuyruğa alır
+          </div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ── SLIDE 3: ARCHITECTURE ── -->
-  <section class="s-arch" data-screen-label="03 Mimari">
+  <section class="s-arch" data-screen-label="06 Mimari">
     <div class="slide-label">Mimari</div>
     <div class="slide-title">Katmanlı Monolit</div>
     <div class="arch-stack">
@@ -773,7 +940,7 @@
   </section>
 
   <!-- ── SLIDE 4: MULTI-TENANCY ── -->
-  <section class="s-tenant" data-screen-label="04 Multi-Tenancy">
+  <section class="s-tenant" data-screen-label="07 Multi-Tenancy">
     <div class="slide-label">Core Mimari</div>
     <div class="slide-title">Kiracı Başına Veritabanı</div>
     <div style="display:flex;align-items:center;gap:16px;padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:16px;">
@@ -1020,7 +1187,7 @@
   </section>
 
   <!-- ── SLIDE 8: CLOSING ── -->
-  <section class="s-close" data-screen-label="08 Özet">
+  <section class="s-close" data-screen-label="11 Özet">
     <div class="slide-label">Özet</div>
     <div class="slide-title">Mevcut Durum</div>
     <div class="stat-strip">
