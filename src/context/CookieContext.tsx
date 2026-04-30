@@ -18,13 +18,24 @@ export const initGlobalCookieStore = (store: CookieContextType) => {
   globalCookieStore = store
 }
 
-// Get global cookies (can be used in fetcher.ts and other non-React files)
 export const getGlobalCookies = (): Record<string, string> => {
-  if (!globalCookieStore) {
-    console.warn('Cookie store not initialized yet')
-    return {}
+  if (globalCookieStore) {
+    return globalCookieStore.cookies
   }
-  return globalCookieStore.cookies
+
+  // Fallback to document.cookie if running in browser and store not initialized
+  if (typeof document !== 'undefined') {
+    return document.cookie
+      .split('; ')
+      .reduce((acc: Record<string, string>, current) => {
+        const [name, value] = current.split('=')
+        if (name) acc[name] = decodeURIComponent(value || '')
+        return acc
+      }, {})
+  }
+
+  console.warn('Cookie store not initialized yet and document is not available')
+  return {}
 }
 
 // Update global cookie (can be used in fetcher.ts and other non-React files)

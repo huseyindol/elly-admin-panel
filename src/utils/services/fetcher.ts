@@ -37,6 +37,8 @@ const prepareRequestCSROptions = (options: RequestInit) => {
   return options
 }
 
+let refreshTokenPromise: Promise<RefreshTokenResponseType> | null = null
+
 export const fetcher = async <T>(
   url: string,
   options: RequestInit = {},
@@ -71,8 +73,16 @@ export const fetcher = async <T>(
             removeAllAuthCookies()
             throw new Error('No refresh token available')
           }
+
+          if (!refreshTokenPromise) {
+            refreshTokenPromise = csrRefreshToken(refreshToken).finally(() => {
+              refreshTokenPromise = null
+            })
+          }
+
           const csrRefreshTokenResponse: RefreshTokenResponseType =
-            await csrRefreshToken(refreshToken)
+            await refreshTokenPromise
+
           if (!csrRefreshTokenResponse.result) {
             // Refresh failed, remove all auth cookies and throw error
             removeAllAuthCookies()
@@ -80,7 +90,7 @@ export const fetcher = async <T>(
           }
           options.headers = {
             ...options.headers,
-            ...(csrRefreshTokenResponse.data.token && {
+            ...(csrRefreshTokenResponse.data?.token && {
               Authorization: `Bearer ${csrRefreshTokenResponse.data.token}`,
             }),
           }
