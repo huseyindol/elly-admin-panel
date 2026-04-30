@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elly CMS — Proje Sunumu</title>
+<script src="deck-stage.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0e12;
+    --surface: #15171e;
+    --surface2: #1c1e28;
+    --border: #252736;
+    --text: #e6e8f0;
+    --muted: #5a5e75;
+    --accent: oklch(68% 0.20 255);
+    --accent2: oklch(68% 0.20 185);
+    --accent3: oklch(68% 0.20 320);
+    --accent-dim: oklch(38% 0.12 255 / 0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  deck-stage { --deck-bg: var(--bg); }
+
+  section {
+    width: 100%; height: 100%;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* shared noise texture overlay */
+  section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  section > * { position: relative; z-index: 1; }
+
+  /* ─── SLIDE 1: TITLE ─── */
+  .s-title {
+    background: var(--bg);
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .s-title .glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, oklch(45% 0.20 255 / 0.18) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .s-title .eyebrow {
+    font-size: 24px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 28px;
+  }
+
+  .s-title h1 {
+    font-size: 96px;
+    font-weight: 700;
+    letter-spacing: -4px;
+    line-height: 1;
+    text-align: center;
+    background: linear-gradient(135deg, #fff 30%, oklch(75% 0.18 255));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .s-title .sub {
+    margin-top: 24px;
+    font-size: 26px;
+    font-weight: 300;
+    color: var(--muted);
+    text-align: center;
+    letter-spacing: -0.3px;
+  }
+
+  .s-title .badges {
+    display: flex;
+    gap: 10px;
+    margin-top: 48px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .badge {
+    font-size: 24px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 12px;
+  }
+
+  /* ─── SLIDE 2: WHAT IS ELLY ─── */
+  .s-what {
+    background: var(--bg);
+    padding: 80px 100px;
+    gap: 48px;
+  }
+
+  .slide-label {
+    font-size: 24px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .slide-title {
+    font-size: 54px;
+    font-weight: 700;
+    letter-spacing: -2px;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+
+  .def-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+  }
+
+  .def-block .def-label {
+    font-size: 24px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .def-block p {
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.65;
+    color: var(--text);
+  }
+
+  .entity-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .entity-pill {
+    font-size: 24px;
+    font-family: 'DM Mono', monospace;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .entity-pill.hi {
+    border-color: oklch(55% 0.18 255 / 0.5);
+    background: oklch(38% 0.12 255 / 0.15);
+    color: var(--accent);
+  }
+
+  /* ─── SLIDE 3: ARCHITECTURE ─── */
+  .s-arch {
+    background: var(--bg);
+    padding: 70px 100px;
+    gap: 40px;
+  }
+
+  .arch-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .arch-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .arch-row .layer-num {
+    font-size: 24px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    width: 24px;
+    flex-shrink: 0;
+  }
+
+  .arch-row .layer-name {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--accent);
+    width: 160px;
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .arch-row .layer-desc {
+    font-size: 24px;
+    color: var(--muted);
+    flex: 1;
+  }
+
+  .arch-row .layer-tags {
+    display: flex;
+    gap: 6px;
+  }
+
+  .tag-sm {
+    font-size: 24px;
+    font-family: 'DM Mono', monospace;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--surface2);
+  }
+
+  .tech-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+
+  .tech-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .tech-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+
+  .tech-name { font-size: 24px; font-weight: 600; color: var(--text); }
+  .tech-ver { font-size: 24px; font-family: 'DM Mono', monospace; color: var(--muted); }
+
+  /* ─── SLIDE 4: MULTI-TENANCY ─── */
+  .s-tenant {
+    background: var(--bg);
+    padding: 70px 100px;
+    gap: 40px;
+  }
+
+  .tenant-diagram {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex: 1;
+  }
+
+  .tenant-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .t-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 24px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .t-box.hi {
+    border-color: oklch(55% 0.18 255 / 0.5);
+    background: oklch(30% 0.12 255 / 0.2);
+    color: var(--accent);
+  }
+
+  .t-box.db1 { border-color: oklch(55% 0.18 185 / 0.5); background: oklch(30% 0.12 185 / 0.15); color: var(--accent2); }
+  .t-box.db2 { border-color: oklch(55% 0.18 320 / 0.5); background: oklch(30% 0.12 320 / 0.15); color: var(--accent3); }
+
+  .arrow {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, var(--border), var(--accent), var(--border));
+    margin: 0 16px;
+    position: relative;
+  }
+
+  .arrow::after {
+    content: '→';
+    position: absolute;
+    right: -8px;
+    top: -10px;
+    color: var(--accent);
+    font-size: 24px;
+  }
+
+  .principle-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .principle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .principle .p-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--accent-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+
+  .principle .p-text h4 { font-size: 24px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .principle .p-text p { font-size: 24px; color: var(--muted); line-height: 1.5; }
+
+  /* ─── SLIDE 5: SECURITY ─── */
+  .s-sec {
+    background: var(--bg);
+    padding: 70px 100px;
+    gap: 40px;
+  }
+
+  .sec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    flex: 1;
+  }
+
+  .sec-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .sec-card .sc-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .sc-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .sc-dot.g { background: var(--accent2); }
+  .sc-dot.p { background: var(--accent3); }
+
+  .sec-card h3 { font-size: 24px; font-weight: 600; color: var(--text); }
+  .sec-card ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .sec-card li { font-size: 24px; color: var(--muted); padding-left: 14px; position: relative; line-height: 1.5; }
+  .sec-card li::before { content: '—'; position: absolute; left: 0; color: var(--border); }
+
+  .rbac-table {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .rbac-table table { width: 100%; border-collapse: collapse; }
+  .rbac-table th {
+    font-size: 24px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .rbac-table td {
+    font-size: 24px;
+    color: var(--text);
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rbac-table tr:last-child td { border-bottom: none; }
+  .rbac-table .role-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 24px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--accent);
+  }
+
+  /* ─── SLIDE 6: PERFORMANCE ─── */
+  .s-perf {
+    background: var(--bg);
+    padding: 70px 100px;
+    gap: 40px;
+  }
+
+  .perf-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    flex: 1;
+  }
+
+  .perf-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .perf-panel h3 {
+    font-size: 24px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .metric-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .metric-label { font-size: 24px; color: var(--muted); flex: 1; }
+
+  .metric-bar-wrap { flex: 2; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .metric-bar { height: 100%; border-radius: 3px; }
+  .metric-bar.before { background: oklch(55% 0.18 10); }
+  .metric-bar.after { background: var(--accent2); }
+
+  .metric-val { font-size: 24px; font-family: 'DM Mono', monospace; color: var(--text); width: 72px; text-align: right; }
+
+  .opt-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .opt-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .opt-badge {
+    font-size: 24px;
+    font-family: 'DM Mono', monospace;
+    padding: 3px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .opt-badge.hi { background: oklch(30% 0.15 10 / 0.3); color: oklch(70% 0.15 10); border: 1px solid oklch(50% 0.15 10 / 0.4); }
+  .opt-badge.mid { background: oklch(30% 0.15 60 / 0.3); color: oklch(70% 0.15 60); border: 1px solid oklch(50% 0.15 60 / 0.4); }
+  .opt-badge.lo { background: oklch(30% 0.12 185 / 0.3); color: var(--accent2); border: 1px solid oklch(50% 0.12 185 / 0.4); }
+
+  .opt-text { font-size: 24px; color: var(--text); line-height: 1.4; }
+  .opt-sub { font-size: 24px; color: var(--muted); margin-top: 2px; }
+
+  /* ─── SLIDE 7: INFRA ─── */
+  .s-infra {
+    background: var(--bg);
+    padding: 40px 80px;
+    gap: 24px;
+  }
+
+  .infra-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .infra-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+  }
+
+  .infra-card h3 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .infra-card h3 span.i-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .code-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 24px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .code-block .cmd { color: var(--accent2); }
+  .code-block .comment { color: var(--border); }
+
+  .svc-row { display: flex; flex-direction: column; gap: 8px; }
+  .svc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 24px;
+  }
+  .svc-item:last-child { border-bottom: none; }
+  .svc-name { color: var(--text); font-weight: 500; }
+  .svc-detail { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 24px; }
+
+  /* ─── SLIDE 8: ROADMAP / CLOSING ─── */
+  .s-close {
+    background: var(--bg);
+    padding: 70px 100px;
+    gap: 40px;
+  }
+
+  .roadmap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    flex: 1;
+  }
+
+  .rm-col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .rm-col h3 {
+    font-size: 24px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .rm-col.now h3 { color: oklch(70% 0.15 10); }
+  .rm-col.soon h3 { color: oklch(70% 0.15 60); }
+  .rm-col.later h3 { color: var(--accent2); }
+
+  .rm-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 24px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  .rm-item::before {
+    content: '○';
+    color: var(--muted);
+    flex-shrink: 0;
+    font-size: 24px;
+    margin-top: 2px;
+  }
+
+  .rm-col.now .rm-item::before { content: '●'; color: oklch(70% 0.15 10); }
+
+  .stat-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .stat-box .stat-val {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    background: linear-gradient(135deg, var(--text), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-box .stat-label {
+    font-size: 24px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+</style>
+</head>
+<body>
+<deck-stage>
+
+  <!-- ── SLIDE 1: TITLE ── -->
+  <section class="s-title" data-screen-label="01 Title">
+    <div class="glow"></div>
+    <div class="eyebrow">CMS Platformu · Spring Boot 3.5 · Java 21</div>
+    <h1>Elly</h1>
+    <div class="sub">Hız, izolasyon ve ölçeklenebilirlik için tasarlanmış<br>güçlü bir çok kiracılı İçerik Yönetim Sistemi.</div>
+    <div class="badges">
+      <span class="badge">PostgreSQL · Kiracı Başına Veritabanı</span>
+      <span class="badge">Redis Cache</span>
+      <span class="badge">RabbitMQ</span>
+      <span class="badge">JWT + OAuth2</span>
+      <span class="badge">Kubernetes-ready</span>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 2: WHAT IS ELLY ── -->
+  <section class="s-what" data-screen-label="02 What is Elly">
+    <div class="slide-label">Genel Bakış</div>
+    <div class="slide-title">Elly Nedir?</div>
+    <div class="two-col">
+      <div class="def-block">
+        <div class="def-label">Temel Amaç</div>
+        <p>Elly, ekiplerin tam web sitelerini hızlıca yapılandırmasını sağlayan bir headless CMS'dir. Sayfalar, bileşenler, bannerlar, widget'lar, yazılar, yorumlar ve puanlamalar — hepsi esnek bir kompozisyon modeliyle birbirine bağlı.</p>
+      </div>
+      <div class="def-block" style="display:flex;flex-direction:column;gap:16px;">
+        <div class="def-label">Alan Varlıkları</div>
+        <div class="entity-grid">
+          <span class="entity-pill hi">Page</span>
+          <span class="entity-pill hi">Component</span>
+          <span class="entity-pill hi">Banner</span>
+          <span class="entity-pill hi">Widget</span>
+          <span class="entity-pill hi">Post</span>
+          <span class="entity-pill">Comment</span>
+          <span class="entity-pill">Rating</span>
+          <span class="entity-pill">SeoInfo</span>
+        </div>
+        <div style="font-size: 24px;color:var(--muted);line-height:1.6;">
+          Sayfalar → Bileşenler → Banner &amp; Widget → Yazı hiyerarşisi. Her katman tiplendirilmiş ve birleştirilebilir.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 3: ARCHITECTURE ── -->
+  <section class="s-arch" data-screen-label="03 Mimari">
+    <div class="slide-label">Mimari</div>
+    <div class="slide-title">Katmanlı Monolit</div>
+    <div class="arch-stack">
+      <div class="arch-row">
+        <div class="layer-num">1</div>
+        <div class="layer-name">IController</div>
+        <div class="layer-desc">Arayüz kontratları, endpoint imzaları</div>
+        <div class="layer-tags"><span class="tag-sm">@RestController</span></div>
+      </div>
+      <div class="arch-row">
+        <div class="layer-num">2</div>
+        <div class="layer-name">Controller</div>
+        <div class="layer-desc">HTTP katmanı, istek ayrıştırma, yanıt sarmalama</div>
+        <div class="layer-tags"><span class="tag-sm">RootEntityResponse&lt;T&gt;</span></div>
+      </div>
+      <div class="arch-row">
+        <div class="layer-num">3</div>
+        <div class="layer-name">IService → Service</div>
+        <div class="layer-desc">İş mantığı, önbellek, kiracı bağlamı</div>
+        <div class="layer-tags"><span class="tag-sm">@Cacheable</span><span class="tag-sm">@Transactional</span></div>
+      </div>
+      <div class="arch-row">
+        <div class="layer-num">4</div>
+        <div class="layer-name">Repository</div>
+        <div class="layer-desc">Spring Data JPA, Entity Graph sorguları</div>
+        <div class="layer-tags"><span class="tag-sm">@EntityGraph</span></div>
+      </div>
+      <div class="arch-row">
+        <div class="layer-num">5</div>
+        <div class="layer-name">Entity + DTO</div>
+        <div class="layer-desc">MapStruct eşleme, entity API'ye doğrudan açılmaz</div>
+        <div class="layer-tags"><span class="tag-sm">MapStruct</span><span class="tag-sm">Lombok</span></div>
+      </div>
+    </div>
+    <div class="tech-row">
+      <div class="tech-card"><div class="tech-icon">☕</div><div class="tech-name">Java</div><div class="tech-ver">21 LTS</div></div>
+      <div class="tech-card"><div class="tech-icon">🍃</div><div class="tech-name">Spring Boot</div><div class="tech-ver">3.5.7</div></div>
+      <div class="tech-card"><div class="tech-icon">🐘</div><div class="tech-name">PostgreSQL</div><div class="tech-ver">Multi-DB</div></div>
+      <div class="tech-card"><div class="tech-icon">⚡</div><div class="tech-name">Redis</div><div class="tech-ver">Cache</div></div>
+      <div class="tech-card"><div class="tech-icon">🐇</div><div class="tech-name">RabbitMQ</div><div class="tech-ver">Queues</div></div>
+      <div class="tech-card"><div class="tech-icon">☸️</div><div class="tech-name">Kubernetes</div><div class="tech-ver">K8s</div></div>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 4: MULTI-TENANCY ── -->
+  <section class="s-tenant" data-screen-label="04 Multi-Tenancy">
+    <div class="slide-label">Core Mimari</div>
+    <div class="slide-title">Kiracı Başına Veritabanı</div>
+    <div style="display:flex;align-items:center;gap:16px;padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:16px;">
+      <div class="tenant-col">
+        <div class="t-box hi">JWT Token<br><span style="font-size: 24px;opacity:0.7">tenantId claim</span></div>
+      </div>
+      <div class="arrow"></div>
+      <div class="tenant-col">
+        <div class="t-box hi">JwtTenantFilter<br><span style="font-size: 24px;opacity:0.7">TenantContext.set()</span></div>
+      </div>
+      <div class="arrow"></div>
+      <div class="tenant-col">
+        <div class="t-box hi">TenantDataSourceRouter<br><span style="font-size: 24px;opacity:0.7">AbstractRoutingDataSource</span></div>
+      </div>
+      <div class="arrow"></div>
+      <div class="tenant-col" style="gap:8px;">
+        <div class="t-box db1">elly_basedb</div>
+        <div class="t-box db2">elly_tenant1</div>
+        <div class="t-box" style="border-color:var(--border);color:var(--muted);">elly_tenant2</div>
+      </div>
+    </div>
+    <div class="principle-list">
+      <div class="principle">
+        <div class="p-icon">🔒</div>
+        <div class="p-text">
+          <h4>Tam İzolasyon</h4>
+          <p>Her kiracının kendi PostgreSQL veritabanı vardır. Kiracılar arasında veri sızıntısı mümkün değildir.</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="p-icon">🧵</div>
+        <div class="p-text">
+          <h4>ThreadLocal Bağlamı</h4>
+          <p>TenantContext, istek bazlı izolasyon için ThreadLocal kullanır; finally bloklarında garantili temizlik yapılır.</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="p-icon">📦</div>
+        <div class="p-text">
+          <h4>HikariCP Bağlantı Havuzları</h4>
+          <p>Her kiracı veritabanının kendi optimize edilmiş HikariCP havuzu vardır — kaynak çekişmesi olmaz.</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="p-icon">⚡</div>
+        <div class="p-text">
+          <h4>Redis Önbellek İzolasyonu</h4>
+          <p>Önbellek anahtarları önekli <code style="font-family:DM Mono,monospace;font-size: 24px;color:var(--accent)">{tenantId}::{cacheName}::{key}</code> — otomatik kiracı bazlı kapsam.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 5: SECURITY ── -->
+  <section class="s-sec" data-screen-label="05 Güvenlik &amp; Kimlik Doğrulama">
+    <div class="slide-label">Kimlik &amp; Erişim</div>
+    <div class="slide-title">Güvenlik &amp; Kimlik Doğrulama</div>
+    <div class="sec-grid">
+      <div class="sec-card">
+        <div class="sc-head"><div class="sc-dot"></div><h3>JWT Kimlik Doğrulama</h3></div>
+        <ul>
+          <li>Access token + refresh token çifti</li>
+          <li>Claims: <code style="font-family:DM Mono;font-size: 24px">loginSource</code>, <code style="font-family:DM Mono;font-size: 24px">tenantId</code></li>
+          <li>Admin &amp; Kiracı giriş akışları</li>
+          <li>Redis auth önbelleği TTL 30 dk</li>
+          <li>1 Redis GET, 3 SQL sorguyu değiştirir</li>
+        </ul>
+      </div>
+      <div class="sec-card">
+        <div class="sc-head"><div class="sc-dot g"></div><h3>OAuth2</h3></div>
+        <ul>
+          <li>Google, Facebook, GitHub providers</li>
+          <li>OAuth2AuthenticationSuccessHandler</li>
+          <li>OAuth sonrası sorunsuz JWT üretimi</li>
+          <li>Kiracı bağlamı akış boyunca korunur</li>
+          <li>Tasarımı gereği durumsuz</li>
+        </ul>
+      </div>
+      <div class="sec-card">
+        <div class="sc-head"><div class="sc-dot p"></div><h3>RBAC</h3></div>
+        <ul>
+          <li>Kullanıcı → Rol → İzin (ManyToMany)</li>
+          <li>SUPER_ADMIN, ADMIN, EDITOR, VIEWER</li>
+          <li>40+ ayrıntılı izin sabiti</li>
+          <li>@PreAuthorize metot düzeyinde güvenlik</li>
+          <li>@EnableMethodSecurity</li>
+        </ul>
+      </div>
+    </div>
+    <div class="rbac-table">
+      <table>
+        <thead><tr><th>Rol</th><th>Kapsam</th><th>Yetkiler</th></tr></thead>
+        <tbody>
+          <tr><td><span class="role-tag">SUPER_ADMIN</span></td><td>Tüm kiracılar</td><td>Tam sistem erişimi, kiracı yönetimi</td></tr>
+          <tr><td><span class="role-tag">ADMIN</span></td><td>Kendi kiracısı</td><td>Tüm CMS işlemleri, kullanıcı yönetimi</td></tr>
+          <tr><td><span class="role-tag">EDITOR</span></td><td>Kendi kiracısı</td><td>İçerik oluşturma/güncelleme, yayınlama</td></tr>
+          <tr><td><span class="role-tag">VIEWER</span></td><td>Kendi kiracısı</td><td>Salt okunur içerik erişimi</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 6: PERFORMANCE ── -->
+  <section class="s-perf" data-screen-label="06 Performance">
+    <div class="slide-label">Optimizasyon</div>
+    <div class="slide-title">Performans Profili</div>
+    <div class="perf-row">
+      <div class="perf-panel">
+        <h3>Before → After Optimizasyon</h3>
+        <div class="metric-row">
+          <div class="metric-label">Yanıt Süresi p95</div>
+          <div class="metric-bar-wrap"><div class="metric-bar before" style="width:100%"></div></div>
+          <div class="metric-val" style="color:oklch(70% 0.15 10)">2340ms</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-label">Yanıt Süresi p95</div>
+          <div class="metric-bar-wrap"><div class="metric-bar after" style="width:20%"></div></div>
+          <div class="metric-val" style="color:var(--accent2)">456ms ✓</div>
+        </div>
+        <div style="height:1px;background:var(--border);margin:4px 0"></div>
+        <div class="metric-row">
+          <div class="metric-label">Verim</div>
+          <div class="metric-bar-wrap"><div class="metric-bar before" style="width:9%"></div></div>
+          <div class="metric-val" style="color:oklch(70% 0.15 10)">18 req/s</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-label">Verim</div>
+          <div class="metric-bar-wrap"><div class="metric-bar after" style="width:94%"></div></div>
+          <div class="metric-val" style="color:var(--accent2)">187 req/s ✓</div>
+        </div>
+        <div style="height:1px;background:var(--border);margin:4px 0"></div>
+        <div class="metric-row">
+          <div class="metric-label">DB sorgu / istek</div>
+          <div class="metric-bar-wrap"><div class="metric-bar before" style="width:100%"></div></div>
+          <div class="metric-val" style="color:oklch(70% 0.15 10)">47 queries</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-label">DB sorgu / istek</div>
+          <div class="metric-bar-wrap"><div class="metric-bar after" style="width:2%"></div></div>
+          <div class="metric-val" style="color:var(--accent2)">1 query ✓</div>
+        </div>
+      </div>
+      <div class="perf-panel">
+        <h3>Optimizasyon Priorities</h3>
+        <div class="opt-list">
+          <div class="opt-item">
+            <div class="opt-badge hi">HIGH</div>
+            <div>
+              <div class="opt-text">@EntityGraph ile N+1 Sorgu Düzeltmesi</div>
+              <div class="opt-sub">47 sorgu → istek başına 1 sorgu</div>
+            </div>
+          </div>
+          <div class="opt-item">
+            <div class="opt-badge hi">HIGH</div>
+            <div>
+              <div class="opt-text">HikariCP Havuz Boyutu 10 → 50</div>
+              <div class="opt-sub">Yük altında bağlantı tükenmesini önler</div>
+            </div>
+          </div>
+          <div class="opt-item">
+            <div class="opt-badge hi">HIGH</div>
+            <div>
+              <div class="opt-text">FK sütunlarında Veritabanı İndeksi</div>
+              <div class="opt-sub">Tam tablo taramalarını ortadan kaldırır — 5–10× hız</div>
+            </div>
+          </div>
+          <div class="opt-item">
+            <div class="opt-badge mid">MID</div>
+            <div>
+              <div class="opt-text">Tüm liste endpoint'lerinde sayfalama</div>
+              <div class="opt-sub">Büyük veri setlerinde OOM'yi önler</div>
+            </div>
+          </div>
+          <div class="opt-item">
+            <div class="opt-badge mid">MID</div>
+            <div>
+              <div class="opt-text">Kiracı önekli Redis @Cacheable</div>
+              <div class="opt-sub">Önbellek isabetinde 50–100×, zarif geri dönüş</div>
+            </div>
+          </div>
+          <div class="opt-item">
+            <div class="opt-badge lo">LOW</div>
+            <div>
+              <div class="opt-text">Dosya yüklemeleri için Read replica + CDN</div>
+              <div class="opt-sub">Okuma işlemlerini yatayda ölçekle</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 7: INFRA ── -->
+  <section class="s-infra" data-screen-label="07 Infrastructure">
+    <div class="slide-label">DevOps &amp; Altyapı</div>
+    <div class="slide-title">Dağıtım &amp; Altyapı</div>
+    <div class="infra-grid">
+      <div class="infra-card">
+        <h3><span class="i-dot"></span>Kubernetes Kurulumu</h3>
+        <div class="code-block">
+          <div><span class="cmd">kubectl apply -f</span> k8s/</div>
+          <div><span class="cmd">kubectl rollout restart</span> deployment/elly-app</div>
+          <div><span class="comment"># HPA scales on CPU + memory</span></div>
+          <div><span class="cmd">kubectl get hpa</span> -n elly</div>
+        </div>
+        <div class="svc-row">
+          <div class="svc-item"><span class="svc-name">App Deployment</span><span class="svc-detail">2a-app-deployment.yaml</span></div>
+          <div class="svc-item"><span class="svc-name">Burst Config</span><span class="svc-detail">2b-app-burst.yaml</span></div>
+          <div class="svc-item"><span class="svc-name">HPA Autoscaler</span><span class="svc-detail">5-hpa.yaml</span></div>
+          <div class="svc-item"><span class="svc-name">Monitoring</span><span class="svc-detail">6-monitoring.yaml</span></div>
+        </div>
+      </div>
+      <div class="infra-card">
+        <h3><span class="i-dot" style="background:var(--accent2)"></span>Servisler &amp; İzleme</h3>
+        <div class="svc-row">
+          <div class="svc-item"><span class="svc-name">PostgreSQL</span><span class="svc-detail">Multi-DB · Backup CronJob</span></div>
+          <div class="svc-item"><span class="svc-name">Redis</span><span class="svc-detail">TTL=10min · Graceful fallback</span></div>
+          <div class="svc-item"><span class="svc-name">RabbitMQ</span><span class="svc-detail">email-queue · retry · DLQ</span></div>
+          <div class="svc-item"><span class="svc-name">Prometheus</span><span class="svc-detail">Spring Actuator metrics</span></div>
+          <div class="svc-item"><span class="svc-name">Grafana</span><span class="svc-detail">Real-time dashboards</span></div>
+          <div class="svc-item"><span class="svc-name">SonarQube</span><span class="svc-detail">Code quality gate in CI</span></div>
+        </div>
+      </div>
+      <div class="infra-card">
+        <h3><span class="i-dot" style="background:var(--accent3)"></span>Mail Sistemi</h3>
+        <div class="svc-row">
+          <div class="svc-item"><span class="svc-name">Kiracı SMTP</span><span class="svc-detail">AES-256 şifreli kimlik bilgileri</span></div>
+          <div class="svc-item"><span class="svc-name">Asenkron gönderim</span><span class="svc-detail">RabbitMQ email-queue</span></div>
+          <div class="svc-item"><span class="svc-name">Yeniden deneme mantığı</span><span class="svc-detail">3× ve 30sn bekleme</span></div>
+          <div class="svc-item"><span class="svc-name">Ölü mektup kuyruğu</span><span class="svc-detail">Tükenmede FAILED + DLQ</span></div>
+          <div class="svc-item"><span class="svc-name">Doğrulama endpoint'i</span><span class="svc-detail">Göndermeden SMTP doğrulaması</span></div>
+        </div>
+      </div>
+      <div class="infra-card">
+        <h3><span class="i-dot" style="background:oklch(68% 0.18 60)"></span>CI/CD &amp; Yük Testleri</h3>
+        <div class="svc-row">
+          <div class="svc-item"><span class="svc-name">GitHub Actions</span><span class="svc-detail">Derleme → Test → Dağıtım</span></div>
+          <div class="svc-item"><span class="svc-name">Docker</span><span class="svc-detail">Dockerfile + docker-compose</span></div>
+          <div class="svc-item"><span class="svc-name">k6 Load Tests</span><span class="svc-detail">temel · stres · yazma paketleri</span></div>
+          <div class="svc-item"><span class="svc-name">SonarQube</span><span class="svc-detail">CI boru hattında kalite kapısı</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SLIDE 8: CLOSING ── -->
+  <section class="s-close" data-screen-label="08 Özet">
+    <div class="slide-label">Özet</div>
+    <div class="slide-title">Mevcut Durum</div>
+    <div class="stat-strip">
+      <div class="stat-box">
+        <div class="stat-val">3</div>
+        <div class="stat-label">Kiracı</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">40+</div>
+        <div class="stat-label">İzin</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">10×</div>
+        <div class="stat-label">Perf. Kazanım</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">K8s</div>
+        <div class="stat-label">Üretime hazır</div>
+      </div>
+    </div>
+    <div class="roadmap-grid">
+      <div class="rm-col now">
+        <h3>Şimdi · Yüksek Öncelik</h3>
+        <div class="rm-item">Veritabanı indeksi dağıtımı</div>
+        <div class="rm-item">Bağlantı havuzu → 50</div>
+        <div class="rm-item">N+1 düzeltmesi için Entity Graph</div>
+        <div class="rm-item">Tüm listelerde sayfalama</div>
+      </div>
+      <div class="rm-col soon">
+        <h3>Yakında · Bu Sprint</h3>
+        <div class="rm-item">Her yerde DTO pattern'i</div>
+        <div class="rm-item">Redis önbellek yaygınlaştırması</div>
+        <div class="rm-item">Asenkron dosya yükleme</div>
+        <div class="rm-item">Yük testi baseline'ı + yeniden test</div>
+      </div>
+      <div class="rm-col later">
+        <h3>İleride · Ölçeklendirme</h3>
+        <div class="rm-item">Read replica kurulumu</div>
+        <div class="rm-item">Dosya yüklemeleri için CDN</div>
+        <div class="rm-item">Çok bölgeli K8s</div>
+        <div class="rm-item">Dinamik kiracı onboarding'i</div>
+      </div>
+    </div>
+  </section>
+
+</deck-stage>
+</body>
+</html>

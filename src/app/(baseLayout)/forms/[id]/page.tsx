@@ -118,9 +118,11 @@ export default function EditFormPage({ params }: PageProps) {
         notificationEnabled: form.notificationEnabled,
       })
       if (fields.length === 0 && (form.schema.fields || []).length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFields((form.schema.fields || []).map(normalizeFieldForApi))
       }
       if (steps.length === 0 && (form.schema.steps || []).length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSteps(form.schema.steps || [])
       }
     }

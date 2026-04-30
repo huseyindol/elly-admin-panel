@@ -123,7 +123,11 @@ export async function proxy(request: NextRequest) {
   }
 
   // Korumalı rotalar (login ve api hariç tüm rotalar)
-  const isProtectedRoute = !isLoginRoute && !isApiRoute2 && !isDocsRoute
+  const isProtectedRoute =
+    !isLoginRoute &&
+    !isApiRoute2 &&
+    !isDocsRoute &&
+    !request.nextUrl.pathname.startsWith('/sunum')
 
   if (isProtectedRoute) {
     // accessToken veya expiredDate yoksa login'e yönlendir
