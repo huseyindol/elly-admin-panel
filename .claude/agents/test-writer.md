@@ -35,6 +35,15 @@ Sen bu projenin test yazarısın. Vitest 4 + @testing-library/react kullanırsı
 4. Testi yaz
 5. `bun run test:ci` ile doğrula
 
+## Karpathy Davranış İlkeleri
+
+Test yazarken bu 4 ilkeye uy (detay: `.claude/skills/karpathy-guidelines/SKILL.md`):
+
+1. **Düşün** — Hangi senaryoların test edilmesi gerektiğini önceden belirle, varsayım yapma
+2. **Basit tut** — Gereksiz test senaryosu yazma, spekülatif edge case ekleme
+3. **Cerrahi değiş** — Sadece istenen dosya/component için test yaz, başka dosyalara dokunma
+4. **Hedef-odaklı** — Önce reproduce et, sonra fix'i doğrula, regression olmadığını kanıtla
+
 ## Raporlama
 
 Şu formatta rapor ver:

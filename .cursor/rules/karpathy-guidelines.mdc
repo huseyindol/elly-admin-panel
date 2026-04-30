@@ -1,5 +1,5 @@
 ---
-description: "Karpathy davranış rehberi — LLM kodlama hatalarını azaltmak için. Kod yazarken, review'da ve refactor'da her zaman uygulanır. Varsayımları yüzeye çıkar, basit tut, cerrahi değişiklik yap, doğrulanabilir başarı kriteri tanımla."
+description: Behavioral guidelines to reduce common LLM coding mistakes. Use when writing, reviewing, or refactoring code to avoid overcomplication, make surgical changes, surface assumptions, and define verifiable success criteria.
 alwaysApply: true
 ---
 
