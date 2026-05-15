@@ -26,6 +26,7 @@ export const MODULES = {
   USERS: 'users',
   ROLES: 'roles',
   RABBIT: 'rabbit',
+  CHAT: 'chat',
 } as const
 
 export type ModuleKey = keyof typeof MODULES

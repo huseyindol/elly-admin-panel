@@ -160,6 +160,12 @@ const menuGroups: MenuGroup[] = [
         href: '/email-logs',
         permission: `${MODULES.EMAILS}:read`,
       },
+      {
+        icon: Icons.MessageSquare,
+        label: 'Chat',
+        href: '/chat',
+        permission: `${MODULES.CHAT}:read`,
+      },
     ],
   },
   {
