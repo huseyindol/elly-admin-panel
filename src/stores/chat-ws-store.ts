@@ -16,6 +16,7 @@ interface ChatWsState {
 
   connect: () => void
   disconnect: () => void
+  _attachGroupSubs: (client: Client, groupId: string) => void
   subscribeToGroup: (groupId: string) => void
   unsubscribeFromGroup: () => void
   sendMessage: (
@@ -66,6 +67,12 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
         })
 
         set(s => ({ subscriptions: [presenceSub, ...s.subscriptions] }))
+
+        // If user already selected a group before WS connected, subscribe now
+        const { activeGroupId } = get()
+        if (activeGroupId) {
+          get()._attachGroupSubs(client, activeGroupId)
+        }
       },
 
       onDisconnect: () => set({ connected: false }),
@@ -93,10 +100,9 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
     })
   },
 
-  subscribeToGroup: (groupId: string) => {
-    const { client, subscriptions } = get()
-    if (!client?.connected) return
-
+  // Internal: attaches STOMP topic subscriptions for a group (requires connected client)
+  _attachGroupSubs: (client: Client, groupId: string) => {
+    const { subscriptions } = get()
     subscriptions.slice(1).forEach(s => s.unsubscribe())
 
     const subs: StompSubscription[] = []
@@ -141,10 +147,18 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
       }),
     )
 
-    set(s => ({
-      activeGroupId: groupId,
-      subscriptions: [s.subscriptions[0], ...subs],
-    }))
+    set(s => ({ subscriptions: [s.subscriptions[0], ...subs] }))
+  },
+
+  subscribeToGroup: (groupId: string) => {
+    // Always set activeGroupId so ChatWindow renders and loads history via REST.
+    // WS topic subscriptions happen immediately if connected, or deferred to onConnect.
+    set({ activeGroupId: groupId })
+
+    const { client } = get()
+    if (client?.connected) {
+      get()._attachGroupSubs(client, groupId)
+    }
   },
 
   unsubscribeFromGroup: () => {

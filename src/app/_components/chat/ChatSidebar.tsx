@@ -13,13 +13,14 @@ export function ChatSidebar() {
   const { isDarkMode } = useAdminTheme()
   const [groups, setGroups] = useState<ChatGroup[]>([])
   const [showCreate, setShowCreate] = useState(false)
-  const { activeGroupId, subscribeToGroup } = useChatWsStore()
+  const { activeGroupId, subscribeToGroup, connected } = useChatWsStore()
 
+  // Load group list on mount and refresh whenever WS (re)connects so new groups appear
   useEffect(() => {
     getMyGroupsService()
       .then(setGroups)
       .catch(() => {})
-  }, [])
+  }, [connected])
 
   return (
     <div className="flex h-full flex-col">

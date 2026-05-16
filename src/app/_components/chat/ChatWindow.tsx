@@ -19,11 +19,13 @@ export function ChatWindow({ groupId }: Props) {
   const oldestId = groupMessages[0]?.id
 
   useEffect(() => {
-    getHistoryService(groupId).then(msgs => {
-      prependHistory(groupId, msgs)
-      if (msgs.length < 50) setHasMore(false)
-      sendRead(groupId)
-    })
+    getHistoryService(groupId)
+      .then(msgs => {
+        prependHistory(groupId, msgs)
+        if (msgs.length < 50) setHasMore(false)
+        sendRead(groupId)
+      })
+      .catch(() => {})
   }, [groupId, prependHistory, sendRead])
 
   useEffect(() => {
