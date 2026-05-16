@@ -2,6 +2,8 @@ export type ChatGroupType = 'GROUP' | 'DM'
 export type ChatMessageType = 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
 export type ChatMemberRole = 'OWNER' | 'MEMBER'
 export type PresenceStatus = 'ONLINE' | 'OFFLINE'
+// Role hierarchy: VIEWER=1, EDITOR=2, ADMIN=3, SUPER_ADMIN=4
+export type RoleLevel = 1 | 2 | 3 | 4
 
 export interface ChatGroup {
   id: string
@@ -9,6 +11,7 @@ export interface ChatGroup {
   description: string | null
   type: ChatGroupType
   createdBy: number
+  visibilityLevel: number // 1=public, 2=EDITOR+, 3=ADMIN+, 4=private
   createdAt: string
   updatedAt: string
 }

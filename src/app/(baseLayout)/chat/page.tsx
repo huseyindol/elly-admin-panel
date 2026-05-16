@@ -1,13 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import { useChatConnection } from '@/hooks/use-chat-connection'
 import { ChatSidebar } from '@/app/_components/chat/ChatSidebar'
 import { ChatWindow } from '@/app/_components/chat/ChatWindow'
 import { ChatInput } from '@/app/_components/chat/ChatInput'
 import { ChatTypingIndicator } from '@/app/_components/chat/ChatTypingIndicator'
+import { ChatMemberList } from '@/app/_components/chat/ChatMemberList'
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import { useAdminTheme } from '@/app/_hooks'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Users } from 'lucide-react'
 
 export default function ChatPage() {
   useChatConnection()
@@ -15,6 +17,7 @@ export default function ChatPage() {
   const { isDarkMode } = useAdminTheme()
   const activeGroupId = useChatWsStore(s => s.activeGroupId)
   const connected = useChatWsStore(s => s.connected)
+  const [showMembers, setShowMembers] = useState(false)
 
   return (
     <div className="flex h-[calc(100vh-64px)]">
@@ -39,16 +42,54 @@ export default function ChatPage() {
 
         {activeGroupId ? (
           <>
-            <div className="min-h-0 flex-1 overflow-hidden">
-              <ChatWindow groupId={activeGroupId} />
-            </div>
-            <div className="px-4 py-1">
-              <ChatTypingIndicator groupId={activeGroupId} />
-            </div>
+            {/* Üye paneli toggle */}
             <div
-              className={`border-t p-4 ${isDarkMode ? 'border-slate-800/50' : 'border-gray-200'}`}
+              className={`flex justify-end border-b px-4 py-2 ${
+                isDarkMode ? 'border-slate-800/50' : 'border-gray-200'
+              }`}
             >
-              <ChatInput groupId={activeGroupId} />
+              <button
+                type="button"
+                onClick={() => setShowMembers(v => !v)}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  showMembers
+                    ? isDarkMode
+                      ? 'bg-violet-500/20 text-violet-400'
+                      : 'bg-violet-50 text-violet-600'
+                    : isDarkMode
+                      ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}
+              >
+                <Users className="h-3.5 w-3.5" />
+                Üyeler
+              </button>
+            </div>
+
+            <div className="flex min-h-0 flex-1">
+              <div className="flex min-w-0 flex-1 flex-col">
+                <div className="min-h-0 flex-1 overflow-hidden">
+                  <ChatWindow groupId={activeGroupId} />
+                </div>
+                <div className="px-4 py-1">
+                  <ChatTypingIndicator groupId={activeGroupId} />
+                </div>
+                <div
+                  className={`border-t p-4 ${isDarkMode ? 'border-slate-800/50' : 'border-gray-200'}`}
+                >
+                  <ChatInput groupId={activeGroupId} />
+                </div>
+              </div>
+
+              {showMembers && (
+                <aside
+                  className={`w-56 shrink-0 overflow-y-auto border-l ${
+                    isDarkMode ? 'border-slate-800/50' : 'border-gray-200'
+                  }`}
+                >
+                  <ChatMemberList groupId={activeGroupId} />
+                </aside>
+              )}
             </div>
           </>
         ) : (

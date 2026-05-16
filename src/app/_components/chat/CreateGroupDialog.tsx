@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Modal } from '@/app/_components'
 import { createGroupService } from '@/app/_services/chat.services'
+import { getMyRoleLevel, visibilityLabel } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
 import type { ChatGroup } from '@/types/chat'
 
@@ -17,6 +18,7 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
+  const myLevel = getMyRoleLevel()
 
   const inputClass = `w-full rounded-xl border px-3 py-2 text-sm outline-none transition-colors focus:ring-2 focus:ring-violet-500/30 ${
     isDarkMode
@@ -77,6 +79,23 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
             className={`${inputClass} resize-none`}
           />
         </div>
+
+        <p
+          className={`rounded-lg px-3 py-2 text-xs ${
+            isDarkMode
+              ? 'bg-slate-800 text-slate-400'
+              : 'bg-gray-50 text-gray-500'
+          }`}
+        >
+          Bu grup otomatik olarak <strong>{visibilityLabel(myLevel)}</strong>{' '}
+          görünürlüğünde oluşturulacak.
+          {myLevel === 1 && ' (VIEWER: herkes görebilir)'}
+          {myLevel === 2 &&
+            ' (EDITOR+: sadece EDITOR, ADMIN ve SUPER_ADMIN görebilir)'}
+          {myLevel === 3 && ' (ADMIN+: sadece ADMIN ve SUPER_ADMIN görebilir)'}
+          {myLevel === 4 &&
+            ' (SUPER_ADMIN: kimse göremez, sadece davet edilenler)'}
+        </p>
 
         <div className="flex justify-end gap-3 pt-2">
           <button

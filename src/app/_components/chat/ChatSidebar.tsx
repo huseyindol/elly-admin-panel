@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import { getMyGroupsService } from '@/app/_services/chat.services'
 import { useChatWsStore } from '@/stores/chat-ws-store'
+import { visibilityLabel } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
 import type { ChatGroup } from '@/types/chat'
-import { MessageSquare, Users, Plus } from 'lucide-react'
+import { MessageSquare, Users, Plus, Lock } from 'lucide-react'
 import { CreateGroupDialog } from './CreateGroupDialog'
 
 export function ChatSidebar() {
@@ -76,9 +77,31 @@ export function ChatSidebar() {
             ) : (
               <MessageSquare className="h-4 w-4 shrink-0" />
             )}
-            <span className="truncate text-sm">{group.name ?? 'DM'}</span>
+            <span className="flex-1 truncate text-sm">
+              {group.name ?? 'DM'}
+            </span>
+            {group.type !== 'DM' && (
+              <span
+                title={visibilityLabel(group.visibilityLevel)}
+                className="shrink-0"
+              >
+                {group.visibilityLevel >= 4 ? (
+                  <Lock className="h-3 w-3 text-muted-foreground opacity-60" />
+                ) : (
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                      isDarkMode
+                        ? 'bg-slate-700 text-slate-400'
+                        : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    {visibilityLabel(group.visibilityLevel)}
+                  </span>
+                )}
+              </span>
+            )}
             {activeGroupId === group.id && (
-              <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-violet-400" />
+              <span className="ml-1 h-2 w-2 shrink-0 rounded-full bg-violet-400" />
             )}
           </button>
         ))}
