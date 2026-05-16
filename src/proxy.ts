@@ -1,4 +1,4 @@
-import { RateLimiter, RateLimitPresets } from '@/lib/rate-limiter'
+// import { RateLimiter, RateLimitPresets } from '@/lib/rate-limiter'
 import { generateCSP, getClientIp } from '@/lib/security'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
@@ -7,8 +7,8 @@ import { removeCookies } from './proxy/removeCookies'
 import { CookieEnum } from './utils/constant/cookieConstant'
 
 // Initialize rate limiters for different routes
-const apiRateLimiter = new RateLimiter(RateLimitPresets.api)
-const generalRateLimiter = new RateLimiter(RateLimitPresets.moderate)
+// const apiRateLimiter = new RateLimiter(RateLimitPresets.api)
+// const generalRateLimiter = new RateLimiter(RateLimitPresets.moderate)
 
 /**
  * Middleware to handle security headers and rate limiting
@@ -17,40 +17,40 @@ export async function proxy(request: NextRequest) {
   const response = NextResponse.next()
 
   // Get client IP for rate limiting
-  const clientIp = getClientIp(request.headers)
+  // const clientIp = getClientIp(request.headers)
 
   // Apply rate limiting
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
-  const rateLimiter = isApiRoute ? apiRateLimiter : generalRateLimiter
+  // const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
+  // const rateLimiter = isApiRoute ? apiRateLimiter : generalRateLimiter
 
-  const rateLimitResult = await rateLimiter.check(clientIp)
+  // const rateLimitResult = await rateLimiter.check(clientIp)
 
   // Add rate limit headers
-  response.headers.set('X-RateLimit-Limit', String(rateLimitResult.limit))
-  response.headers.set(
-    'X-RateLimit-Remaining',
-    String(rateLimitResult.remaining),
-  )
-  response.headers.set(
-    'X-RateLimit-Reset',
-    new Date(rateLimitResult.reset).toISOString(),
-  )
+  // response.headers.set('X-RateLimit-Limit', String(rateLimitResult.limit))
+  // response.headers.set(
+  //   'X-RateLimit-Remaining',
+  //   String(rateLimitResult.remaining),
+  // )
+  // response.headers.set(
+  //   'X-RateLimit-Reset',
+  //   new Date(rateLimitResult.reset).toISOString(),
+  // )
 
   // If rate limit exceeded, return 429
-  if (!rateLimitResult.success) {
-    return new NextResponse('Too Many Requests', {
-      status: 429,
-      headers: {
-        'Content-Type': 'application/json',
-        'Retry-After': String(
-          Math.ceil((rateLimitResult.reset - Date.now()) / 1000),
-        ),
-        'X-RateLimit-Limit': String(rateLimitResult.limit),
-        'X-RateLimit-Remaining': '0',
-        'X-RateLimit-Reset': new Date(rateLimitResult.reset).toISOString(),
-      },
-    })
-  }
+  // if (!rateLimitResult.success) {
+  //   return new NextResponse('Too Many Requests', {
+  //     status: 429,
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       'Retry-After': String(
+  //         Math.ceil((rateLimitResult.reset - Date.now()) / 1000),
+  //       ),
+  //       'X-RateLimit-Limit': String(rateLimitResult.limit),
+  //       'X-RateLimit-Remaining': '0',
+  //       'X-RateLimit-Reset': new Date(rateLimitResult.reset).toISOString(),
+  //     },
+  //   })
+  // }
 
   // Security Headers
   // Prevent DNS prefetching
