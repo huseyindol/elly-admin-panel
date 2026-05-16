@@ -1,24 +1,26 @@
 import type { NextRequest, NextResponse } from 'next/server'
+import { CookieEnum } from '../utils/constant/cookieConstant'
 
-const COOKIE_DOMAINS: (string | undefined)[] = [undefined, '.huseyindol.com']
+const AUTH_COOKIES = [
+  CookieEnum.ACCESS_TOKEN,
+  CookieEnum.REFRESH_TOKEN,
+  CookieEnum.EXPIRED_DATE,
+  CookieEnum.USER_CODE,
+  CookieEnum.TENANT_ID,
+]
 
-/**
- * İstekteki tüm cookie'leri hem mevcut domain'de hem de .huseyindol.com
- * domain'inde maxAge=0 ile sıfırlar.
- */
 export const removeCookies = async (
   response: NextResponse,
-  request: NextRequest,
+  _request: NextRequest,
 ) => {
-  const allCookies = request.cookies.getAll()
-
-  for (const cookie of allCookies) {
-    for (const domain of COOKIE_DOMAINS) {
-      response.cookies.set(cookie.name, '', {
-        path: '/',
-        maxAge: 0,
-        ...(domain && { domain }),
-      })
-    }
+  for (const name of AUTH_COOKIES) {
+    // Host-only
+    response.cookies.set(name, '', { path: '/', maxAge: 0 })
+    // .huseyindol.com domain
+    response.cookies.set(name, '', {
+      path: '/',
+      maxAge: 0,
+      domain: '.huseyindol.com',
+    })
   }
 }

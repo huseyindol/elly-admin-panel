@@ -1,23 +1,33 @@
 'use server'
 import { cookies } from 'next/headers'
+import { CookieEnum } from '../../utils/constant/cookieConstant'
 
-const COOKIE_DOMAINS: (string | undefined)[] = [undefined, '.huseyindol.com']
+const AUTH_COOKIES = [
+  CookieEnum.ACCESS_TOKEN,
+  CookieEnum.REFRESH_TOKEN,
+  CookieEnum.EXPIRED_DATE,
+  CookieEnum.USER_CODE,
+  CookieEnum.TENANT_ID,
+]
 
 export const logout = async () => {
-  try {
-    const cookieStore = await cookies()
-    const allCookies = cookieStore.getAll()
+  const cookieStore = await cookies()
 
-    for (const cookie of allCookies) {
-      for (const domain of COOKIE_DOMAINS) {
-        cookieStore.set(cookie.name, '', {
-          path: '/',
-          maxAge: 0,
-          ...(domain && { domain }),
-        })
-      }
+  // Host-only cookie'leri sil (saveTokens'ta nasıl set edildiyse)
+  for (const name of AUTH_COOKIES) {
+    cookieStore.delete(name)
+  }
+
+  // .huseyindol.com domain cookie'leri sil (varsa)
+  for (const name of AUTH_COOKIES) {
+    try {
+      cookieStore.set(name, '', {
+        path: '/',
+        maxAge: 0,
+        domain: '.huseyindol.com',
+      })
+    } catch {
+      // domain silme hatası diğerlerini etkilemesin
     }
-  } catch {
-    // cookie silme hatası navigation'ı engellemez
   }
 }
