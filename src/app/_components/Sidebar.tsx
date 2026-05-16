@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import React from 'react'
 import { logout } from '@/actions/auth/logout'
 import { PermissionGate } from '@/components/PermissionGate'
@@ -289,12 +289,13 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
   }
 
   const queryClient = useQueryClient()
+  const router = useRouter()
 
-  const onLogout = () => {
-    // Zustand store'u temizle (localStorage'dan da silinir)
+  const onLogout = async () => {
     usePermissionStore.getState().clearPermissions()
     queryClient.clear()
-    logout()
+    await logout()
+    router.push('/login')
   }
 
   // Kullanıcı rol etiketini belirle
