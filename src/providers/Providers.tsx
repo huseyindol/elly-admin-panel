@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import CookieContext, { initGlobalCookieStore } from '../context/CookieContext'
 import { ThemeProvider } from './ThemeProvider'
 
@@ -48,15 +48,14 @@ export default function Providers({
     persistBrowserCookie(name, value)
   }, [])
 
-  // cookies state değiştiğinde singleton'ı güncelle
-  useEffect(() => {
-    initGlobalCookieStore({ cookies, updateCookie })
-  }, [cookies, updateCookie])
-
   const contextValue = useMemo(
     () => ({ cookies, updateCookie }),
     [cookies, updateCookie],
   )
+
+  // Synchronous initialization so globalCookieStore is available before
+  // any child useEffect hooks fire (React runs effects bottom-up: children first)
+  initGlobalCookieStore(contextValue)
 
   return (
     <CookieContext.Provider value={contextValue}>
