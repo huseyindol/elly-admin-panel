@@ -5,10 +5,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 import { logout } from '@/actions/auth/logout'
+import { removeGlobalCookie } from '@/context/CookieContext'
 import { PermissionGate } from '@/components/PermissionGate'
 import { usePermission } from '@/hooks/usePermission'
 import { usePermissionStore } from '@/stores/permission-store'
 import { MODULES } from '@/types/permissions'
+import { CookieEnum } from '@/utils/constant/cookieConstant'
 import { useAdminTheme } from '../_hooks'
 import { Icons } from './Icons'
 
@@ -293,7 +295,20 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
   const onLogout = async () => {
     usePermissionStore.getState().clearPermissions()
     queryClient.clear()
+
+    // Client-side cookie'leri temizle (Providers.tsx'teki persistBrowserCookie ile set edilenler)
+    const clientCookies = [
+      CookieEnum.ACCESS_TOKEN,
+      CookieEnum.REFRESH_TOKEN,
+      CookieEnum.EXPIRED_DATE,
+      CookieEnum.USER_CODE,
+      CookieEnum.TENANT_ID,
+    ]
+    clientCookies.forEach(name => removeGlobalCookie(name))
+
+    // Server-side httpOnly cookie'leri temizle
     await logout()
+
     window.location.href = '/login'
   }
 
