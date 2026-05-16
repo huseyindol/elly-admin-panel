@@ -10,12 +10,12 @@ export const refreshTokenProxy = async (
   const refreshToken = request.cookies.get(CookieEnum.REFRESH_TOKEN)
   if (!refreshToken) {
     // remove cookies
-    await removeCookies(response)
+    await removeCookies(response, request)
     return false
   } else {
     const refreshResponse = await refreshService(refreshToken.value)
     if (!refreshResponse.result) {
-      await removeCookies(response)
+      await removeCookies(response, request)
       return false
     }
     // cookies update

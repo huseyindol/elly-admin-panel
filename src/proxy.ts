@@ -149,7 +149,7 @@ export async function proxy(request: NextRequest) {
           new URL('/login', request.url),
         )
         // İstediğiniz cookie'yi burada set edebilirsiniz
-        await removeCookies(redirectResponse)
+        await removeCookies(redirectResponse, request)
         return redirectResponse
       }
     }
