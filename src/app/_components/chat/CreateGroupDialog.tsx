@@ -87,14 +87,10 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
               : 'bg-gray-50 text-gray-500'
           }`}
         >
-          Bu grup otomatik olarak <strong>{visibilityLabel(myLevel)}</strong>{' '}
-          görünürlüğünde oluşturulacak.
-          {myLevel === 1 && ' (VIEWER: herkes görebilir)'}
-          {myLevel === 2 &&
-            ' (EDITOR+: sadece EDITOR, ADMIN ve SUPER_ADMIN görebilir)'}
-          {myLevel === 3 && ' (ADMIN+: sadece ADMIN ve SUPER_ADMIN görebilir)'}
-          {myLevel === 4 &&
-            ' (SUPER_ADMIN: kimse göremez, sadece davet edilenler)'}
+          {myLevel === 1 && 'Bu grup herkese görünür.'}
+          {myLevel === 2 && 'Bu grubu Editor ve Admin rolündekiler görebilir.'}
+          {myLevel === 3 && 'Bu grubu yalnızca Admin rolündekiler görebilir.'}
+          {myLevel === 4 && 'Bu grup gizlidir — yalnızca siz görebilirsiniz.'}
         </p>
 
         <div className="flex justify-end gap-3 pt-2">
