@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from 'react'
 import { fetcher } from '@/utils/services/fetcher'
 import { usePermissionStore } from '@/stores/permission-store'
 import type { BaseResponse } from '@/types/BaseResponse'
@@ -53,6 +54,28 @@ export async function getMyRoleLevel(): Promise<RoleLevel> {
 export function getMyRoleLevelSync(): RoleLevel {
   const store = usePermissionStore.getState()
   return rolesToLevel(store.roles)
+}
+
+/**
+ * Reactive rol seviyesi hook'u — permission-store roller dolunca
+ * component otomatik re-render olur. Store boşsa arka planda
+ * refreshPermissions tetiklenir.
+ *
+ * Bu hook'u tercih et: `useState + useEffect(getMyRoleLevel().then(...))`
+ * pattern'i ilk render'da 1 döndürür ve refresh çağrısı başarısız
+ * olursa orada takılı kalır. Reactive hook store değişimini izler.
+ */
+export function useMyRoleLevel(): RoleLevel {
+  const roles = usePermissionStore(s => s.roles)
+  const isLoaded = usePermissionStore(s => s.isLoaded)
+
+  useEffect(() => {
+    if (!isLoaded) {
+      usePermissionStore.getState().refreshPermissions()
+    }
+  }, [isLoaded])
+
+  return useMemo(() => rolesToLevel(roles), [roles])
 }
 
 async function fetchMyProfile(): Promise<UserProfile | null> {

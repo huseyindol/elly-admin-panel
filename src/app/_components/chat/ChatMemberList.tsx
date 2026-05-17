@@ -6,7 +6,7 @@ import {
   removeMemberService,
   addMemberService,
 } from '@/app/_services/chat.services'
-import { getMyRoleLevel, canInvite } from '@/utils/chat-role'
+import { useMyRoleLevel, canInvite } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
 import { PermissionGate } from '@/components/PermissionGate'
 import type { ChatMember, RoleLevel } from '@/types/chat'
@@ -27,17 +27,13 @@ export function ChatMemberList({ groupId }: Props) {
   const [members, setMembers] = useState<ChatMember[]>([])
   const [inviteUserId, setInviteUserId] = useState('')
   const [inviting, setInviting] = useState(false)
-  const [myLevel, setMyLevel] = useState<RoleLevel>(1)
+  const myLevel = useMyRoleLevel()
 
   useEffect(() => {
     getMembersService(groupId)
       .then(setMembers)
       .catch(() => {})
   }, [groupId])
-
-  useEffect(() => {
-    getMyRoleLevel().then(setMyLevel)
-  }, [])
 
   const handleRemove = async (userId: number) => {
     await removeMemberService(groupId, userId)

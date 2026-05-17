@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { getMyGroupsService } from '@/app/_services/chat.services'
 import { useChatWsStore } from '@/stores/chat-ws-store'
-import { visibilityLabel, getMyRoleLevel } from '@/utils/chat-role'
+import { visibilityLabel, useMyRoleLevel } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
-import type { ChatGroup, RoleLevel } from '@/types/chat'
+import type { ChatGroup } from '@/types/chat'
 import { MessageSquare, Users, Plus, Lock, MessageCircle } from 'lucide-react'
 import { CreateGroupDialog } from './CreateGroupDialog'
 import { DmDialog } from './DmDialog'
@@ -20,7 +20,7 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const [groups, setGroups] = useState<ChatGroup[]>([])
   const [showCreate, setShowCreate] = useState(false)
   const [showDm, setShowDm] = useState(false)
-  const [myLevel, setMyLevel] = useState<RoleLevel>(1)
+  const myLevel = useMyRoleLevel()
 
   const activeGroupId = useChatWsStore(s => s.activeGroupId)
   const connected = useChatWsStore(s => s.connected)
@@ -31,11 +31,6 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const deletedGroupSignal = useChatWsStore(s => s.deletedGroupSignal)
   const invitedGroupSignal = useChatWsStore(s => s.invitedGroupSignal)
   const unreadCounts = useChatWsStore(s => s.unreadCounts)
-
-  // Rol seviyesini çek
-  useEffect(() => {
-    getMyRoleLevel().then(setMyLevel)
-  }, [])
 
   // Grupları yükle ve tüm gruplara mesaj sub'ı at
   useEffect(() => {

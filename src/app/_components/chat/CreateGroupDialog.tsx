@@ -3,9 +3,9 @@
 import { Modal } from '@/app/_components'
 import { useAdminTheme } from '@/app/_hooks'
 import { createGroupService } from '@/app/_services/chat.services'
-import type { ChatGroup, RoleLevel } from '@/types/chat'
-import { getMyRoleLevel, visibilityLabel } from '@/utils/chat-role'
-import { useEffect, useState } from 'react'
+import type { ChatGroup } from '@/types/chat'
+import { useMyRoleLevel, visibilityLabel } from '@/utils/chat-role'
+import { useState } from 'react'
 
 interface Props {
   isOpen: boolean
@@ -18,12 +18,7 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
-  const [myLevel, setMyLevel] = useState<RoleLevel>(1)
-
-  useEffect(() => {
-    if (!isOpen) return
-    getMyRoleLevel().then(setMyLevel)
-  }, [isOpen])
+  const myLevel = useMyRoleLevel()
 
   const inputClass = `w-full rounded-xl border px-3 py-2 text-sm outline-none transition-colors focus:ring-2 focus:ring-violet-500/30 ${
     isDarkMode
