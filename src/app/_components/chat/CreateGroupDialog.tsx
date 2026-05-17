@@ -33,6 +33,7 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
       const group = await createGroupService({
         name: name.trim(),
         description: description.trim() || undefined,
+        visibilityLevel: myLevel,
       })
       onCreated(group)
       onClose()

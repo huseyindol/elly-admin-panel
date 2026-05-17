@@ -33,6 +33,7 @@ export const getMembersService = async (
 export const createGroupService = async (data: {
   name: string
   description?: string
+  visibilityLevel?: number
   memberIds?: number[]
 }): Promise<ChatGroup> => {
   const res: BaseResponse<ChatGroup> = await fetcher('/api/v1/chat/groups', {
