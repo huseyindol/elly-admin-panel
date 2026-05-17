@@ -104,12 +104,21 @@ export async function proxy(request: NextRequest) {
   // Auth bilgilerini al
   const accessToken = request.cookies.get(CookieEnum.ACCESS_TOKEN)
   const expiredDate = request.cookies.get(CookieEnum.EXPIRED_DATE)
-  const isAuthenticated = !!(accessToken && expiredDate)
+  const refreshToken = request.cookies.get(CookieEnum.REFRESH_TOKEN)
+  // accessToken (4h) + expiredDate (4h) düşmüş olabilir; refreshToken (6 ay)
+  // hâlâ varsa "yenilenebilir" sayılır.
+  const hasAccess = !!(accessToken && expiredDate)
+  const canRefresh = !!refreshToken
+  const isAuthenticated = hasAccess || canRefresh
 
   const isLoginRoute = request.nextUrl.pathname === '/login'
   const isApiRoute2 = request.nextUrl.pathname.startsWith('/api/')
   const isDocsRoute = request.nextUrl.pathname.startsWith('/docs/')
   const isRootRoute = request.nextUrl.pathname === '/'
+
+  // Token süresinin dolup dolmadığını expiredDate cookie değerinden kontrol et
+  const isAccessExpired =
+    hasAccess && new Date(Number(expiredDate?.value)) < new Date()
 
   // Root (/) → login veya dashboard'a yönlendir
   if (isRootRoute) {
@@ -118,16 +127,15 @@ export async function proxy(request: NextRequest) {
   }
 
   // Login sayfası: süresi geçmiş token ile loop'a girmemek için
-  //   - geçerli token varsa dashboard'a yönlendir
+  //   - geçerli access varsa dashboard'a yönlendir
   //   - süresi geçmişse cookie'leri temizle, login'i servis et (self-heal)
   if (isLoginRoute && isAuthenticated) {
-    const expiredDateCheck = new Date(Number(expiredDate?.value))
-    if (expiredDateCheck < new Date()) {
-      // Stale auth — kullanıcı zaten /login'e geldi, yenisini girsin
-      await removeCookies(response, request)
-      return response
+    if (hasAccess && !isAccessExpired) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    // Stale auth — login'i temiz state ile servis et
+    await removeCookies(response, request)
+    return response
   }
 
   // Korumalı rotalar (login ve api hariç tüm rotalar)
@@ -138,21 +146,19 @@ export async function proxy(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/sunum')
 
   if (isProtectedRoute) {
-    // accessToken veya expiredDate yoksa login'e yönlendir
+    // Ne access ne refresh varsa direkt login
     if (!isAuthenticated) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // Token süresi dolmuşsa
-    const expiredDateCheck = new Date(Number(expiredDate?.value))
-    // console.log('expiredDate-CHECK', expiredDateCheck, 'new Date()', new Date())
-    if (expiredDateCheck < new Date()) {
-      // console.log('PROXY - Token expired, attempting refresh')
+    // Access yoksa veya süresi dolmuşsa, refreshToken varsa yenileme dene
+    const needsRefresh = !hasAccess || isAccessExpired
+    if (needsRefresh) {
+      if (!canRefresh) {
+        return NextResponse.redirect(new URL('/login', request.url))
+      }
       const refreshResult = await refreshTokenProxy(request, response)
-      // console.log('refreshResult', refreshResult)
-      // Refresh başarısız olduysa login'e yönlendir
       if (!refreshResult) {
-        // console.log('PROXY - Refresh failed, redirecting to login')
         const redirectResponse = NextResponse.redirect(
           new URL('/login', request.url),
         )

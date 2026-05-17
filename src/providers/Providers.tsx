@@ -4,16 +4,20 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useCallback, useMemo, useState } from 'react'
 import CookieContext, { initGlobalCookieStore } from '../context/CookieContext'
+import { getCookieMaxAge } from '../utils/constant/cookieConstant'
 import { ThemeProvider } from './ThemeProvider'
 
 /**
  * Browser cookie'ye yaz — server action'lar (next/headers cookies())
  * sadece HTTP cookie'lerini okuyabilir, React state yetmez.
+ * Her cookie kendi adına özel max-age ile yazılır (bkz.
+ * cookieConstant.COOKIE_MAX_AGE).
  */
 function persistBrowserCookie(name: string, value: string) {
   if (typeof document === 'undefined') return
   if (value) {
-    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`
+    const maxAge = getCookieMaxAge(name)
+    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`
   } else {
     document.cookie = `${name}=; path=/; max-age=0`
   }

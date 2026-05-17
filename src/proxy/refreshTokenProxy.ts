@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { refreshService } from '../services/auth/refreshService'
-import { CookieEnum } from '../utils/constant/cookieConstant'
+import { COOKIE_MAX_AGE, CookieEnum } from '../utils/constant/cookieConstant'
 import { removeCookies } from './removeCookies'
 
 export const refreshTokenProxy = async (
@@ -19,12 +19,12 @@ export const refreshTokenProxy = async (
     return false
   }
 
-  // cookies update
+  // cookies update — her cookie ilgili token TTL'iyle hizalanır
   response.cookies.set(CookieEnum.ACCESS_TOKEN, refreshResponse.data.token, {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: COOKIE_MAX_AGE[CookieEnum.ACCESS_TOKEN],
   })
   response.cookies.set(
     CookieEnum.REFRESH_TOKEN,
@@ -33,7 +33,7 @@ export const refreshTokenProxy = async (
       httpOnly: true,
       secure: true,
       sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: COOKIE_MAX_AGE[CookieEnum.REFRESH_TOKEN],
     },
   )
   response.cookies.set(
@@ -43,14 +43,14 @@ export const refreshTokenProxy = async (
       httpOnly: false,
       secure: true,
       sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: COOKIE_MAX_AGE[CookieEnum.EXPIRED_DATE],
     },
   )
   response.cookies.set(CookieEnum.USER_CODE, refreshResponse.data.userCode, {
     httpOnly: false,
     secure: true,
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: COOKIE_MAX_AGE[CookieEnum.USER_CODE],
   })
   return true
 }
