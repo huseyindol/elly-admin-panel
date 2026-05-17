@@ -11,11 +11,10 @@ import { ConfirmDialog } from '@/app/_components'
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import {
   deleteGroupService,
-  getGroupService,
+  getMembersService,
 } from '@/app/_services/chat.services'
-import { getMyRoleLevel, getMyUserId } from '@/utils/chat-role'
+import { getMyRoleLevel, getMyUsername } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
-import type { ChatGroup } from '@/types/chat'
 import { AlertCircle, Users, Trash2 } from 'lucide-react'
 
 export default function ChatPage() {
@@ -29,24 +28,26 @@ export default function ChatPage() {
   const [showDeleteGroup, setShowDeleteGroup] = useState(false)
   const [deletingGroup, setDeletingGroup] = useState(false)
   const [refreshToken, setRefreshToken] = useState(0)
-  const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null)
+  const [isGroupOwner, setIsGroupOwner] = useState(false)
 
-  // Grup değiştiğinde detayları çek; silme yetkisini belirlemek için gerekli
+  // Grup değiştiğinde üyeleri çek; OWNER rolü ile sahiplik kontrol edilir
   useEffect(() => {
-    if (!activeGroupId) return
-    getGroupService(activeGroupId)
-      .then(setActiveGroup)
-      .catch(() => {})
+    if (!activeGroupId) {
+      setIsGroupOwner(false)
+      return
+    }
+    const myUsername = getMyUsername()
+    getMembersService(activeGroupId)
+      .then(members => {
+        const ownerMember = members.find(m => m.role === 'OWNER')
+        setIsGroupOwner(ownerMember?.username === myUsername)
+      })
+      .catch(() => setIsGroupOwner(false))
   }, [activeGroupId])
 
-  const myId = getMyUserId()
   const myLevel = getMyRoleLevel()
-  // activeGroup.id === activeGroupId kontrolü: eski grup detayının stale olmaması için
   const canDeleteGroup =
-    activeGroupId !== null &&
-    activeGroup !== null &&
-    activeGroup.id === activeGroupId &&
-    (myLevel >= 4 || (myId !== null && myId === activeGroup.createdBy))
+    activeGroupId !== null && (isGroupOwner || myLevel >= 4)
 
   const handleDeleteGroup = async () => {
     if (!activeGroupId) return

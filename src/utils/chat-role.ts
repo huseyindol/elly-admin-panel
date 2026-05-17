@@ -43,12 +43,13 @@ export function visibilityLabel(level: number): string {
   return labels[level] ?? 'Bilinmiyor'
 }
 
-// USER_CODE cookie'sinden mevcut kullanıcı ID'sini döner
-export function getMyUserId(): number | null {
-  const code = getGlobalCookies()[CookieEnum.USER_CODE]
-  if (!code) return null
-  const num = Number(code)
-  return isNaN(num) ? null : num
+// JWT sub claim'inden kullanıcı adını döner (Spring Boot sub = username)
+export function getMyUsername(): string | null {
+  const token = getGlobalCookies()[CookieEnum.ACCESS_TOKEN]
+  if (!token) return null
+  const payload = decodeJwtPayload(token)
+  if (typeof payload.sub === 'string' && payload.sub) return payload.sub
+  return null
 }
 
 // Backend kuralı: requesterLevel < 4 ise targetLevel < requesterLevel olmalı
