@@ -19,7 +19,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 export default function NewPagePage() {
@@ -36,8 +36,9 @@ export default function NewPagePage() {
   const {
     register,
     handleSubmit,
+    control,
     setValue,
-    watch,
+    getValues,
     formState: { errors },
   } = useForm<CreatePageInput>({
     resolver: zodResolver(CreatePageSchema),
@@ -93,7 +94,7 @@ export default function NewPagePage() {
     },
   })
 
-  const title = watch('title')
+  const title = useWatch({ control, name: 'title' })
 
   const filteredPageTemplates = useMemo(
     () => pageTemplates.filter(t => t.value !== ''),
@@ -143,7 +144,7 @@ export default function NewPagePage() {
         shouldDirty: true,
       })
       setValue('seoInfo.keywords', res.data.seoKeywords, { shouldDirty: true })
-      const currentSlug = watch('slug')
+      const currentSlug = getValues('slug')
       if (currentSlug) {
         setValue('seoInfo.canonicalUrl', `/${currentSlug}`, {
           shouldDirty: true,

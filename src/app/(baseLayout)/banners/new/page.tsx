@@ -19,7 +19,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 type ImageInputMode = 'upload' | 'url'
@@ -50,7 +50,7 @@ export default function NewBannerPage() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { errors },
   } = useForm<CreateBannerInput>({
@@ -67,7 +67,7 @@ export default function NewBannerPage() {
     },
   })
 
-  const title = watch('title')
+  const title = useWatch({ control, name: 'title' })
 
   const handleAiAltText = async () => {
     if (!title) return

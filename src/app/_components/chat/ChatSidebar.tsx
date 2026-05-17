@@ -12,9 +12,10 @@ import { DmDialog } from './DmDialog'
 
 interface Props {
   refreshToken?: number
+  onGroupSelect?: () => void
 }
 
-export function ChatSidebar({ refreshToken }: Props) {
+export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const { isDarkMode } = useAdminTheme()
   const [groups, setGroups] = useState<ChatGroup[]>([])
   const [showCreate, setShowCreate] = useState(false)
@@ -86,7 +87,10 @@ export function ChatSidebar({ refreshToken }: Props) {
           <button
             key={group.id}
             type="button"
-            onClick={() => subscribeToGroup(group.id)}
+            onClick={() => {
+              subscribeToGroup(group.id)
+              onGroupSelect?.()
+            }}
             className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
               activeGroupId === group.id
                 ? isDarkMode

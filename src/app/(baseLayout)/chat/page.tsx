@@ -39,11 +39,6 @@ export default function ChatPage() {
       .catch(() => {})
   }, [activeGroupId])
 
-  // Mobil: grup seçilince chat view'a otomatik geç
-  useEffect(() => {
-    if (activeGroupId) setMobileView('chat')
-  }, [activeGroupId])
-
   const myLevel = getMyRoleLevel()
   const myUserId = getMyUserId()
   const isOwner =
@@ -78,7 +73,10 @@ export default function ChatPage() {
       <aside
         className={`flex-col border-r ${isDarkMode ? 'border-slate-800/50' : 'border-gray-200'} ${mobileView === 'sidebar' ? 'flex' : 'hidden'} w-full md:flex md:w-64 md:shrink-0`}
       >
-        <ChatSidebar refreshToken={refreshToken} />
+        <ChatSidebar
+          refreshToken={refreshToken}
+          onGroupSelect={() => setMobileView('chat')}
+        />
       </aside>
 
       {/* Ana chat alanı — mobil: tam ekran, desktop: kalan alan */}

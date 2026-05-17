@@ -26,7 +26,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 export default function EditPostPage() {
@@ -57,7 +57,7 @@ export default function EditPostPage() {
     control,
     reset,
     setValue,
-    watch,
+    getValues,
     formState: { errors, isDirty },
   } = useForm<UpdatePostInput>({
     resolver: zodResolver(UpdatePostSchema),
@@ -71,7 +71,7 @@ export default function EditPostPage() {
     },
   })
 
-  const title = watch('title')
+  const title = useWatch({ control, name: 'title' })
 
   const filteredPostTemplates = useMemo(
     () => postTemplates.filter(t => t.value !== ''),
@@ -102,7 +102,7 @@ export default function EditPostPage() {
         shouldDirty: true,
       })
       setValue('seoInfo.keywords', res.data.seoKeywords, { shouldDirty: true })
-      const currentSlug = watch('slug')
+      const currentSlug = getValues('slug')
       if (currentSlug) {
         setValue('seoInfo.canonicalUrl', `/${currentSlug}`, {
           shouldDirty: true,
