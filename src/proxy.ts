@@ -1,5 +1,5 @@
 // import { RateLimiter, RateLimitPresets } from '@/lib/rate-limiter'
-import { generateCSP, getClientIp } from '@/lib/security'
+import { generateCSP } from '@/lib/security'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { refreshTokenProxy } from './proxy/refreshTokenProxy'

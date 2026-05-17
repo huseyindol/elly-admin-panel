@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Modal } from '@/app/_components'
 import { createGroupService } from '@/app/_services/chat.services'
-import { getMyRoleLevel, visibilityLabel } from '@/utils/chat-role'
+import { getMyRoleLevel } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
 import type { ChatGroup } from '@/types/chat'
 

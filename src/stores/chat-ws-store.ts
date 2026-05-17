@@ -79,7 +79,6 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
       onDisconnect: () => set({ connected: false }),
       onStompError: frame => {
         if (process.env.NODE_ENV === 'development') {
-          // eslint-disable-next-line no-console
           console.error('STOMP error', frame)
         }
       },

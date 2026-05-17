@@ -11,7 +11,7 @@ import {
 import type { Field, FormSchema } from '@/types/form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMemo } from 'react'
-import { UseFormReturn, useForm } from 'react-hook-form'
+import { UseFormReturn, useForm, useWatch } from 'react-hook-form'
 
 interface UseFormSchemaOptions {
   schema: FormSchema
@@ -58,8 +58,8 @@ export function useFormSchema({
     shouldUnregister: true,
   })
 
-  // Watch all form values for conditional visibility
-  const formValues = form.watch()
+  // Watch all form values for conditional visibility (useWatch is React Compiler-safe)
+  const formValues = useWatch({ control: form.control })
 
   // Calculate visible fields based on current form values
   const visibleFields = useMemo(() => {

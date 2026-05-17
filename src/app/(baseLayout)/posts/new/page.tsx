@@ -24,7 +24,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 export default function NewPostPage() {
@@ -42,7 +42,7 @@ export default function NewPostPage() {
     handleSubmit,
     control,
     formState: { errors },
-    watch,
+    getValues,
     setValue,
   } = useForm<CreatePostInput>({
     resolver: zodResolver(CreatePostSchema),
@@ -56,7 +56,7 @@ export default function NewPostPage() {
     },
   })
 
-  const title = watch('title')
+  const title = useWatch({ control, name: 'title' })
 
   const filteredPostTemplates = useMemo(
     () => postTemplates.filter(t => t.value !== ''),
@@ -91,7 +91,7 @@ export default function NewPostPage() {
         shouldDirty: true,
       })
       setValue('seoInfo.keywords', res.data.seoKeywords, { shouldDirty: true })
-      const currentSlug = watch('slug')
+      const currentSlug = getValues('slug')
       if (currentSlug) {
         setValue('seoInfo.canonicalUrl', `/${currentSlug}`, {
           shouldDirty: true,

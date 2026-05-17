@@ -83,7 +83,6 @@ export default function EditFormPage({ params }: PageProps) {
     handleSubmit,
     reset,
     control,
-    watch,
     formState: { errors },
   } = useForm<UpdateFormInput>({
     resolver: zodResolver(UpdateFormSchema),
@@ -122,7 +121,6 @@ export default function EditFormPage({ params }: PageProps) {
         setFields((form.schema.fields || []).map(normalizeFieldForApi))
       }
       if (steps.length === 0 && (form.schema.steps || []).length > 0) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSteps(form.schema.steps || [])
       }
     }

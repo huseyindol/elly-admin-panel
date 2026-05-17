@@ -33,10 +33,7 @@ export default function ChatPage() {
 
   // Grup değiştiğinde detayları çek; silme yetkisini belirlemek için gerekli
   useEffect(() => {
-    if (!activeGroupId) {
-      setActiveGroup(null)
-      return
-    }
+    if (!activeGroupId) return
     getGroupService(activeGroupId)
       .then(setActiveGroup)
       .catch(() => {})
@@ -44,8 +41,11 @@ export default function ChatPage() {
 
   const myId = getMyUserId()
   const myLevel = getMyRoleLevel()
+  // activeGroup.id === activeGroupId kontrolü: eski grup detayının stale olmaması için
   const canDeleteGroup =
+    activeGroupId !== null &&
     activeGroup !== null &&
+    activeGroup.id === activeGroupId &&
     (myLevel >= 4 || (myId !== null && myId === activeGroup.createdBy))
 
   const handleDeleteGroup = async () => {

@@ -71,7 +71,6 @@ export default function NewFormPage() {
     register,
     handleSubmit,
     control,
-    watch,
     formState: { errors },
   } = useForm<CreateFormInput>({
     resolver: zodResolver(CreateFormSchema),
