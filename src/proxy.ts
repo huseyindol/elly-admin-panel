@@ -117,8 +117,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(target, request.url))
   }
 
-  // Login sayfasında authenticated kullanıcıyı dashboard'a yönlendir
+  // Login sayfası: süresi geçmiş token ile loop'a girmemek için
+  //   - geçerli token varsa dashboard'a yönlendir
+  //   - süresi geçmişse cookie'leri temizle, login'i servis et (self-heal)
   if (isLoginRoute && isAuthenticated) {
+    const expiredDateCheck = new Date(Number(expiredDate?.value))
+    if (expiredDateCheck < new Date()) {
+      // Stale auth — kullanıcı zaten /login'e geldi, yenisini girsin
+      await removeCookies(response, request)
+      return response
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

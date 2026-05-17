@@ -9,53 +9,46 @@ const AUTH_COOKIES = [
   CookieEnum.TENANT_ID,
 ]
 
-/**
- * Browser sadece "name + path + domain" tuple'ı tam eşleşen Set-Cookie
- * header'ını expired sayar. Cookie'ler iki farklı yoldan geliyor:
- *   1. Login JS:    document.cookie  → host-only, SameSite=Lax, secure yok
- *   2. Proxy/refresh: response.cookies.set(..., { httpOnly:true, secure:true,
- *                                                sameSite:'strict' })
- *
- * `domain=.huseyindol.com` ile prod'da set edilmiş eski cookie'ler de olabilir.
- * Bu nedenle hangisi olduğunu tahmin etmek yerine, tüm makul kombinasyonlar
- * için `Set-Cookie name=; Max-Age=0; Expires=0` header'ı yazıyoruz.
- */
-const DELETE_VARIANTS: Array<{
-  domain?: string
-  sameSite?: 'lax' | 'strict' | 'none'
-  secure?: boolean
-  httpOnly?: boolean
-}> = [
-  // 1) host-only varyantları (login JS + middleware her ikisini de denemeli)
-  {},
-  { sameSite: 'lax' },
-  { sameSite: 'strict' },
-  { sameSite: 'lax', secure: true },
-  { sameSite: 'strict', secure: true },
-  { sameSite: 'strict', secure: true, httpOnly: true },
-  // 2) production'da .huseyindol.com domain'inde set edilmiş olabilir
-  { domain: '.huseyindol.com' },
-  { domain: '.huseyindol.com', sameSite: 'strict', secure: true },
-  {
-    domain: '.huseyindol.com',
-    sameSite: 'strict',
-    secure: true,
-    httpOnly: true,
-  },
-]
+const PAST_EXPIRES = 'Thu, 01 Jan 1970 00:00:00 GMT'
 
+/**
+ * Browser sadece "name + Path + Domain" tuple'ı tam eşleşen Set-Cookie
+ * header'ını "expire" olarak yorumlar. NextResponse.cookies API'si
+ * dahili Map'inde key = `name|domain|path` ile dedup yapar — yani aynı
+ * name+path+domain için birden çok set çağrısı yapsak bile yalnızca
+ * SONUNCU header gönderilir.
+ *
+ * Bu yüzden cookies API'sini kullanmıyoruz; doğrudan
+ * `response.headers.append('set-cookie', ...)` ile birden çok ham
+ * Set-Cookie satırı yazıyoruz. Browser hepsini görür ve eşleşeni
+ * uygular.
+ *
+ * Cookie matching için Secure / HttpOnly / SameSite atribütleri
+ * gerekmez (silme yalnızca name+path+domain ile yapılır); yine de
+ * eski deploy'lardan kalmış değişik atribüt kombinasyonlarını
+ * yakalamak adına bir kaç varyant gönderiyoruz.
+ */
 export const removeCookies = async (
   response: NextResponse,
   _request: NextRequest,
 ) => {
   for (const name of AUTH_COOKIES) {
-    for (const variant of DELETE_VARIANTS) {
-      response.cookies.set(name, '', {
-        path: '/',
-        maxAge: 0,
-        expires: new Date(0),
-        ...variant,
-      })
+    const baseAttrs = `Path=/; Max-Age=0; Expires=${PAST_EXPIRES}`
+    const variants: string[] = [
+      // 1) Host-only — login sayfası bu varyantta yazmış olabilir
+      `${name}=; ${baseAttrs}`,
+      `${name}=; ${baseAttrs}; SameSite=Lax`,
+      `${name}=; ${baseAttrs}; SameSite=Strict`,
+      `${name}=; ${baseAttrs}; HttpOnly; SameSite=Lax`,
+      `${name}=; ${baseAttrs}; HttpOnly; SameSite=Strict`,
+      `${name}=; ${baseAttrs}; Secure; SameSite=Strict`,
+      `${name}=; ${baseAttrs}; HttpOnly; Secure; SameSite=Strict`,
+      // 2) .huseyindol.com domain — production'da set edilmiş olabilir
+      `${name}=; Domain=.huseyindol.com; ${baseAttrs}`,
+      `${name}=; Domain=.huseyindol.com; ${baseAttrs}; HttpOnly; Secure; SameSite=Strict`,
+    ]
+    for (const v of variants) {
+      response.headers.append('set-cookie', v)
     }
   }
 }
