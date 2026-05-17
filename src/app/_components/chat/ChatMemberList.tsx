@@ -27,13 +27,17 @@ export function ChatMemberList({ groupId }: Props) {
   const [members, setMembers] = useState<ChatMember[]>([])
   const [inviteUserId, setInviteUserId] = useState('')
   const [inviting, setInviting] = useState(false)
-  const myLevel = getMyRoleLevel()
+  const [myLevel, setMyLevel] = useState<RoleLevel>(1)
 
   useEffect(() => {
     getMembersService(groupId)
       .then(setMembers)
       .catch(() => {})
   }, [groupId])
+
+  useEffect(() => {
+    getMyRoleLevel().then(setMyLevel)
+  }, [])
 
   const handleRemove = async (userId: number) => {
     await removeMemberService(groupId, userId)

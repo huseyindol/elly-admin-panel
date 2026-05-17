@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import { Modal } from '@/app/_components'
-import { createGroupService } from '@/app/_services/chat.services'
-import { getMyRoleLevel } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
-import type { ChatGroup } from '@/types/chat'
+import { createGroupService } from '@/app/_services/chat.services'
+import type { ChatGroup, RoleLevel } from '@/types/chat'
+import { getMyRoleLevel, visibilityLabel } from '@/utils/chat-role'
+import { useEffect, useState } from 'react'
 
 interface Props {
   isOpen: boolean
@@ -18,7 +18,12 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
-  const myLevel = getMyRoleLevel()
+  const [myLevel, setMyLevel] = useState<RoleLevel>(1)
+
+  useEffect(() => {
+    if (!isOpen) return
+    getMyRoleLevel().then(setMyLevel)
+  }, [isOpen])
 
   const inputClass = `w-full rounded-xl border px-3 py-2 text-sm outline-none transition-colors focus:ring-2 focus:ring-violet-500/30 ${
     isDarkMode
@@ -33,7 +38,6 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
       const group = await createGroupService({
         name: name.trim(),
         description: description.trim() || undefined,
-        visibilityLevel: myLevel,
       })
       onCreated(group)
       onClose()
@@ -88,10 +92,14 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
               : 'bg-gray-50 text-gray-500'
           }`}
         >
-          {myLevel === 1 && 'Bu grup herkese görünür.'}
-          {myLevel === 2 && 'Bu grubu Editor ve Admin rolündekiler görebilir.'}
-          {myLevel === 3 && 'Bu grubu yalnızca Admin rolündekiler görebilir.'}
-          {myLevel === 4 && 'Bu grup gizlidir — yalnızca siz görebilirsiniz.'}
+          Bu grup otomatik olarak <strong>{visibilityLabel(myLevel)}</strong>{' '}
+          görünürlüğünde oluşturulacak.
+          {myLevel === 1 && ' (VIEWER: herkes görebilir)'}
+          {myLevel === 2 &&
+            ' (EDITOR+: sadece EDITOR, ADMIN ve SUPER_ADMIN görebilir)'}
+          {myLevel === 3 && ' (ADMIN+: sadece ADMIN ve SUPER_ADMIN görebilir)'}
+          {myLevel === 4 &&
+            ' (SUPER_ADMIN: kimse göremez, sadece davet edilenler)'}
         </p>
 
         <div className="flex justify-end gap-3 pt-2">

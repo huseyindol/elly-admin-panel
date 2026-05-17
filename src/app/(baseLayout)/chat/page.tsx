@@ -15,7 +15,7 @@ import {
 } from '@/app/_services/chat.services'
 import { getMyRoleLevel, getMyUserId } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
-import type { ChatGroup } from '@/types/chat'
+import type { ChatGroup, RoleLevel } from '@/types/chat'
 import { AlertCircle, Users, Trash2, ChevronLeft, X } from 'lucide-react'
 
 export default function ChatPage() {
@@ -31,6 +31,8 @@ export default function ChatPage() {
   const [refreshToken, setRefreshToken] = useState(0)
   const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null)
   const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('sidebar')
+  const [myLevel, setMyLevel] = useState<RoleLevel>(1)
+  const [myUserId, setMyUserId] = useState<number | null>(null)
 
   useEffect(() => {
     if (!activeGroupId) return
@@ -39,8 +41,11 @@ export default function ChatPage() {
       .catch(() => {})
   }, [activeGroupId])
 
-  const myLevel = getMyRoleLevel()
-  const myUserId = getMyUserId()
+  useEffect(() => {
+    getMyRoleLevel().then(setMyLevel)
+    getMyUserId().then(setMyUserId)
+  }, [])
+
   const isOwner =
     activeGroup !== null &&
     activeGroup.id === activeGroupId &&
