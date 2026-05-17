@@ -67,9 +67,12 @@ export default function PagesListPage() {
       render: page => (
         <div>
           <p
+            title={page.title.length > 25 ? page.title : undefined}
             className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
           >
-            {page.title}
+            {page.title.length > 25
+              ? `${page.title.slice(0, 25)}…`
+              : page.title}
           </p>
           <p
             className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
@@ -77,17 +80,6 @@ export default function PagesListPage() {
             /{page.slug}
           </p>
         </div>
-      ),
-    },
-    {
-      key: 'description',
-      header: 'Açıklama',
-      render: page => (
-        <span
-          className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}
-        >
-          {page.description || '-'}
-        </span>
       ),
     },
     {
