@@ -7,7 +7,7 @@ import {
 } from '@/app/_services/chat.services'
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import { useAdminTheme } from '@/app/_hooks'
-import { getMyUserId } from '@/utils/chat-role'
+import { useMyUserId } from '@/stores/user-store'
 import { Trash2, Paperclip, FileText, ImageIcon } from 'lucide-react'
 import type { ChatMessage } from '@/types/chat'
 
@@ -37,12 +37,8 @@ export function ChatWindow({ groupId }: Props) {
   const [hasMore, setHasMore] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [myUserId, setMyUserId] = useState<number | null>(null)
+  const myUserId = useMyUserId()
   const oldestId = groupMessages[0]?.id
-
-  useEffect(() => {
-    getMyUserId().then(setMyUserId)
-  }, [])
 
   useEffect(() => {
     getHistoryService(groupId)

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { fetcher } from '@/utils/services/fetcher'
 import { usePermissionStore } from '@/stores/permission-store'
+import { useUserStore } from '@/stores/user-store'
 import type { BaseResponse } from '@/types/BaseResponse'
 import type { UserProfile } from '@/types/user-management'
 import type { RoleLevel } from '@/types/chat'
@@ -102,14 +103,22 @@ async function fetchMyProfile(): Promise<UserProfile | null> {
   return profilePromise
 }
 
-/** /api/v1/users/me'den numeric userId döndürür (cache'li). */
+/**
+ * Numeric userId döner. Önce zustand user-store'a bakar (login/refresh
+ * sonrası dolar), yoksa /api/v1/users/me fetch eder. Component dışı
+ * (chat-ws-store gibi async kontekstler) için.
+ */
 export async function getMyUserId(): Promise<number | null> {
+  const stored = useUserStore.getState().id
+  if (stored !== null) return stored
   const profile = await fetchMyProfile()
   return profile?.id ?? null
 }
 
-/** /api/v1/users/me'den username döndürür (cache'li). */
+/** Username döner — önce store, sonra /api/v1/users/me fallback. */
 export async function getMyUsername(): Promise<string | null> {
+  const stored = useUserStore.getState().username
+  if (stored !== null) return stored
   const profile = await fetchMyProfile()
   return profile?.username ?? null
 }

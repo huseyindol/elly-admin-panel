@@ -19,6 +19,7 @@ import {
 } from '@/context/CookieContext'
 import { LoginInput, LoginSchema } from '@/schemas/user'
 import { usePermissionStore } from '@/stores/permission-store'
+import { useUserStore } from '@/stores/user-store'
 import { LoginResponseType } from '@/types/AuthResponse'
 import {
   CookieEnum,
@@ -68,6 +69,7 @@ const AdminLoginPage = () => {
       updateCookie(name, '')
     })
     usePermissionStore.getState().clearPermissions()
+    useUserStore.getState().clearUser()
   }, [updateCookie])
   // React Hook Form setup with Zod resolver
   const {
@@ -138,13 +140,19 @@ const AdminLoginPage = () => {
         updateCookie(CookieEnum.TENANT_ID, formData.tenantId)
       }
 
-      // İzinleri Zustand store'a yaz (persist → localStorage)
+      // İzinleri ve kullanıcı kimliğini Zustand store'lara yaz (persist → localStorage)
       usePermissionStore
         .getState()
         .setPermissions(
           response.data.roles ?? [],
           response.data.permissions ?? [],
         )
+      useUserStore.getState().setUser({
+        id: response.data.userId,
+        username: response.data.username,
+        email: response.data.email,
+        userCode: response.data.userCode,
+      })
 
       router.push('/dashboard')
     } catch (err) {

@@ -37,6 +37,7 @@ const removeAllAuthCookies = () => {
   if (typeof window !== 'undefined') {
     try {
       window.localStorage.removeItem('permission-storage')
+      window.localStorage.removeItem('user-storage')
     } catch {
       // ignore — private mode / storage disabled
     }
@@ -184,6 +185,21 @@ const csrRefreshToken = async (refreshToken: string) => {
   if (typeof window !== 'undefined' && data?.roles && data?.permissions) {
     const { usePermissionStore } = await import('@/stores/permission-store')
     usePermissionStore.getState().setPermissions(data.roles, data.permissions)
+  }
+
+  // Kullanıcı kimliğini de tazele (refresh response login ile aynı yapıda)
+  if (
+    typeof window !== 'undefined' &&
+    data?.userId !== undefined &&
+    data?.username
+  ) {
+    const { useUserStore } = await import('@/stores/user-store')
+    useUserStore.getState().setUser({
+      id: data.userId,
+      username: data.username,
+      email: data.email ?? '',
+      userCode: data.userCode ?? '',
+    })
   }
 
   return response
