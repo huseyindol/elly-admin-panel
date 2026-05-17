@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useChatConnection } from '@/hooks/use-chat-connection'
 import { ChatSidebar } from '@/app/_components/chat/ChatSidebar'
 import { ChatWindow } from '@/app/_components/chat/ChatWindow'
@@ -9,8 +9,13 @@ import { ChatTypingIndicator } from '@/app/_components/chat/ChatTypingIndicator'
 import { ChatMemberList } from '@/app/_components/chat/ChatMemberList'
 import { ConfirmDialog } from '@/app/_components'
 import { useChatWsStore } from '@/stores/chat-ws-store'
-import { deleteGroupService } from '@/app/_services/chat.services'
+import {
+  deleteGroupService,
+  getGroupService,
+} from '@/app/_services/chat.services'
+import { getMyRoleLevel, getMyUserId } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
+import type { ChatGroup } from '@/types/chat'
 import { AlertCircle, Users, Trash2 } from 'lucide-react'
 
 export default function ChatPage() {
@@ -24,6 +29,24 @@ export default function ChatPage() {
   const [showDeleteGroup, setShowDeleteGroup] = useState(false)
   const [deletingGroup, setDeletingGroup] = useState(false)
   const [refreshToken, setRefreshToken] = useState(0)
+  const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null)
+
+  // Grup değiştiğinde detayları çek; silme yetkisini belirlemek için gerekli
+  useEffect(() => {
+    if (!activeGroupId) {
+      setActiveGroup(null)
+      return
+    }
+    getGroupService(activeGroupId)
+      .then(setActiveGroup)
+      .catch(() => {})
+  }, [activeGroupId])
+
+  const myId = getMyUserId()
+  const myLevel = getMyRoleLevel()
+  const canDeleteGroup =
+    activeGroup !== null &&
+    (myLevel >= 4 || (myId !== null && myId === activeGroup.createdBy))
 
   const handleDeleteGroup = async () => {
     if (!activeGroupId) return
@@ -89,19 +112,21 @@ export default function ChatPage() {
                 Üyeler
               </button>
 
-              {/* Grubu sil */}
-              <button
-                type="button"
-                onClick={() => setShowDeleteGroup(true)}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  isDarkMode
-                    ? 'text-rose-400 hover:bg-rose-500/10'
-                    : 'text-rose-500 hover:bg-rose-50'
-                }`}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Grubu Sil
-              </button>
+              {/* Grubu sil — sadece grup sahibi veya SUPER_ADMIN */}
+              {canDeleteGroup && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteGroup(true)}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    isDarkMode
+                      ? 'text-rose-400 hover:bg-rose-500/10'
+                      : 'text-rose-500 hover:bg-rose-50'
+                  }`}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Grubu Sil
+                </button>
+              )}
             </div>
 
             <div className="flex min-h-0 flex-1">

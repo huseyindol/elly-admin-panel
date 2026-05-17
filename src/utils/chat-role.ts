@@ -43,6 +43,14 @@ export function visibilityLabel(level: number): string {
   return labels[level] ?? 'Bilinmiyor'
 }
 
+// USER_CODE cookie'sinden mevcut kullanıcı ID'sini döner
+export function getMyUserId(): number | null {
+  const code = getGlobalCookies()[CookieEnum.USER_CODE]
+  if (!code) return null
+  const num = Number(code)
+  return isNaN(num) ? null : num
+}
+
 // Backend kuralı: requesterLevel < 4 ise targetLevel < requesterLevel olmalı
 export function canInvite(myLevel: RoleLevel, targetLevel: RoleLevel): boolean {
   if (myLevel >= 4) return true
