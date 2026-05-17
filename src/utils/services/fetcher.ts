@@ -64,11 +64,13 @@ const prepareRequestCSROptions = (options: RequestInit) => {
 let refreshTokenPromise: Promise<RefreshTokenResponseType> | null = null
 
 const handleAuthFailure = (reason: string): never => {
+  // JS-erişimli cookie'ler + localStorage'i best-effort temizle
   removeAllAuthCookies()
   if (typeof window !== 'undefined') {
-    // Login dışındaki sayfadaysak yönlendir
+    // HttpOnly cookie'ler JS'ten silinemediği için server endpoint'ine
+    // git — orada raw Set-Cookie header'larıyla kesin temizlik + /login redirect
     if (!window.location.pathname.startsWith('/login')) {
-      window.location.replace('/login')
+      window.location.replace('/api/auth/logout')
     }
   }
   throw new Error(reason)
