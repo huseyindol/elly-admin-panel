@@ -1,9 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { getHistoryService } from '@/app/_services/chat.services'
+import {
+  getHistoryService,
+  deleteMessageService,
+} from '@/app/_services/chat.services'
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import { useAdminTheme } from '@/app/_hooks'
+import { Trash2 } from 'lucide-react'
 
 interface Props {
   groupId: string
@@ -11,11 +15,14 @@ interface Props {
 
 export function ChatWindow({ groupId }: Props) {
   const { isDarkMode } = useAdminTheme()
-  const { messages, prependHistory, sendRead } = useChatWsStore()
+  const { messages, prependHistory, sendRead, markMessageDeleted } =
+    useChatWsStore()
   const groupMessages = messages[groupId] ?? []
   const bottomRef = useRef<HTMLDivElement>(null)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const oldestId = groupMessages[0]?.id
 
   useEffect(() => {
@@ -41,14 +48,25 @@ export function ChatWindow({ groupId }: Props) {
     setLoadingMore(false)
   }, [groupId, oldestId, loadingMore, hasMore, prependHistory])
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    if (e.currentTarget.scrollTop === 0) loadMore()
+  const handleDelete = async (messageId: string) => {
+    setDeletingId(messageId)
+    try {
+      await deleteMessageService(messageId)
+      markMessageDeleted(groupId, messageId)
+    } catch {
+      // backend 403 → sessizce geç
+    } finally {
+      setDeletingId(null)
+      setHoveredId(null)
+    }
   }
 
   return (
     <div
       className="flex h-full flex-col space-y-1 overflow-y-auto p-4"
-      onScroll={handleScroll}
+      onScroll={e => {
+        if (e.currentTarget.scrollTop === 0) loadMore()
+      }}
     >
       {loadingMore && (
         <p
@@ -59,7 +77,12 @@ export function ChatWindow({ groupId }: Props) {
       )}
 
       {groupMessages.map(msg => (
-        <div key={msg.id} className="flex flex-col">
+        <div
+          key={msg.id}
+          className="group relative flex flex-col"
+          onMouseEnter={() => setHoveredId(msg.id)}
+          onMouseLeave={() => setHoveredId(null)}
+        >
           {msg.parentId && (
             <div
               className={`mb-1 border-l-2 pl-2 text-xs italic ${
@@ -109,6 +132,22 @@ export function ChatWindow({ groupId }: Props) {
                 minute: '2-digit',
               })}
             </span>
+            {/* Soft delete — hover'da görünür, zaten silinmişse gizle */}
+            {!msg.deleted && hoveredId === msg.id && (
+              <button
+                type="button"
+                disabled={deletingId === msg.id}
+                onClick={() => handleDelete(msg.id)}
+                className={`shrink-0 rounded p-0.5 transition-colors ${
+                  isDarkMode
+                    ? 'text-slate-500 hover:bg-rose-500/10 hover:text-rose-400'
+                    : 'text-gray-400 hover:bg-rose-50 hover:text-rose-500'
+                } disabled:opacity-40`}
+                aria-label="Mesajı sil"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
       ))}

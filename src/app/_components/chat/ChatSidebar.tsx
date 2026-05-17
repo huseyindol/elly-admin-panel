@@ -6,21 +6,27 @@ import { useChatWsStore } from '@/stores/chat-ws-store'
 import { visibilityLabel } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
 import type { ChatGroup } from '@/types/chat'
-import { MessageSquare, Users, Plus, Lock } from 'lucide-react'
+import { MessageSquare, Users, Plus, Lock, MessageCircle } from 'lucide-react'
 import { CreateGroupDialog } from './CreateGroupDialog'
+import { DmDialog } from './DmDialog'
 
-export function ChatSidebar() {
+interface Props {
+  refreshToken?: number
+}
+
+export function ChatSidebar({ refreshToken }: Props) {
   const { isDarkMode } = useAdminTheme()
   const [groups, setGroups] = useState<ChatGroup[]>([])
   const [showCreate, setShowCreate] = useState(false)
+  const [showDm, setShowDm] = useState(false)
   const { activeGroupId, subscribeToGroup, connected } = useChatWsStore()
 
-  // Load group list on mount and refresh whenever WS (re)connects so new groups appear
+  // Refresh: on mount, WS connect, and when parent signals a group was deleted
   useEffect(() => {
     getMyGroupsService()
       .then(setGroups)
       .catch(() => {})
-  }, [connected])
+  }, [connected, refreshToken])
 
   return (
     <div className="flex h-full flex-col">
@@ -34,18 +40,36 @@ export function ChatSidebar() {
         >
           Konuşmalar
         </span>
-        <button
-          type="button"
-          onClick={() => setShowCreate(true)}
-          className={`rounded-lg p-1.5 transition-colors ${
-            isDarkMode
-              ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
-              : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-          }`}
-          aria-label="Yeni grup oluştur"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          {/* DM başlat */}
+          <button
+            type="button"
+            onClick={() => setShowDm(true)}
+            title="Direkt mesaj başlat"
+            className={`rounded-lg p-1.5 transition-colors ${
+              isDarkMode
+                ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+            aria-label="DM başlat"
+          >
+            <MessageCircle className="h-4 w-4" />
+          </button>
+          {/* Yeni grup oluştur */}
+          <button
+            type="button"
+            onClick={() => setShowCreate(true)}
+            title="Yeni grup oluştur"
+            className={`rounded-lg p-1.5 transition-colors ${
+              isDarkMode
+                ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+            aria-label="Yeni grup oluştur"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -87,7 +111,7 @@ export function ChatSidebar() {
                 className="shrink-0"
               >
                 {group.visibilityLevel >= 4 ? (
-                  <Lock className="h-3 w-3 text-muted-foreground opacity-60" />
+                  <Lock className="h-3 w-3 opacity-50" />
                 ) : (
                   <span
                     className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
@@ -112,6 +136,18 @@ export function ChatSidebar() {
         isOpen={showCreate}
         onClose={() => setShowCreate(false)}
         onCreated={g => setGroups(prev => [g, ...prev])}
+      />
+
+      <DmDialog
+        isOpen={showDm}
+        onClose={() => setShowDm(false)}
+        onCreated={g => {
+          setGroups(prev => {
+            // DM zaten listede varsa tekrar ekleme
+            if (prev.some(existing => existing.id === g.id)) return prev
+            return [g, ...prev]
+          })
+        }}
       />
     </div>
   )

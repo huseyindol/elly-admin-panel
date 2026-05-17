@@ -28,6 +28,7 @@ interface ChatWsState {
   sendTyping: (groupId: string) => void
   sendRead: (groupId: string) => void
   prependHistory: (groupId: string, messages: ChatMessage[]) => void
+  markMessageDeleted: (groupId: string, messageId: string) => void
 }
 
 export const useChatWsStore = create<ChatWsState>((set, get) => ({
@@ -196,6 +197,17 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
       messages: {
         ...s.messages,
         [groupId]: [...messages, ...(s.messages[groupId] ?? [])],
+      },
+    }))
+  },
+
+  markMessageDeleted: (groupId, messageId) => {
+    set(s => ({
+      messages: {
+        ...s.messages,
+        [groupId]: (s.messages[groupId] ?? []).map(m =>
+          m.id === messageId ? { ...m, deleted: true } : m,
+        ),
       },
     }))
   },
