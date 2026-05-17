@@ -37,3 +37,23 @@ export const COOKIE_MAX_AGE: Record<CookieEnum, number> = {
 export function getCookieMaxAge(name: string): number {
   return COOKIE_MAX_AGE[name as CookieEnum] ?? DAY * 30
 }
+
+/**
+ * Backend'in döndüğü `expiredDate` (Unix ms) değerinden cookie max-age
+ * (saniye) hesaplar. Değer geçmişteyse veya geçersizse `fallbackSec` döner.
+ *
+ * accessToken ve expiredDate cookie'leri için kullanılır — cookie'nin
+ * tarayıcıda yaşam süresi token'ın gerçek geçerlilik süresiyle hizalansın.
+ */
+export function deriveMaxAgeFromExpiredDate(
+  expiredDateMs: number | string | undefined | null,
+  fallbackSec: number = HOUR * 4,
+): number {
+  const ms =
+    typeof expiredDateMs === 'string'
+      ? Number(expiredDateMs)
+      : (expiredDateMs ?? Number.NaN)
+  if (!Number.isFinite(ms)) return fallbackSec
+  const diffSec = Math.floor((ms - Date.now()) / 1000)
+  return diffSec > 0 ? diffSec : fallbackSec
+}

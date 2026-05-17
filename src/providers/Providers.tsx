@@ -10,14 +10,17 @@ import { ThemeProvider } from './ThemeProvider'
 /**
  * Browser cookie'ye yaz — server action'lar (next/headers cookies())
  * sadece HTTP cookie'lerini okuyabilir, React state yetmez.
- * Her cookie kendi adına özel max-age ile yazılır (bkz.
- * cookieConstant.COOKIE_MAX_AGE).
+ *
+ * `maxAge` verilmezse cookie adına özel sabit kullanılır (bkz.
+ * cookieConstant.COOKIE_MAX_AGE). accessToken / expiredDate gibi
+ * backend'in döndüğü `expiredDate`'e dayalı süre kullanmak isteyen
+ * çağrıcılar override edebilir.
  */
-function persistBrowserCookie(name: string, value: string) {
+function persistBrowserCookie(name: string, value: string, maxAge?: number) {
   if (typeof document === 'undefined') return
   if (value) {
-    const maxAge = getCookieMaxAge(name)
-    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`
+    const ttl = typeof maxAge === 'number' ? maxAge : getCookieMaxAge(name)
+    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${ttl}; SameSite=Lax`
   } else {
     document.cookie = `${name}=; path=/; max-age=0`
   }
@@ -44,13 +47,16 @@ export default function Providers({
       }),
   )
 
-  const updateCookie = useCallback((name: string, value: string) => {
-    setCookies(prev => ({
-      ...prev,
-      [name]: value,
-    }))
-    persistBrowserCookie(name, value)
-  }, [])
+  const updateCookie = useCallback(
+    (name: string, value: string, maxAge?: number) => {
+      setCookies(prev => ({
+        ...prev,
+        [name]: value,
+      }))
+      persistBrowserCookie(name, value, maxAge)
+    },
+    [],
+  )
 
   const contextValue = useMemo(
     () => ({ cookies, updateCookie }),

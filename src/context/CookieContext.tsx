@@ -4,7 +4,12 @@ import { createContext, useContext } from 'react'
 
 export interface CookieContextType {
   cookies: Record<string, string>
-  updateCookie: (name: string, value: string) => void
+  /**
+   * Cookie state'i ve `document.cookie`'yi günceller.
+   * @param maxAge Saniye cinsinden override. Verilmezse cookie adına
+   *   göre COOKIE_MAX_AGE map'inden okunur.
+   */
+  updateCookie: (name: string, value: string, maxAge?: number) => void
 }
 
 const CookieContext = createContext<CookieContextType | undefined>(undefined)
@@ -39,12 +44,16 @@ export const getGlobalCookies = (): Record<string, string> => {
 }
 
 // Update global cookie (can be used in fetcher.ts and other non-React files)
-export const updateGlobalCookie = (name: string, value: string) => {
+export const updateGlobalCookie = (
+  name: string,
+  value: string,
+  maxAge?: number,
+) => {
   if (!globalCookieStore) {
     console.error('Cookie store not initialized yet')
     return
   }
-  globalCookieStore.updateCookie(name, value)
+  globalCookieStore.updateCookie(name, value, maxAge)
 }
 
 // Remove global cookie (can be used in fetcher.ts and other non-React files)

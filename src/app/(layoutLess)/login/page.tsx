@@ -20,7 +20,10 @@ import {
 import { LoginInput, LoginSchema } from '@/schemas/user'
 import { usePermissionStore } from '@/stores/permission-store'
 import { LoginResponseType } from '@/types/AuthResponse'
-import { CookieEnum } from '@/utils/constant/cookieConstant'
+import {
+  CookieEnum,
+  deriveMaxAgeFromExpiredDate,
+} from '@/utils/constant/cookieConstant'
 import { fetcher } from '@/utils/services/fetcher'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -105,19 +108,32 @@ const AdminLoginPage = () => {
         return
       }
 
-      updateGlobalCookie(CookieEnum.ACCESS_TOKEN, response.data.token)
+      // accessToken / expiredDate cookie'lerinin ömrü backend'in döndüğü
+      // expiredDate'e bağlı; refreshToken / userCode / tenantId sabit 6 ay
+      const accessTtl = deriveMaxAgeFromExpiredDate(response.data.expiredDate)
+
+      updateGlobalCookie(
+        CookieEnum.ACCESS_TOKEN,
+        response.data.token,
+        accessTtl,
+      )
       updateGlobalCookie(CookieEnum.REFRESH_TOKEN, response.data.refreshToken)
       updateGlobalCookie(
         CookieEnum.EXPIRED_DATE,
         String(response.data.expiredDate),
+        accessTtl,
       )
       updateGlobalCookie(CookieEnum.USER_CODE, response.data.userCode)
       if (formData.tenantId) {
         updateGlobalCookie(CookieEnum.TENANT_ID, formData.tenantId)
       }
-      updateCookie(CookieEnum.ACCESS_TOKEN, response.data.token)
+      updateCookie(CookieEnum.ACCESS_TOKEN, response.data.token, accessTtl)
       updateCookie(CookieEnum.REFRESH_TOKEN, response.data.refreshToken)
-      updateCookie(CookieEnum.EXPIRED_DATE, String(response.data.expiredDate))
+      updateCookie(
+        CookieEnum.EXPIRED_DATE,
+        String(response.data.expiredDate),
+        accessTtl,
+      )
       if (formData.tenantId) {
         updateCookie(CookieEnum.TENANT_ID, formData.tenantId)
       }

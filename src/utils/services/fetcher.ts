@@ -6,7 +6,10 @@ import {
 } from '../../context/CookieContext'
 import { refreshService } from '../../services/auth/refreshService'
 import { RefreshTokenResponseType } from '../../types/AuthResponse'
-import { CookieEnum } from '../constant/cookieConstant'
+import {
+  CookieEnum,
+  deriveMaxAgeFromExpiredDate,
+} from '../constant/cookieConstant'
 
 const AUTH_COOKIES: CookieEnum[] = [
   CookieEnum.ACCESS_TOKEN,
@@ -155,12 +158,26 @@ export const fetcher = async <T>(
 const csrRefreshToken = async (refreshToken: string) => {
   const response = await refreshService(refreshToken)
   const { data } = response
-  // Update cookies using global function (no React hook needed!)
+
+  // accessToken / expiredDate → backend'in döndüğü expiredDate'e bağlı süre
+  // refreshToken → 6 ay sabit (cookie sabitlerinden okunur)
+  const accessTtl = deriveMaxAgeFromExpiredDate(data?.expiredDate)
+
   if (data?.refreshToken) {
     updateGlobalCookie(CookieEnum.REFRESH_TOKEN, data.refreshToken)
   }
   if (data?.token) {
-    updateGlobalCookie(CookieEnum.ACCESS_TOKEN, data.token)
+    updateGlobalCookie(CookieEnum.ACCESS_TOKEN, data.token, accessTtl)
+  }
+  if (data?.expiredDate !== undefined && data?.expiredDate !== null) {
+    updateGlobalCookie(
+      CookieEnum.EXPIRED_DATE,
+      String(data.expiredDate),
+      accessTtl,
+    )
+  }
+  if (data?.userCode) {
+    updateGlobalCookie(CookieEnum.USER_CODE, data.userCode)
   }
 
   // Refresh response'unda roles/permissions varsa Zustand store'u güncelle
