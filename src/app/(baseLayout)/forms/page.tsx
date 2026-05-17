@@ -121,6 +121,23 @@ export default function FormsListPage() {
       header: 'Durum',
       render: form => <StatusBadge status={form.active} />,
     },
+    {
+      key: 'submissions',
+      header: 'Yanıtlar',
+      render: form => (
+        <Link
+          href={`/forms/${form.id}/submissions`}
+          onClick={e => e.stopPropagation()}
+          className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+            isDarkMode
+              ? 'text-violet-300 hover:bg-violet-500/10'
+              : 'text-violet-600 hover:bg-violet-50'
+          }`}
+        >
+          Görüntüle
+        </Link>
+      ),
+    },
   ]
 
   const handleDelete = () => {

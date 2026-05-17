@@ -275,15 +275,27 @@ export default function EditFormPage({ params }: PageProps) {
         </span>
       </div>
 
-      <div>
-        <h1
-          className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1
+            className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+          >
+            Form Düzenle
+          </h1>
+          <p className={isDarkMode ? 'text-slate-400' : 'text-gray-500'}>
+            Form ayarlarını ve alanlarını düzenleyin
+          </p>
+        </div>
+        <Link
+          href={`/forms/${id}/submissions`}
+          className={`inline-flex items-center gap-1.5 self-start rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors sm:self-end ${
+            isDarkMode
+              ? 'border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'
+              : 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+          }`}
         >
-          Form Düzenle
-        </h1>
-        <p className={isDarkMode ? 'text-slate-400' : 'text-gray-500'}>
-          Form ayarlarını ve alanlarını düzenleyin
-        </p>
+          Yanıtları Görüntüle
+        </Link>
       </div>
 
       <form
