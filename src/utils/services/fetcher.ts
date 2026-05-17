@@ -8,12 +8,36 @@ import { refreshService } from '../../services/auth/refreshService'
 import { RefreshTokenResponseType } from '../../types/AuthResponse'
 import { CookieEnum } from '../constant/cookieConstant'
 
-// Helper function to remove all auth cookies
+const AUTH_COOKIES: CookieEnum[] = [
+  CookieEnum.ACCESS_TOKEN,
+  CookieEnum.REFRESH_TOKEN,
+  CookieEnum.EXPIRED_DATE,
+  CookieEnum.USER_CODE,
+  CookieEnum.TENANT_ID,
+]
+
+/**
+ * Tüm auth cookie'lerini ve persist edilmiş permission state'i temizler.
+ * - `removeGlobalCookie`: singleton React state + `document.cookie` (max-age=0)
+ * - Singleton henüz init olmamış olabilir (early request) → `document.cookie`
+ *   doğrudan yazılıyor ki refresh başarısızlığı sonrası ortam kesin temizlensin
+ * - localStorage'taki `permission-storage` da temizlenir
+ */
 const removeAllAuthCookies = () => {
-  removeGlobalCookie(CookieEnum.ACCESS_TOKEN)
-  removeGlobalCookie(CookieEnum.REFRESH_TOKEN)
-  removeGlobalCookie(CookieEnum.EXPIRED_DATE)
-  removeGlobalCookie(CookieEnum.USER_CODE)
+  AUTH_COOKIES.forEach(name => {
+    removeGlobalCookie(name)
+    if (typeof document !== 'undefined') {
+      document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`
+    }
+  })
+
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.removeItem('permission-storage')
+    } catch {
+      // ignore — private mode / storage disabled
+    }
+  }
 }
 
 const prepareRequestSSROptions = async (options: RequestInit) => {
@@ -38,6 +62,17 @@ const prepareRequestCSROptions = (options: RequestInit) => {
 }
 
 let refreshTokenPromise: Promise<RefreshTokenResponseType> | null = null
+
+const handleAuthFailure = (reason: string): never => {
+  removeAllAuthCookies()
+  if (typeof window !== 'undefined') {
+    // Login dışındaki sayfadaysak yönlendir
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.replace('/login')
+    }
+  }
+  throw new Error(reason)
+}
 
 export const fetcher = async <T>(
   url: string,
@@ -69,9 +104,7 @@ export const fetcher = async <T>(
           const cookies = getGlobalCookies()
           const refreshToken = cookies[CookieEnum.REFRESH_TOKEN]
           if (!refreshToken) {
-            // No refresh token, remove all auth cookies and throw error
-            removeAllAuthCookies()
-            throw new Error('No refresh token available')
+            handleAuthFailure('No refresh token available')
           }
 
           if (!refreshTokenPromise) {
@@ -80,25 +113,29 @@ export const fetcher = async <T>(
             })
           }
 
-          const csrRefreshTokenResponse: RefreshTokenResponseType =
-            await refreshTokenPromise
-
-          if (!csrRefreshTokenResponse.result) {
-            // Refresh failed, remove all auth cookies and throw error
-            removeAllAuthCookies()
-            throw new Error('Token refresh failed')
+          let csrRefreshTokenResponse: RefreshTokenResponseType
+          try {
+            csrRefreshTokenResponse = await refreshTokenPromise
+          } catch {
+            handleAuthFailure('Token refresh threw')
           }
+
+          if (!csrRefreshTokenResponse!.result) {
+            handleAuthFailure('Token refresh failed')
+          }
+
           options.headers = {
             ...options.headers,
-            ...(csrRefreshTokenResponse.data?.token && {
-              Authorization: `Bearer ${csrRefreshTokenResponse.data.token}`,
+            ...(csrRefreshTokenResponse!.data?.token && {
+              Authorization: `Bearer ${csrRefreshTokenResponse!.data.token}`,
             }),
           }
-          // console.log('options', options)
           response = await fetch(
             `${process.env.NEXT_PUBLIC_API}${url}`,
             options,
           )
+        } else {
+          handleAuthFailure('Unauthorized')
         }
       } else {
         redirect('/login')
