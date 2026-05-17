@@ -29,6 +29,7 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const clearUnread = useChatWsStore(s => s.clearUnread)
   const newGroupSignal = useChatWsStore(s => s.newGroupSignal)
   const deletedGroupSignal = useChatWsStore(s => s.deletedGroupSignal)
+  const invitedGroupSignal = useChatWsStore(s => s.invitedGroupSignal)
   const unreadCounts = useChatWsStore(s => s.unreadCounts)
 
   // Rol seviyesini çek
@@ -62,6 +63,23 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
     setGroups(next)
     if (connected) subscribeToAllGroups(next, myLevel)
   }, [newGroupSignal, myLevel, connected, groups, subscribeToAllGroups])
+
+  // Davet sinyali — bir gruba dahil edildiğimde sidebar'a ekle
+  // (newGroupSignal'den farkı: kişisel topic'ten gelir, visibilityLevel
+  // kontrolüne gerek yok — davet zaten yetki demektir)
+  useEffect(() => {
+    if (!invitedGroupSignal) return
+
+    const signal = invitedGroupSignal
+    useChatWsStore.setState({ invitedGroupSignal: null })
+
+    if (groups.some(g => g.id === signal.id)) return
+
+    const next = [signal, ...groups]
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- consuming a one-shot WS signal
+    setGroups(next)
+    if (connected) subscribeToAllGroups(next, myLevel)
+  }, [invitedGroupSignal, myLevel, connected, groups, subscribeToAllGroups])
 
   // Silinen grup sinyali — listeden çıkar + aktif gruba bakıyorsak paneli kapat
   useEffect(() => {

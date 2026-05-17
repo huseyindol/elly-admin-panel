@@ -3,6 +3,7 @@ import { Client, type IFrame, type StompSubscription } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import { getGlobalCookies } from '@/context/CookieContext'
 import { CookieEnum } from '@/utils/constant/cookieConstant'
+import { getMyUserId } from '@/utils/chat-role'
 import type {
   ChatGroup,
   ChatMessage,
@@ -21,6 +22,8 @@ interface ChatWsState {
   newGroupSignal: ChatGroup | null
   /** Silinen grup id — sidebar listeden kaldırır, işleyince null'a çeker */
   deletedGroupSignal: string | null
+  /** Kullanıcı bir gruba davet edildiğinde gelen kişisel bildirim */
+  invitedGroupSignal: ChatGroup | null
   /** groupId → okunmamış mesaj sayısı (sidebar badge için) */
   unreadCounts: Record<string, number>
 
@@ -58,6 +61,7 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
   typingUsers: {},
   newGroupSignal: null,
   deletedGroupSignal: null,
+  invitedGroupSignal: null,
   unreadCounts: {},
 
   globalSubs: [],
@@ -115,6 +119,31 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
 
         set({ globalSubs: [presenceSub, newGroupSub, deletedGroupSub] })
 
+        // Kişisel sub: kullanıcı bir gruba davet edildiğinde
+        // userId /api/v1/users/me'den çekilir (chat-role cache'liyor).
+        // Fire-and-forget: id gelince globalSubs'a ekleriz.
+        getMyUserId()
+          .then(userId => {
+            if (!userId) return
+            // Bu arada disconnect olduysa abone olma
+            if (!get().client?.connected) return
+            const invitedSub = client.subscribe(
+              `/topic/user/${userId}/groups/joined`,
+              msg => {
+                try {
+                  const group: ChatGroup = JSON.parse(msg.body)
+                  set({ invitedGroupSignal: group })
+                } catch {
+                  // ignore parse errors
+                }
+              },
+            )
+            set(s => ({ globalSubs: [...s.globalSubs, invitedSub] }))
+          })
+          .catch(() => {
+            // userId çekilemezse sessizce geç — diğer sub'lar zaten aktif
+          })
+
         // Kullanıcı WS bağlanmadan önce bir grup açtıysa, typing/read sub'larını şimdi at
         const { activeGroupId } = get()
         if (activeGroupId) {
@@ -150,6 +179,7 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
       unreadCounts: {},
       newGroupSignal: null,
       deletedGroupSignal: null,
+      invitedGroupSignal: null,
     })
   },
 
