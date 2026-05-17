@@ -52,6 +52,16 @@ export function getMyUsername(): string | null {
   return null
 }
 
+// JWT'deki numeric userId claim'ini döner (ChatGroup.createdBy ile karşılaştırma için)
+export function getMyUserId(): number | null {
+  const token = getGlobalCookies()[CookieEnum.ACCESS_TOKEN]
+  if (!token) return null
+  const payload = decodeJwtPayload(token)
+  if (typeof payload.userId === 'number') return payload.userId
+  if (typeof payload.id === 'number') return payload.id
+  return null
+}
+
 // Backend kuralı: requesterLevel < 4 ise targetLevel < requesterLevel olmalı
 export function canInvite(myLevel: RoleLevel, targetLevel: RoleLevel): boolean {
   if (myLevel >= 4) return true

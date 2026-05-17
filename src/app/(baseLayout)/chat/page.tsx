@@ -11,10 +11,11 @@ import { ConfirmDialog } from '@/app/_components'
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import {
   deleteGroupService,
-  getMembersService,
+  getGroupService,
 } from '@/app/_services/chat.services'
-import { getMyRoleLevel, getMyUsername } from '@/utils/chat-role'
+import { getMyRoleLevel, getMyUserId } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
+import type { ChatGroup } from '@/types/chat'
 import { AlertCircle, Users, Trash2 } from 'lucide-react'
 
 export default function ChatPage() {
@@ -28,26 +29,27 @@ export default function ChatPage() {
   const [showDeleteGroup, setShowDeleteGroup] = useState(false)
   const [deletingGroup, setDeletingGroup] = useState(false)
   const [refreshToken, setRefreshToken] = useState(0)
-  const [isGroupOwner, setIsGroupOwner] = useState(false)
+  const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null)
 
-  // Grup değiştiğinde üyeleri çek; OWNER rolü ile sahiplik kontrol edilir
+  // Grup sahibini kontrol etmek için grup detaylarını çek (createdBy karşılaştırması)
+  // SUPER_ADMIN için çekmeye gerek yok ama diğer veriler için tutuyoruz
   useEffect(() => {
-    if (!activeGroupId) {
-      setIsGroupOwner(false)
-      return
-    }
-    const myUsername = getMyUsername()
-    getMembersService(activeGroupId)
-      .then(members => {
-        const ownerMember = members.find(m => m.role === 'OWNER')
-        setIsGroupOwner(ownerMember?.username === myUsername)
-      })
-      .catch(() => setIsGroupOwner(false))
+    if (!activeGroupId) return
+    getGroupService(activeGroupId)
+      .then(setActiveGroup)
+      .catch(() => {})
   }, [activeGroupId])
 
   const myLevel = getMyRoleLevel()
-  const canDeleteGroup =
-    activeGroupId !== null && (isGroupOwner || myLevel >= 4)
+  const myUserId = getMyUserId()
+
+  // SUPER_ADMIN her grubu silebilir; diğerleri yalnızca kendi oluşturdukları grubu
+  const isOwner =
+    activeGroup !== null &&
+    activeGroup.id === activeGroupId &&
+    myUserId !== null &&
+    activeGroup.createdBy === myUserId
+  const canDeleteGroup = activeGroupId !== null && (myLevel >= 4 || isOwner)
 
   const handleDeleteGroup = async () => {
     if (!activeGroupId) return
