@@ -11,7 +11,12 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { updateGlobalCookie, useCookie } from '@/context/CookieContext'
+import {
+  getGlobalCookies,
+  removeGlobalCookie,
+  updateGlobalCookie,
+  useCookie,
+} from '@/context/CookieContext'
 import { LoginInput, LoginSchema } from '@/schemas/user'
 import { usePermissionStore } from '@/stores/permission-store'
 import { LoginResponseType } from '@/types/AuthResponse'
@@ -28,14 +33,39 @@ import {
   Shield,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+
+// Login sayfasına geldiğinde silinmesi gereken auth cookie'leri
+const AUTH_COOKIES: CookieEnum[] = [
+  CookieEnum.ACCESS_TOKEN,
+  CookieEnum.REFRESH_TOKEN,
+  CookieEnum.EXPIRED_DATE,
+  CookieEnum.USER_CODE,
+  CookieEnum.TENANT_ID,
+]
 
 const AdminLoginPage = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [generalError, setGeneralError] = useState('')
   const { updateCookie } = useCookie()
   const router = useRouter()
+
+  // Önceki oturumdan kalan cookie / store değerlerini temizle.
+  // Login ekranına ulaşan kullanıcı zaten oturum açmıyor — kalan auth
+  // değerleri eski tenant veya geçersiz token olabilir, yenisini set
+  // etmeden önce ortamı temizliyoruz.
+  useEffect(() => {
+    const cookies = getGlobalCookies()
+    const stale = AUTH_COOKIES.filter(name => Boolean(cookies[name]))
+    if (stale.length === 0) return
+
+    stale.forEach(name => {
+      removeGlobalCookie(name)
+      updateCookie(name, '')
+    })
+    usePermissionStore.getState().clearPermissions()
+  }, [updateCookie])
   // React Hook Form setup with Zod resolver
   const {
     register,
