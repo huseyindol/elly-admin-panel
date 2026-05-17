@@ -16,7 +16,7 @@ import {
 import { getMyRoleLevel, getMyUserId } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
 import type { ChatGroup } from '@/types/chat'
-import { AlertCircle, Users, Trash2 } from 'lucide-react'
+import { AlertCircle, Users, Trash2, ChevronLeft, X } from 'lucide-react'
 
 export default function ChatPage() {
   useChatConnection()
@@ -30,9 +30,8 @@ export default function ChatPage() {
   const [deletingGroup, setDeletingGroup] = useState(false)
   const [refreshToken, setRefreshToken] = useState(0)
   const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null)
+  const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('sidebar')
 
-  // Grup sahibini kontrol etmek için grup detaylarını çek (createdBy karşılaştırması)
-  // SUPER_ADMIN için çekmeye gerek yok ama diğer veriler için tutuyoruz
   useEffect(() => {
     if (!activeGroupId) return
     getGroupService(activeGroupId)
@@ -40,10 +39,13 @@ export default function ChatPage() {
       .catch(() => {})
   }, [activeGroupId])
 
+  // Mobil: grup seçilince chat view'a otomatik geç
+  useEffect(() => {
+    if (activeGroupId) setMobileView('chat')
+  }, [activeGroupId])
+
   const myLevel = getMyRoleLevel()
   const myUserId = getMyUserId()
-
-  // SUPER_ADMIN her grubu silebilir; diğerleri yalnızca kendi oluşturdukları grubu
   const isOwner =
     activeGroup !== null &&
     activeGroup.id === activeGroupId &&
@@ -59,8 +61,8 @@ export default function ChatPage() {
       unsubscribeFromGroup()
       setShowMembers(false)
       setShowDeleteGroup(false)
-      // Sidebar'ı yenile
       setRefreshToken(t => t + 1)
+      setMobileView('sidebar')
     } catch {
       // backend 403 vb. — sessizce kapat
     } finally {
@@ -68,19 +70,21 @@ export default function ChatPage() {
     }
   }
 
+  const groupName = activeGroup?.name ?? 'DM'
+
   return (
-    <div className="flex h-[calc(100vh-64px)]">
-      {/* Sol sidebar — grup listesi */}
+    <div className="flex h-[calc(100dvh-64px)] overflow-hidden">
+      {/* Sol sidebar — mobil: tam ekran, desktop: sabit genişlik */}
       <aside
-        className={`flex w-64 shrink-0 flex-col border-r ${
-          isDarkMode ? 'border-slate-800/50' : 'border-gray-200'
-        }`}
+        className={`flex-col border-r ${isDarkMode ? 'border-slate-800/50' : 'border-gray-200'} ${mobileView === 'sidebar' ? 'flex' : 'hidden'} w-full md:flex md:w-64 md:shrink-0`}
       >
         <ChatSidebar refreshToken={refreshToken} />
       </aside>
 
-      {/* Ana chat alanı */}
-      <main className="flex min-w-0 flex-1 flex-col">
+      {/* Ana chat alanı — mobil: tam ekran, desktop: kalan alan */}
+      <main
+        className={`min-w-0 flex-1 flex-col ${mobileView === 'chat' ? 'flex' : 'hidden md:flex'} `}
+      >
         {/* Bağlantı kesildi uyarısı */}
         {!connected && (
           <div className="flex items-center gap-2 border-b border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-400">
@@ -93,15 +97,41 @@ export default function ChatPage() {
           <>
             {/* Araç çubuğu */}
             <div
-              className={`flex items-center justify-end gap-2 border-b px-4 py-2 ${
+              className={`flex items-center gap-1 border-b px-2 py-2 sm:gap-2 sm:px-3 ${
                 isDarkMode ? 'border-slate-800/50' : 'border-gray-200'
               }`}
             >
+              {/* Mobil geri butonu */}
+              <button
+                type="button"
+                onClick={() => setMobileView('sidebar')}
+                className={`shrink-0 rounded-lg p-1.5 transition-colors md:hidden ${
+                  isDarkMode
+                    ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}
+                aria-label="Geri"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+
+              {/* Grup adı — sadece mobil */}
+              <span
+                className={`flex-1 truncate text-sm font-semibold md:hidden ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}
+              >
+                {groupName}
+              </span>
+
+              {/* Desktop spacer */}
+              <div className="hidden flex-1 md:block" />
+
               {/* Üye listesi toggle */}
               <button
                 type="button"
                 onClick={() => setShowMembers(v => !v)}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
                   showMembers
                     ? isDarkMode
                       ? 'bg-violet-500/20 text-violet-400'
@@ -111,28 +141,29 @@ export default function ChatPage() {
                       : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                 }`}
               >
-                <Users className="h-3.5 w-3.5" />
-                Üyeler
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Üyeler</span>
               </button>
 
-              {/* Grubu sil — sadece grup sahibi veya SUPER_ADMIN */}
+              {/* Grubu sil — sadece yetkili */}
               {canDeleteGroup && (
                 <button
                   type="button"
                   onClick={() => setShowDeleteGroup(true)}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
                     isDarkMode
                       ? 'text-rose-400 hover:bg-rose-500/10'
                       : 'text-rose-500 hover:bg-rose-50'
                   }`}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Grubu Sil
+                  <Trash2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Grubu Sil</span>
                 </button>
               )}
             </div>
 
-            <div className="flex min-h-0 flex-1">
+            {/* Mesaj alanı + üye paneli */}
+            <div className="relative flex min-h-0 flex-1">
               <div className="flex min-w-0 flex-1 flex-col">
                 <div className="min-h-0 flex-1 overflow-hidden">
                   <ChatWindow groupId={activeGroupId} />
@@ -141,20 +172,39 @@ export default function ChatPage() {
                   <ChatTypingIndicator groupId={activeGroupId} />
                 </div>
                 <div
-                  className={`border-t p-4 ${isDarkMode ? 'border-slate-800/50' : 'border-gray-200'}`}
+                  className={`border-t p-3 sm:p-4 ${isDarkMode ? 'border-slate-800/50' : 'border-gray-200'}`}
                 >
                   <ChatInput groupId={activeGroupId} />
                 </div>
               </div>
 
+              {/* Üye paneli — mobil: overlay, desktop: sabit kenar */}
               {showMembers && (
-                <aside
-                  className={`w-72 shrink-0 border-l ${
-                    isDarkMode ? 'border-slate-800/50' : 'border-gray-200'
-                  }`}
-                >
-                  <ChatMemberList groupId={activeGroupId} />
-                </aside>
+                <>
+                  {/* Mobil backdrop */}
+                  <div
+                    className="absolute inset-0 z-10 bg-black/50 md:hidden"
+                    onClick={() => setShowMembers(false)}
+                  />
+                  <aside
+                    className={`absolute inset-y-0 right-0 z-20 w-4/5 max-w-xs shrink-0 border-l md:relative md:inset-auto md:z-auto md:w-72 ${isDarkMode ? 'border-slate-800/50 bg-slate-950' : 'border-gray-200 bg-white'} `}
+                  >
+                    {/* Mobil kapat butonu */}
+                    <button
+                      type="button"
+                      onClick={() => setShowMembers(false)}
+                      className={`absolute right-3 top-3 z-10 rounded-lg p-1 transition-colors md:hidden ${
+                        isDarkMode
+                          ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                      }`}
+                      aria-label="Kapat"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <ChatMemberList groupId={activeGroupId} />
+                  </aside>
+                </>
               )}
             </div>
           </>

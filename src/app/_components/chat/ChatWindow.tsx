@@ -82,6 +82,9 @@ export function ChatWindow({ groupId }: Props) {
           className="group relative flex flex-col"
           onMouseEnter={() => setHoveredId(msg.id)}
           onMouseLeave={() => setHoveredId(null)}
+          onClick={() =>
+            setHoveredId(prev => (prev === msg.id ? null : msg.id))
+          }
         >
           {msg.parentId && (
             <div

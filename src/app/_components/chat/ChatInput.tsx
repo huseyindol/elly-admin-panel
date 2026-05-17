@@ -61,14 +61,14 @@ export function ChatInput({ groupId }: Props) {
         value={content}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        placeholder="Mesaj yaz... (Enter: gönder, Shift+Enter: yeni satır)"
+        placeholder="Mesaj yaz..."
         rows={1}
         className={`flex-1 resize-none rounded-xl border px-3 py-2 text-sm outline-none transition-colors focus:ring-2 focus:ring-violet-500/30 ${
           isDarkMode
             ? 'border-slate-700 bg-slate-800 text-white placeholder:text-slate-500 focus:border-violet-500/50'
             : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:border-violet-300'
         }`}
-        style={{ minHeight: '40px', maxHeight: '120px' }}
+        style={{ minHeight: '44px', maxHeight: '120px' }}
       />
 
       <button
