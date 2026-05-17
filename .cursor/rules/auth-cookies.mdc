@@ -1,0 +1,58 @@
+---
+description: "Auth tokens, cookies, JWE decoding, max-age strategy ve cookie-deletion tuzakları — auth/cookie kodu yazarken zorunlu referans."
+globs: src/proxy.ts, src/proxy/**, src/utils/services/fetcher.ts, src/utils/constant/cookieConstant.ts, src/stores/permission-store.ts, src/stores/user-store.ts, src/app/(layoutLess)/login/**, src/app/api/auth/**, src/providers/Providers.tsx
+alwaysApply: false
+---
+
+# Auth & Cookie Pipeline — Project Rules
+
+Bu kural projeye özel auth/cookie hatalarını tekrar etmemek için yazıldı. İlgili dosyaları düzenlemeye geçmeden bu maddeleri tara.
+
+## 1. JWT'yi `atob` ile decode etme
+
+JWT'ler **JWE** (encrypted, AES-256-GCM). Frontend'den içine bakılamaz.
+
+❌ `JSON.parse(atob(token.split('.')[1]))`
+✅ Roller → `usePermissionStore` / `useMyRoleLevel()`. UserId → `useUserStore` / `useMyUserId()`.
+
+## 2. Cookie max-age
+
+Tek kaynak: `src/utils/constant/cookieConstant.ts`.
+
+| Cookie | TTL |
+|---|---|
+| accessToken / expiredDate | Backend'in döndüğü `expiredDate` ile hizalı → `deriveMaxAgeFromExpiredDate(...)` |
+| refreshToken / userCode / tenantId | 6 ay sabit (`COOKIE_MAX_AGE[name]`) |
+
+❌ Hardcoded `60 * 60 * 24 * 30` gibi yazma. Hep `getCookieMaxAge(name)` veya `deriveMaxAgeFromExpiredDate(expiredDate)`.
+
+## 3. Cookie SİLME — `cookies.set` dedup tuzağı
+
+`NextResponse.cookies.set` Map dedup'ı yapar (`name|domain|path`). Aynı tuple için 9 farklı varyant set edersen 8'i yutulur.
+
+❌ `for (const v of variants) response.cookies.set(name, '', v)`
+✅ `for (const v of variants) response.headers.append('set-cookie', `${name}=; ${v}`)`
+
+Referans: `src/proxy/removeCookies.ts`, `src/app/api/auth/logout/route.ts`.
+
+HttpOnly cookies **JS'ten silinemez** — server endpoint'i (`/api/auth/logout`) veya middleware (`removeCookies`) şart.
+
+## 4. Logout akışı
+
+CSR 401 → `fetcher.handleAuthFailure` → `removeAllAuthCookies` (best-effort) → `window.location.replace('/api/auth/logout')` → server raw `Set-Cookie` + redirect → `/login` self-heal.
+
+`localStorage`'ı da temizle: `permission-storage` ve `user-storage`.
+
+## 5. Middleware (`src/proxy.ts`)
+
+- Next.js 16'da middleware adı `proxy.ts`
+- `isAuthenticated = hasAccess || canRefresh` (refresh token tek başına yetki kapısı)
+- AccessToken yok/expired iken refreshToken varsa `refreshTokenProxy` sessiz yenileme yapar; başarısızsa cleanup + redirect
+
+## Checklist
+
+- [ ] Cookie max-age constant / helper'dan alındı
+- [ ] JWT decode girişimi YOK
+- [ ] Roller/userId zustand store'larından
+- [ ] Toplu silme `headers.append('set-cookie', ...)` ile
+- [ ] localStorage `permission-storage` + `user-storage` temizleniyor

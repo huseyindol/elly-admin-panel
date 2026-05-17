@@ -17,15 +17,22 @@ Huseyin DOL'un modern portföy ve CMS sitesi. Next.js 16 App Router, React 19, T
 
 ## Dizin Yapısı
 
-- `src/app/` — Sayfalar (App Router). `(baseLayout)/` admin panel sayfaları, `(layoutLess)/` layout-free (login)
-- `src/components/` — React componentleri. `ui/` shadcn, `forms/` formlar, `dynamic/` dinamik içerik
-- `src/lib/` — Yardımcı araçlar (env.ts, rate-limiter.ts, security.ts, utils.ts)
-- `src/services/` — API servisleri (auth, typicode)
+- `src/app/` — Sayfalar (App Router). `(baseLayout)/` admin panel sayfaları, `(layoutLess)/` layout-free (login), `api/` route handler'lar
+- `src/app/_services/` — Panel modül servisleri (forms, posts, mail-accounts, chat, email-logs, …). Her entity için ayrı dosya
+- `src/app/_hooks/` — TanStack Query hook'ları + admin tema/permission hook'ları
+- `src/app/_components/` — Panel paylaşılan bileşenler (Sheet, DataTable, ConfirmDialog, DestructiveConfirmDialog, vb.)
+- `src/app/_utils/` — Yardımcılar (zod-generator, condition-evaluator, dateUtils)
+- `src/components/` — Genel React componentler. `ui/` shadcn, `forms/`, `dynamic/`, `chat/`
+- `src/stores/` — Zustand store'ları (`permission-store`, `user-store`, `chat-ws-store`). `persist` middleware ile localStorage
+- `src/services/auth/` — Auth servisleri (refreshService) — login/refresh endpoint'lerine direkt fetch
+- `src/lib/` — Yardımcı araçlar (env.ts, rate-limiter.ts, security.ts, utils.ts, api/api-error.ts, auth/permissions\*.ts)
 - `src/schemas/` — Zod validation şemaları
-- `src/actions/` — Server Actions
-- `src/types/` — TypeScript tip tanımları
-- `src/context/` — React Context
-- `src/providers/` — React Provider'lar
+- `src/actions/` — Server Actions (AI üretimi, vb.)
+- `src/types/` — TypeScript tip tanımları (`AuthResponse`, `form`, `cms`, `user-management`, `chat`)
+- `src/context/` — React Context (CookieContext)
+- `src/providers/` — React Provider'lar (QueryClient + CookieContext + Theme)
+- `src/proxy.ts` — **Next.js 16 middleware** (Next 16'da `middleware.ts` yerine `proxy.ts` adıyla çalışır)
+- `src/proxy/` — Middleware yardımcı modülleri (`refreshTokenProxy`, `removeCookies`)
 - `tests/` — Vitest test dosyaları (components/, lib/, api/)
 
 ## Davranış Rehberi
@@ -68,9 +75,39 @@ LLM kodlama hatalarını azaltmak için dört ilke her zaman aktiftir: **Düşü
 - `src/lib/env.ts` — Zod ile environment variable validasyonu
 - `src/lib/rate-limiter.ts` — IP bazlı rate limiting
 - `src/lib/security.ts` — Security header'ları ve yardımcı araçlar
-- `src/middleware.ts` — Next.js middleware
+- `src/proxy.ts` — Next.js 16 middleware (auth redirect + silent token refresh)
+- `src/utils/services/fetcher.ts` — Tek merkezli fetcher (CSR + SSR, auto Authorization, 401 refresh akışı)
+- `src/utils/constant/cookieConstant.ts` — Cookie isim enum'u + `COOKIE_MAX_AGE` + `deriveMaxAgeFromExpiredDate`
+- `src/stores/permission-store.ts` — Roller + permissions (persist)
+- `src/stores/user-store.ts` — userId / username / email / userCode (persist)
+- `src/stores/chat-ws-store.ts` — STOMP/SockJS chat client + sinyaller (newGroup, deletedGroup, invitedGroup, unreadCounts)
 - `next.config.ts` — Next.js konfigürasyonu
 - `vitest.config.ts` — Test konfigürasyonu
+
+## Auth Akışı (kritik)
+
+- **Backend token TTL'leri:** accessToken **4 saat**, refreshToken **6 ay**
+- **Cookie max-age** `cookieConstant.ts` üzerinden tek kaynak. accessToken / expiredDate cookie'leri **backend'in döndüğü `expiredDate` (Unix ms)** ile hizalanır → `deriveMaxAgeFromExpiredDate()`. refreshToken / userCode / tenantId 6 ay sabit
+- **JWT JWE'dir** (encrypted) — `atob` ile decode etme. Roller / userId backend'ten `/api/v1/auth/login` ve `/api/v1/users/me/permissions` ile gelir, zustand store'larında persist edilir
+- **Cookie silme:** Next.js `response.cookies.set` Map dedup'ı yapar. Toplu silme için `src/proxy/removeCookies.ts` raw `Set-Cookie` header'larıyla 9 farklı varyant gönderir. Client-side logout için `GET /api/auth/logout` route handler'ı (plain `Response`)
+- **Middleware** (`src/proxy.ts`): accessToken yoksa veya expired ise refreshToken varken sessizce yenileme yapar; başarısızsa `removeCookies` + `/login`. `/login` üzerinde stale cookie varsa self-heal eder
+- **Reactive hooks** (component'lerde):
+  - `useMyRoleLevel()` — permission-store'dan rol seviyesi (SUPER_ADMIN=4, ADMIN=3, EDITOR=2, VIEWER=1)
+  - `useMyUserId()`, `useMyUsername()`, `useMyEmail()`, `useMyUserCode()` — user-store'dan
+  - `usePermission('permission-key')` — boolean permission check
+- **Async helper'lar** (non-component, örn. chat-ws-store): `getMyUserId()` önce store'a bakar, yoksa `/api/v1/users/me` fallback
+
+## Chat / WebSocket
+
+- STOMP üzerinden SockJS — `src/stores/chat-ws-store.ts`
+- Subscription kovaları: `globalSubs` (presence + groups/new + groups/deleted + per-user groups/joined), `activeGroupSubs` (typing + read), `allGroupSubs` (her grup için mesaj sub'ı)
+- Sinyaller one-shot: `newGroupSignal`, `deletedGroupSignal`, `invitedGroupSignal` — sidebar tüketince `null`'a çeker
+- WS topic'leri:
+  - `/topic/groups/new` — yeni grup yayını
+  - `/topic/groups/deleted` — `msg.body = groupId`
+  - `/topic/user/{userId}/groups/joined` — kişisel davet
+  - `/topic/group/{id}` — mesajlar (allGroupSubs)
+  - `/topic/group/{id}/typing` ve `/read` (activeGroupSubs)
 
 ## Agent Teams Koordinasyonu
 

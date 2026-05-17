@@ -41,6 +41,22 @@ Bu dosya, projede yapay zekâ asistanlarının, rollerin ve skill'lerin nerede t
 | **doc-changes**         | `/doc-changes [açıklama]` | `@doc-changes`            | Değişiklikleri CHANGELOG + rehber olarak dokümante eder                          |
 | **ai-generate**         | _(otomatik)_              | _(globs: generate-\*.ts)_ | Gemini AI entegrasyon referansı                                                  |
 | **debug-fix**           | `/debug-fix <sorun>`      | `@debug-fix`              | Sistematik hata ayıklama akışı                                                   |
+| **sidebar-sync**        | _(otomatik)_              | `@sidebar-sync`           | Yeni `(baseLayout)` sayfası eklenince Sidebar güncellemesini zorunlu kılar       |
+| **auth-cookies**        | _(otomatik)_              | `@auth-cookies`           | Auth/cookie pipeline kuralları — JWE, max-age, Set-Cookie dedup tuzakları        |
+
+> Not: `.cursor/rules/nextjs-rule.mdc` deprecated — yerine `project-conventions` kullanılır.
+
+## Built-in Claude Code Komutları
+
+Aşağıdaki komutlar `.claude/skills/` altında değil — Claude Code'a dahili:
+
+| Komut              | Amaç                                                             |
+| ------------------ | ---------------------------------------------------------------- |
+| `/review`          | Açık bir PR'ı review eder (gh CLI üzerinden)                     |
+| `/security-review` | Mevcut branch'teki bekleyen değişiklikler için güvenlik review'ü |
+| `/init`            | `CLAUDE.md` ve agent yapısını sıfırdan kurar (yeni projelerde)   |
+
+Proje özel `pr-check` skill'i, `/review` ile birlikte kullanılabilir — `pr-check` proje-spesifik checklist (Bun, TS strict, console.log, tests) uygular; `/review` daha geniş PR yorumu.
 
 ## Nasıl kullanılır
 
