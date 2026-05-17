@@ -19,6 +19,8 @@ interface ChatWsState {
   typingUsers: Record<string, Set<string>>
   /** Yeni grup bildirim sinyali — sidebar dinler, işleyince null'a çeker */
   newGroupSignal: ChatGroup | null
+  /** Silinen grup id — sidebar listeden kaldırır, işleyince null'a çeker */
+  deletedGroupSignal: string | null
   /** groupId → okunmamış mesaj sayısı (sidebar badge için) */
   unreadCounts: Record<string, number>
 
@@ -55,6 +57,7 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
   presence: {},
   typingUsers: {},
   newGroupSignal: null,
+  deletedGroupSignal: null,
   unreadCounts: {},
 
   globalSubs: [],
@@ -100,7 +103,17 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
           }
         })
 
-        set({ globalSubs: [presenceSub, newGroupSub] })
+        // Global sub: silinen grup bildirimleri (msg.body = groupId)
+        const deletedGroupSub = client.subscribe(
+          '/topic/groups/deleted',
+          msg => {
+            const groupId = (msg.body ?? '').trim()
+            if (!groupId) return
+            set({ deletedGroupSignal: groupId })
+          },
+        )
+
+        set({ globalSubs: [presenceSub, newGroupSub, deletedGroupSub] })
 
         // Kullanıcı WS bağlanmadan önce bir grup açtıysa, typing/read sub'larını şimdi at
         const { activeGroupId } = get()
@@ -136,6 +149,7 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
       allGroupSubs: [],
       unreadCounts: {},
       newGroupSignal: null,
+      deletedGroupSignal: null,
     })
   },
 

@@ -28,6 +28,7 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const subscribeToAllGroups = useChatWsStore(s => s.subscribeToAllGroups)
   const clearUnread = useChatWsStore(s => s.clearUnread)
   const newGroupSignal = useChatWsStore(s => s.newGroupSignal)
+  const deletedGroupSignal = useChatWsStore(s => s.deletedGroupSignal)
   const unreadCounts = useChatWsStore(s => s.unreadCounts)
 
   // Rol seviyesini çek
@@ -61,6 +62,32 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
     setGroups(next)
     if (connected) subscribeToAllGroups(next, myLevel)
   }, [newGroupSignal, myLevel, connected, groups, subscribeToAllGroups])
+
+  // Silinen grup sinyali — listeden çıkar + aktif gruba bakıyorsak paneli kapat
+  useEffect(() => {
+    if (!deletedGroupSignal) return
+
+    const deletedId = deletedGroupSignal
+    // İşlendi olarak işaretle
+    useChatWsStore.setState({ deletedGroupSignal: null })
+
+    if (!groups.some(g => g.id === deletedId)) return
+
+    const next = groups.filter(g => g.id !== deletedId)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- consuming a one-shot WS signal
+    setGroups(next)
+    if (connected) subscribeToAllGroups(next, myLevel)
+    if (activeGroupId === deletedId) {
+      useChatWsStore.getState().unsubscribeFromGroup()
+    }
+  }, [
+    deletedGroupSignal,
+    activeGroupId,
+    groups,
+    connected,
+    myLevel,
+    subscribeToAllGroups,
+  ])
 
   const handleGroupClick = (groupId: string) => {
     subscribeToGroup(groupId)
