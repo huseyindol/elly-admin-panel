@@ -62,6 +62,12 @@ export interface Post {
   orderIndex: number
   template?: string
   seoInfo: SeoInfo
+  description: string | null
+  category: string | null
+  coverImage: string | null
+  publishedAt: string | null
+  author: string | null
+  readingTime: string | null
 }
 
 export interface Widget {

@@ -63,7 +63,7 @@ export default function PostsListPage() {
       key: 'title',
       header: 'Başlık',
       render: post => (
-        <div>
+        <div className="space-y-1">
           <p
             className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
           >
@@ -74,6 +74,29 @@ export default function PostsListPage() {
           >
             /{post.slug}
           </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {post.category && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${isDarkMode ? 'bg-violet-500/20 text-violet-300' : 'bg-violet-50 text-violet-600'}`}
+              >
+                {post.category}
+              </span>
+            )}
+            {post.author && (
+              <span
+                className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
+              >
+                {post.author}
+              </span>
+            )}
+            {post.publishedAt && (
+              <span
+                className={`text-xs ${isDarkMode ? 'text-slate-600' : 'text-gray-400'}`}
+              >
+                {new Date(post.publishedAt).toLocaleDateString('tr-TR')}
+              </span>
+            )}
+          </div>
         </div>
       ),
     },

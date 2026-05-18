@@ -35,6 +35,12 @@ export const CreatePostSchema = z.object({
   orderIndex: z.number().int().min(0).default(0),
   template: z.string().max(50, 'Template 50 karakteri geçemez').optional(),
   seoInfo: SeoInfoSchema.optional(),
+  description: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
+  coverImage: z.string().nullable().optional(),
+  publishedAt: z.string().nullable().optional(),
+  author: z.string().nullable().optional(),
+  readingTime: z.string().nullable().optional(),
 })
 
 // Update Post Schema - PUT /api/v1/posts/{id}

@@ -32,6 +32,7 @@ export default function NewPostPage() {
   const queryClient = useQueryClient()
   const { isDarkMode } = useAdminTheme()
   const [showSeo, setShowSeo] = useState(false)
+  const [showBlog, setShowBlog] = useState(false)
   const [useAi, setUseAi] = useState(false)
   const [slugLoading, setSlugLoading] = useState(false)
   const [seoLoading, setSeoLoading] = useState(false)
@@ -53,6 +54,12 @@ export default function NewPostPage() {
       status: true,
       orderIndex: 0,
       template: '',
+      description: null,
+      category: null,
+      coverImage: null,
+      publishedAt: null,
+      author: null,
+      readingTime: null,
     },
   })
 
@@ -117,7 +124,12 @@ export default function NewPostPage() {
   })
 
   const onSubmit = (data: CreatePostInput) => {
-    createMutation.mutate(data)
+    createMutation.mutate({
+      ...data,
+      publishedAt: data.publishedAt
+        ? new Date(data.publishedAt).toISOString()
+        : null,
+    })
   }
 
   const inputClass = `w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors ${
@@ -356,6 +368,110 @@ export default function NewPostPage() {
               </label>
             </div>
           </div>
+        </div>
+
+        {/* Blog Bilgileri */}
+        <div
+          className={`rounded-2xl p-6 ${isDarkMode ? 'border border-slate-800/50 bg-slate-900/60' : 'border border-gray-200 bg-white'}`}
+        >
+          <button
+            type="button"
+            onClick={() => setShowBlog(!showBlog)}
+            className="flex items-center gap-3"
+          >
+            <h2
+              className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+            >
+              Blog Bilgileri
+            </h2>
+            <span
+              className={`transition-transform ${showBlog ? 'rotate-90' : ''}`}
+            >
+              →
+            </span>
+          </button>
+
+          {showBlog && (
+            <div className="mt-4 space-y-4">
+              {/* Kısa Açıklama */}
+              <div>
+                <label htmlFor="description" className={labelClass}>
+                  Kısa Açıklama
+                </label>
+                <textarea
+                  id="description"
+                  {...register('description')}
+                  rows={3}
+                  className={inputClass}
+                  placeholder="Listing kartında görünür"
+                />
+              </div>
+              {/* Kategori */}
+              <div>
+                <label htmlFor="category" className={labelClass}>
+                  Kategori
+                </label>
+                <input
+                  id="category"
+                  type="text"
+                  {...register('category')}
+                  className={inputClass}
+                  placeholder="Teknoloji, Tasarım..."
+                />
+              </div>
+              {/* Kapak Görseli */}
+              <div>
+                <label htmlFor="coverImage" className={labelClass}>
+                  Kapak Görseli URL
+                </label>
+                <input
+                  id="coverImage"
+                  type="text"
+                  {...register('coverImage')}
+                  className={inputClass}
+                  placeholder="https://... veya /assets/..."
+                />
+              </div>
+              {/* Yayın Tarihi */}
+              <div>
+                <label htmlFor="publishedAt" className={labelClass}>
+                  Yayın Tarihi
+                </label>
+                <input
+                  id="publishedAt"
+                  type="date"
+                  {...register('publishedAt')}
+                  className={inputClass}
+                />
+              </div>
+              {/* Yazar */}
+              <div>
+                <label htmlFor="author" className={labelClass}>
+                  Yazar
+                </label>
+                <input
+                  id="author"
+                  type="text"
+                  {...register('author')}
+                  className={inputClass}
+                  placeholder="Yazar adı"
+                />
+              </div>
+              {/* Okuma Süresi */}
+              <div>
+                <label htmlFor="readingTime" className={labelClass}>
+                  Okuma Süresi
+                </label>
+                <input
+                  id="readingTime"
+                  type="text"
+                  {...register('readingTime')}
+                  className={inputClass}
+                  placeholder="5 dk okuma"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* SEO Settings */}
