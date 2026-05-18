@@ -13,12 +13,12 @@ API çağrıları `fetcher` utility ile yapılır (token otomatik eklenir, Autho
 `DtoPost` ve `DtoPostIU` güncellendi — şu 6 alan eklendi:
 
 ```typescript
-description: string | null      // kısa açıklama (listing kartı için)
-category: string | null         // kategori
-coverImage: string | null       // kapak görseli URL
-publishedAt: string | null      // ISO date string ("2025-01-15T00:00:00.000Z")
-author: string | null           // yazar adı
-readingTime: string | null      // "5 dk okuma"
+description: string | null // kısa açıklama (listing kartı için)
+category: string | null // kategori
+coverImage: string | null // kapak görseli URL
+publishedAt: string | null // ISO date string ("2025-01-15T00:00:00.000Z")
+author: string | null // yazar adı
+readingTime: string | null // "5 dk okuma"
 ```
 
 ---
@@ -32,7 +32,7 @@ Projedeki `Post` tip tanımlarına (muhtemelen `src/types/` veya servis dosyası
 description: string | null
 category: string | null
 coverImage: string | null
-publishedAt: string | null   // ISO string
+publishedAt: string | null // ISO string
 author: string | null
 readingTime: string | null
 ```
@@ -54,14 +54,14 @@ Label, shadcn bileşenleri, layout) koru — sadece yeni alanları uygun bir yer
 
 ### Alan tablosu
 
-| Alan | Bileşen | Label | Notlar |
-|------|---------|-------|--------|
-| `description` | `<Textarea rows={3}>` | Kısa Açıklama | Listing kartında görünür |
-| `category` | `<Input>` | Kategori | Serbest metin |
-| `coverImage` | `<Input>` | Kapak Görseli URL | Tam URL veya `/assets/...` |
-| `publishedAt` | `<Input type="date">` | Yayın Tarihi | Dönüşüm gerekli (aşağıya bak) |
-| `author` | `<Input>` | Yazar | |
-| `readingTime` | `<Input>` | Okuma Süresi | Örn. "5 dk okuma" |
+| Alan          | Bileşen               | Label             | Notlar                        |
+| ------------- | --------------------- | ----------------- | ----------------------------- |
+| `description` | `<Textarea rows={3}>` | Kısa Açıklama     | Listing kartında görünür      |
+| `category`    | `<Input>`             | Kategori          | Serbest metin                 |
+| `coverImage`  | `<Input>`             | Kapak Görseli URL | Tam URL veya `/assets/...`    |
+| `publishedAt` | `<Input type="date">` | Yayın Tarihi      | Dönüşüm gerekli (aşağıya bak) |
+| `author`      | `<Input>`             | Yazar             |                               |
+| `readingTime` | `<Input>`             | Okuma Süresi      | Örn. "5 dk okuma"             |
 
 ### `publishedAt` dönüşümü
 
