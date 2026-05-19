@@ -19,6 +19,9 @@ Kayıt formatı:
 
 ### Added
 
+- `tmp_e2e_test/chat-test.ts` — Chat modülü için 4 eşzamanlı kullanıcıyla 8 test senaryosunu doğrulayan Playwright E2E test betiği
+- `docs/tests/chat-e2e/` — Chat E2E testine ait test planı, görev listesi, detaylı Türkçe bulgular ve test ekran görüntüleri arşivi
+- `.cursor/rules/playwright-test-reporting.mdc` — E2E test çıktılarının `docs/tests/{islem-adi}/` altında bağıl (relative) görsel yolları ile arşivlenmesini zorunlu kılan Cursor kuralı
 - `src/app/(baseLayout)/settings/page.tsx` — placeholder Ayarlar sayfası (sidebar linki 404 veriyordu)
 - `src/app/(baseLayout)/email-templates/_components/ClasspathTemplateSection.tsx` — `/api/v1/emails/templates` classpath listesi, email-templates sayfasının altında gösteriliyor
 - `src/app/_components/Icons.tsx` → `AtSign` ikonu eklendi

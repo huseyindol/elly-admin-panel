@@ -1,0 +1,30 @@
+---
+description: "Playwright E2E test çıktılarının (implementation plan, task, walkthrough, screenshots) docs/tests altında arşivlenmesi kuralları."
+alwaysApply: true
+---
+
+## Playwright / E2E Test Çıktı Arşivleme Kuralları
+
+Herhangi bir genel E2E (Playwright vb.) testi gerçekleştirildiğinde veya mevcut testler güncellendiğinde, test sürecine dair dokümantasyon ve çıktılar `docs/tests/` altında süreç ismiyle oluşturulan izole bir klasörde saklanmalıdır.
+
+### 1. Klasör Yapısı
+Her test işlemi için `docs/tests/{islem-adi}/` klasörü oluşturulmalıdır. Örneğin, chat E2E testleri için:
+- `docs/tests/chat-e2e/`
+
+Klasörün altında aşağıdaki 4 ana bileşen yer almalıdır:
+1. `implementation_plan.md`: Test planı, senaryolar ve beklentiler.
+2. `task.md`: Test adımlarının tamamlanma durumu ve TODO listesi.
+3. `walkthrough.md`: Test sonuçlarını (PASS/FAIL), detaylı bulguları ve analizleri içeren nihai rapor.
+4. `screenshots/`: Test sırasında çekilen ekran görüntülerinin tutulduğu klasör.
+
+### 2. Dosya İçi Yol Kuralları
+- `walkthrough.md` içindeki ekran görüntüsü (resim) bağlantıları kesinlikle lokal bilgisayardaki absolute yolları (`/Users/...` veya `/tmp/...` vb.) referans etmemelidir.
+- Tüm görsel yolları, Markdown dosyasına göre **bağıl (relative)** yollarla (örneğin `./screenshots/case1_superadmin_created.png`) tanımlanmalıdır. Bu sayede dokümantasyon tüm geliştiriciler için taşınabilir ve görüntülenebilir kalır.
+
+### 3. Otomatik Arşivleme Akışı
+Herhangi bir E2E testi yazıldığında veya çalıştırıldığında:
+1. Test planını ve görev listesini oluşturun.
+2. Testi çalıştırıp ekran görüntülerini ve logları toplayın.
+3. Çıktıları `docs/tests/{islem-adi}/` klasörüne kopyalayın.
+4. Yolları bağıl (relative) olacak şekilde düzenleyin.
+5. `walkthrough.md` raporunu güncelleyip işlemi tamamlayın.
