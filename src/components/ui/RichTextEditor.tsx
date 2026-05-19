@@ -3,6 +3,7 @@
 import { useAdminTheme } from '@/app/_hooks'
 import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import Image from '@tiptap/extension-image'
 import { useEffect } from 'react'
 
 interface RichTextEditorProps {
@@ -66,6 +67,14 @@ export default function RichTextEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
+      }),
+      Image.configure({
+        inline: false,
+        allowBase64: false,
+        HTMLAttributes: {
+          loading: 'lazy',
+          class: 'tiptap-img',
+        },
       }),
     ],
     content: value || '',
@@ -250,6 +259,8 @@ export default function RichTextEditor({
         .tiptap-editor code { background: ${isDarkMode ? '#1e293b' : '#f1f5f9'}; border-radius: 4px; padding: 2px 5px; font-size: 0.875em; }
         .tiptap-editor strong { font-weight: 700; }
         .tiptap-editor em { font-style: italic; }
+        .tiptap-editor img.tiptap-img,
+        .tiptap-editor img { display: block; max-width: 100%; height: auto; margin: 1rem auto; border-radius: 0.5rem; }
       `}</style>
       <div className="tiptap-editor text-sm">
         <EditorContent editor={editor} />

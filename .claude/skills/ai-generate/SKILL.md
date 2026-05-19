@@ -69,6 +69,17 @@ Her aşama ayrı `generateContent` çağrısı. Aşamalar arası veriyi server-s
 
 ### İzin Verilen HTML Tag'leri (Makale)
 
-`h1`, `h2`, `h3`, `p`, `ul`, `ol`, `li`, `strong`, `em`, `blockquote`
+`h1`, `h2`, `h3`, `p`, `ul`, `ol`, `li`, `strong`, `em`, `blockquote`, `img`
 
 Başka tag'ler (script, iframe, style, div, span) `frontendAgent` tarafından temizlenir.
+
+### Görsel Kuralları (Makale)
+
+- Her makalede **2 (en fazla 3)** görsel olmalı. 0 veya 1 olabilir ama 4+ kabul edilmez.
+- `img` etiketi yalnızca `<p>...</p>` içinde sarmalanmış olur.
+- `img` üzerinde izinli attribute'lar: `src`, `alt`, `width`, `height`, `loading`.
+- `src` formatı (zorunlu domain — Pollinations.ai, ücretsiz AI image proxy):
+  `https://image.pollinations.ai/prompt/{ENCODED_PROMPT}?width=1200&height=675&nologo=true`
+  - `{ENCODED_PROMPT}` URL-encoded **İngilizce** görsel prompt (6-14 kelime, fotogerçekçi/illustration/diagram stilini belirt, marka veya kişi adı içermesin)
+- `alt` zorunlu, Türkçe, max ~12 kelime. Boşsa `frontendAgent` üretir.
+- RichTextEditor `@tiptap/extension-image` ile yüklü; başka bir TipTap extension'ı eklemeden önce StarterKit ile çakışma olmadığından emin ol.

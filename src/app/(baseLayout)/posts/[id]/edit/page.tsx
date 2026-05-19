@@ -7,11 +7,13 @@ import {
   updatePostService,
 } from '@/app/_services/posts.services'
 import {
+  generateBlogInfoAction,
   generateSeoFieldsAction,
   generateSlugAction,
 } from '@/actions/generate-field'
 import AiArticlePanel from '@/components/posts/AiArticlePanel'
 import AiFieldButton from '@/components/ui/AiFieldButton'
+import { useMyEmail, useMyUsername } from '@/stores/user-store'
 import dynamic from 'next/dynamic'
 
 const RichTextEditor = dynamic(() => import('@/components/ui/RichTextEditor'), {
@@ -39,7 +41,10 @@ export default function EditPostPage() {
   const [useAi, setUseAi] = useState(false)
   const [slugLoading, setSlugLoading] = useState(false)
   const [seoLoading, setSeoLoading] = useState(false)
+  const [blogLoading, setBlogLoading] = useState(false)
   const { templates: postTemplates } = useTemplates('posts')
+  const myUsername = useMyUsername()
+  const myEmail = useMyEmail()
 
   const {
     data: postData,
@@ -73,6 +78,12 @@ export default function EditPostPage() {
   })
 
   const title = useWatch({ control, name: 'title' })
+  const content = useWatch({ control, name: 'content' })
+
+  const hasContent = useMemo(() => {
+    const stripped = (content ?? '').replace(/<[^>]+>/g, '').trim()
+    return stripped.length > 0
+  }, [content])
 
   const filteredPostTemplates = useMemo(
     () => postTemplates.filter(t => t.value !== ''),
@@ -114,6 +125,35 @@ export default function EditPostPage() {
       toast.error(res.error ?? 'SEO alanları oluşturulamadı')
     }
     setSeoLoading(false)
+  }
+
+  const handleAiBlogInfo = async () => {
+    if (!title || !hasContent) return
+    setBlogLoading(true)
+    if (!showBlog) setShowBlog(true)
+    const res = await generateBlogInfoAction(title, content ?? '')
+    if (res.success && res.data) {
+      const { description, category, readingTime, imagePrompt } = res.data
+      setValue('description', description, { shouldDirty: true })
+      setValue('category', category, { shouldDirty: true })
+      setValue('readingTime', readingTime, { shouldDirty: true })
+
+      const coverUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
+        imagePrompt,
+      )}?width=1600&height=900&nologo=true`
+      setValue('coverImage', coverUrl, { shouldDirty: true })
+
+      const today = new Date().toISOString().split('T')[0]
+      setValue('publishedAt', today, { shouldDirty: true })
+
+      const author = myUsername ?? myEmail ?? ''
+      if (author) setValue('author', author, { shouldDirty: true })
+
+      toast.success('Blog bilgileri oluşturuldu')
+    } else {
+      toast.error(res.error ?? 'Blog bilgileri oluşturulamadı')
+    }
+    setBlogLoading(false)
   }
 
   useEffect(() => {
@@ -436,22 +476,30 @@ export default function EditPostPage() {
         <div
           className={`rounded-2xl p-6 ${isDarkMode ? 'border border-slate-800/50 bg-slate-900/60' : 'border border-gray-200 bg-white'}`}
         >
-          <button
-            type="button"
-            onClick={() => setShowBlog(!showBlog)}
-            className="flex items-center gap-3"
-          >
-            <h2
-              className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setShowBlog(!showBlog)}
+              className="flex items-center gap-3"
             >
-              Blog Bilgileri
-            </h2>
-            <span
-              className={`transition-transform ${showBlog ? 'rotate-90' : ''}`}
-            >
-              →
-            </span>
-          </button>
+              <h2
+                className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+              >
+                Blog Bilgileri
+              </h2>
+              <span
+                className={`transition-transform ${showBlog ? 'rotate-90' : ''}`}
+              >
+                →
+              </span>
+            </button>
+            <AiFieldButton
+              onClick={handleAiBlogInfo}
+              isLoading={blogLoading}
+              disabled={!title || !hasContent}
+              label="AI ile oluştur"
+            />
+          </div>
 
           {showBlog && (
             <div className="mt-4 space-y-4">

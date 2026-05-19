@@ -24,7 +24,7 @@ async function articleAgent(topic: string, keywords: string): Promise<string> {
   const model = getGeminiModel()
 
   const refinementPrompt = `Sen bir makale planlama ve içerik stratejisi uzmanısın.
-Görevin: Verilen ham konu ve anahtar kelimeleri alarak, AI'ın daha kaliteli ve odaklanmış bir makale yazabilmesi için yapılandırılmış bir makale planı oluşturmak.
+Görevin: Verilen ham konu ve anahtar kelimeleri alarak, AI'ın derinlemesine, görsel destekli ve odaklı bir makale yazabilmesi için yapılandırılmış bir plan oluşturmak.
 
 Ham Konu: ${topic}
 Yardımcı Anahtar Kelimeler: ${keywords || 'Belirtilmedi'}
@@ -33,8 +33,12 @@ Lütfen aşağıdaki formatta bir makale planı oluştur:
 - Ana başlık önerisi
 - Hedef kitle
 - Makalenin ana mesajı (1-2 cümle)
-- Bölüm başlıkları (en az 4, en fazla 7 bölüm)
-- Her bölümde ele alınacak temel noktalar (2-3 madde)
+- Bölüm başlıkları (en az 5, en fazla 7 bölüm) — her bölüm derinlemesine işlenecek
+- Her bölümde ele alınacak temel noktalar (3-5 madde, sadece liste değil; kavram, örnek ve gerekçe)
+- Görsel planı: Makale gövdesi içine yerleştirilecek 2 (en fazla 3) görselin nereye konulacağı ve içeriği. Her görsel için:
+  * yerleşim: "Hangi bölümün sonunda / hangi paragrafın altında"
+  * imagePrompt: kısa İNGİLİZCE görsel prompt (max 14 kelime, fotogerçekçi/diyagram/illustration stilini belirt, marka/kişi adı içermesin)
+  * alt: kısa Türkçe alt metin (max 10 kelime)
 - Sonuç bölümünde yer alacak çağrı-eylem (CTA)
 
 Yanıtını Türkçe ver ve yalnızca yapılandırılmış planı döndür, ek açıklama yapma.`
@@ -53,7 +57,7 @@ async function generateFullArticle(outline: string): Promise<string> {
   const model = getGeminiModel()
 
   const articlePrompt = `Sen profesyonel bir Türkçe içerik yazarı ve web editörüsün.
-Görevin: Aşağıdaki makale planına göre kapsamlı, bilgilendirici ve SEO dostu bir makale yazmak.
+Görevin: Aşağıdaki makale planına göre DERİNLEMESİNE, görsel destekli ve SEO dostu bir makale yazmak.
 
 MAKALE PLANI:
 ${outline}
@@ -61,13 +65,26 @@ ${outline}
 YAZIM KURALLARI:
 - Makaleyi Türkçe yaz
 - Akıcı, anlaşılır ve profesyonel bir dil kullan
-- Her bölüm için yeterli derinlik ve detay sağla
+- Yüzeysel geçme: her bölüm derinlemesine işlensin, kavramlar tanımlansın, gerekçelendirilsin, somut örnek/senaryo/karşılaştırma verilsin
+- Toplam uzunluk minimum 800, maksimum 1500 kelime olmalı (bölüm başına ortalama 150-250 kelime). 800'ün altı kabul edilmez, 1500'ü aşma.
 - Sadece geçerli HTML çıktısı ver (body içeriği, html/body/head etiketleri olmadan)
-- Kullanabileceğin HTML etiketleri: h1, h2, h3, p, ul, ol, li, strong, em, blockquote
-- Başlıklar için h1 (ana başlık), h2 (bölüm başlıkları), h3 (alt başlıklar) kullan
+- Kullanabileceğin HTML etiketleri: h1, h2, h3, p, ul, ol, li, strong, em, blockquote, img
+- Başlıklar için h1 (ana başlık, sadece 1 adet), h2 (bölüm başlıkları), h3 (alt başlıklar) kullan
 - Önemli kavramları <strong> ile vurgula
-- Listeleri uygun yerde kullan
-- Herhangi bir markdown, ek açıklama veya kod bloğu ekleme — sadece saf HTML döndür`
+- Listeleri yalnızca açıklayıcı olduğu yerde kullan — gereksiz bullet'a kaçma
+
+GÖRSEL KURALLARI (ZORUNLU):
+- Makale gövdesine 2 (gerekiyorsa en fazla 3) görsel yerleştir. Daha azı kabul edilmez, daha fazlası dağıtıcı olur.
+- Her görsel ayrı bir <p>...</p> bloğu içinde olmalı: <p><img src="..." alt="..." width="1200" height="675" loading="lazy" /></p>
+- Görseller H1 başlığından ÖNCE olmaz. İlk görsel ilk veya ikinci bölümün ardından, son görsel sonuç bölümünden ÖNCE olmalı.
+- Her img src değeri ŞU FORMATTA olmalı (başka domain kullanma):
+  https://image.pollinations.ai/prompt/{ENCODED_PROMPT}?width=1200&height=675&nologo=true
+  - {ENCODED_PROMPT} kısmı URL-encoded İngilizce görsel prompt'tur (boşluk yerine %20, virgül yerine %2C)
+  - Görsel prompt'u 6-14 kelime, fotogerçekçi/illustration/diagram stili belirt, marka veya kişi adı içermesin
+- Her görselin alt metni TÜRKÇE, max 12 kelime, görseli açıklayıcı ve anahtar kavramı barındıran şekilde olmalı
+- Görsel için ek başlık/figcaption yazma — sadece <p><img/></p>
+
+Herhangi bir markdown, ek açıklama veya kod bloğu ekleme — sadece saf HTML döndür.`
 
   const articleResult = await model.generateContent(articlePrompt)
   logger.info('[ArticleAgent] Ham HTML içerik üretildi')
@@ -90,13 +107,17 @@ HAM HTML:
 ${rawHtml}
 
 YAPILACAKLAR:
-1. Sadece şu etiketlere izin ver: h1, h2, h3, p, ul, ol, li, strong, em, blockquote — diğer tüm etiketleri kaldır
-2. Başlık hiyerarşisini düzelt (h1 → h2 → h3 sırası)
+1. Sadece şu etiketlere izin ver: h1, h2, h3, p, ul, ol, li, strong, em, blockquote, img — diğer tüm etiketleri kaldır
+2. Başlık hiyerarşisini düzelt (h1 → h2 → h3 sırası, sadece 1 adet h1)
 3. Boş etiketleri kaldır
 4. Birden fazla ardışık boş satırı tek satıra indir
-5. Script, style, class, id ve inline style attribute'larını kaldır
-6. HTML entity'lerini düzgün encode et (&amp; &lt; &gt; vb.)
-7. Makul olmayan ya da çok kısa paragrafları bir önceki veya sonraki paragrafla birleştir
+5. img dışındaki tüm etiketlerden script, style, class, id ve inline style attribute'larını kaldır
+6. img etiketinde SADECE şu attribute'lara izin ver: src, alt, width, height, loading. Diğerlerini (class, id, style, srcset, data-*, onerror vb.) kaldır.
+7. img src değeri "https://image.pollinations.ai/prompt/" ile başlamıyorsa ya da http/https ile başlayan geçerli bir URL değilse görseli komple kaldır.
+8. Her img için alt boşsa kısa Türkçe bir alt metni türet; img yine de <p>...</p> içinde sarmalanmış olmalı, değilse sarmalanmış hale getir
+9. Görsel sayısı 2 veya 3 olmalı. 1 veya 0 ise olduğu gibi bırak (daha fazlası dağıtıcı). 4+ görsel varsa fazlasını kaldır, içerikle en alakalı 3 tanesini koru.
+10. HTML entity'lerini düzgün encode et (&amp; &lt; &gt; vb.)
+11. Makul olmayan ya da çok kısa paragrafları bir önceki veya sonraki paragrafla birleştir
 
 ÖNEMLI: Yalnızca temizlenmiş HTML döndür. Açıklama, yorum, markdown veya kod bloğu ekleme.`
 

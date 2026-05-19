@@ -118,6 +118,84 @@ Kurallar:
   }
 }
 
+// ─── Blog Info (description + category + readingTime + image prompt) ────────
+
+export interface GeneratedBlogInfo {
+  description: string
+  category: string
+  readingTime: string
+  imagePrompt: string
+}
+
+function stripHtmlForPrompt(html: string, maxLen = 4000): string {
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;|&amp;|&lt;|&gt;|&quot;|&#39;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLen)
+}
+
+export async function generateBlogInfoAction(
+  title: string,
+  content: string,
+): Promise<{
+  success: boolean
+  data?: GeneratedBlogInfo
+  error?: string
+}> {
+  try {
+    const plainContent = stripHtmlForPrompt(content)
+    if (!title.trim() || !plainContent) {
+      return { success: false, error: 'Başlık ve içerik gerekli' }
+    }
+
+    logger.info('[generateBlogInfoAction] Blog meta üretiliyor', {
+      title,
+      contentLen: plainContent.length,
+    })
+    const model = getGeminiModel()
+    const result = await model.generateContent(
+      `Aşağıdaki blog yazısının başlığı ve içeriğine göre meta bilgileri üret.
+
+Başlık: "${title}"
+İçerik:
+"""
+${plainContent}
+"""
+
+Çıktı kuralları:
+- description: İçeriği özetleyen, kullanıcıyı meraklandıran, tek cümlelik Türkçe özet. Maksimum 180 karakter. Soru cümlesi olabilir.
+- category: İçeriğin ait olduğu kısa Türkçe kategori adı (1-3 kelime). Örnek: "Backend Güvenlik", "Frontend", "DevOps", "Yapay Zeka", "Veritabanı", "Mobil".
+- readingTime: İçeriği yaklaşık 200 kelime/dk hızla okuma süresi. Format: "X dk okuma" (örn: "4 dk okuma").
+- imagePrompt: İçeriği temsil eden, fotogerçekçi bir kapak görseli için kısa İNGİLİZCE görsel prompt'u. Maksimum 14 kelime, kişisel veya marka isimleri içermesin, "blog cover, modern, professional" gibi stilistik ipuçları içerebilir.
+
+Tam olarak şu JSON formatında yanıt ver, başka hiçbir şey yazma:
+{
+  "description": "...",
+  "category": "...",
+  "readingTime": "X dk okuma",
+  "imagePrompt": "..."
+}`,
+    )
+
+    const raw = result.response
+      .text()
+      .trim()
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim()
+
+    const parsed: GeneratedBlogInfo = JSON.parse(raw)
+    logger.info('[generateBlogInfoAction] Tamamlandı')
+    return { success: true, data: parsed }
+  } catch (err) {
+    logger.error('[generateBlogInfoAction] Hata', err)
+    return { success: false, error: sanitizeApiKeyError(err) }
+  }
+}
+
 export async function generateDescriptionAction(
   name: string,
   context?: string,
