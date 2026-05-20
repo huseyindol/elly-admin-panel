@@ -4,13 +4,11 @@ import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
-import { logout } from '@/actions/auth/logout'
-import { removeGlobalCookie } from '@/context/CookieContext'
 import { PermissionGate } from '@/components/PermissionGate'
 import { usePermission } from '@/hooks/usePermission'
 import { usePermissionStore } from '@/stores/permission-store'
+import { useUserStore } from '@/stores/user-store'
 import { MODULES } from '@/types/permissions'
-import { CookieEnum } from '@/utils/constant/cookieConstant'
 import { useAdminTheme } from '../_hooks'
 import { Icons } from './Icons'
 
@@ -292,24 +290,19 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
 
   const queryClient = useQueryClient()
 
-  const onLogout = async () => {
+  const onLogout = () => {
+    // In-memory state temizliği
     usePermissionStore.getState().clearPermissions()
+    useUserStore.getState().clearUser()
     queryClient.clear()
 
-    // Client-side cookie'leri temizle (Providers.tsx'teki persistBrowserCookie ile set edilenler)
-    const clientCookies = [
-      CookieEnum.ACCESS_TOKEN,
-      CookieEnum.REFRESH_TOKEN,
-      CookieEnum.EXPIRED_DATE,
-      CookieEnum.USER_CODE,
-      CookieEnum.TENANT_ID,
-    ]
-    clientCookies.forEach(name => removeGlobalCookie(name))
+    // Persisted localStorage'ı da temizle
+    localStorage.removeItem('permission-storage')
+    localStorage.removeItem('user-storage')
 
-    // Server-side httpOnly cookie'leri temizle
-    await logout()
-
-    window.location.href = '/login'
+    // /api/auth/logout GET → 9 varyant Set-Cookie silme + 302 /login
+    // HttpOnly cookie'ler dahil tüm auth cookie'leri server-side silinir.
+    window.location.replace('/api/auth/logout')
   }
 
   // Kullanıcı rol etiketini belirle

@@ -4,7 +4,6 @@ import {
   removeGlobalCookie,
   updateGlobalCookie,
 } from '../../context/CookieContext'
-import { refreshService } from '../../services/auth/refreshService'
 import { RefreshTokenResponseType } from '../../types/AuthResponse'
 import {
   CookieEnum,
@@ -107,14 +106,10 @@ export const fetcher = async <T>(
       if (typeof window !== 'undefined') {
         const fetchOngoing = process.env.NEXT_PUBLIC_FETCH_ONGOING === 'true'
         if (fetchOngoing) {
-          const cookies = getGlobalCookies()
-          const refreshToken = cookies[CookieEnum.REFRESH_TOKEN]
-          if (!refreshToken) {
-            handleAuthFailure('No refresh token available')
-          }
-
+          // refreshToken HttpOnly olduğu için context'ten değil, /api/auth/refresh
+          // proxy'sinden okunur — bu route server-side cookies() ile güncel token'ı alır.
           if (!refreshTokenPromise) {
-            refreshTokenPromise = csrRefreshToken(refreshToken).finally(() => {
+            refreshTokenPromise = csrRefreshToken().finally(() => {
               refreshTokenPromise = null
             })
           }
@@ -155,44 +150,57 @@ export const fetcher = async <T>(
   return response.json() as Promise<T>
 }
 
-// CSR Refresh Token
-const csrRefreshToken = async (refreshToken: string) => {
-  const response = await refreshService(refreshToken)
+/**
+ * CSR Token Yenileme
+ *
+ * refreshToken HttpOnly olduğundan JS'ten okunamaz. Context'teki değer,
+ * middleware server-side refresh yaptıktan sonra stale kalır ve backend
+ * rotate edilmiş eski token'ı reddeder → logout.
+ *
+ * Çözüm: /api/auth/refresh proxy route'unu çağır. Bu route, server-side
+ * cookies() ile her zaman güncel refreshToken'ı okur; yeni cookie'leri de
+ * response'a yazar (HttpOnly dahil). Burası yalnızca context'i günceller.
+ */
+const csrRefreshToken = async (): Promise<RefreshTokenResponseType> => {
+  const raw = await fetch('/api/auth/refresh', {
+    method: 'POST',
+    credentials: 'include',
+  })
+
+  if (!raw.ok) {
+    throw new Error('Refresh proxy responded with ' + raw.status)
+  }
+
+  const response: RefreshTokenResponseType = await raw.json()
   const { data } = response
 
-  // accessToken / expiredDate → backend'in döndüğü expiredDate'e bağlı süre
-  // refreshToken → 6 ay sabit (cookie sabitlerinden okunur)
-  const accessTtl = deriveMaxAgeFromExpiredDate(data?.expiredDate)
+  if (!data) return response
 
-  if (data?.refreshToken) {
-    updateGlobalCookie(CookieEnum.REFRESH_TOKEN, data.refreshToken)
-  }
-  if (data?.token) {
+  // accessToken / expiredDate → backend'in döndüğü expiredDate'e bağlı süre
+  const accessTtl = deriveMaxAgeFromExpiredDate(data.expiredDate)
+
+  // React context'i yeni token'larla güncelle (cookie'ler API route tarafından set edildi)
+  if (data.token) {
     updateGlobalCookie(CookieEnum.ACCESS_TOKEN, data.token, accessTtl)
   }
-  if (data?.expiredDate !== undefined && data?.expiredDate !== null) {
+  if (data.expiredDate !== undefined && data.expiredDate !== null) {
     updateGlobalCookie(
       CookieEnum.EXPIRED_DATE,
       String(data.expiredDate),
       accessTtl,
     )
   }
-  if (data?.userCode) {
+  if (data.userCode) {
     updateGlobalCookie(CookieEnum.USER_CODE, data.userCode)
   }
+  // refreshToken HttpOnly — context'e yazmaya gerek yok (API route cookie'yi set etti)
 
-  // Refresh response'unda roles/permissions varsa Zustand store'u güncelle
-  if (typeof window !== 'undefined' && data?.roles && data?.permissions) {
+  // Zustand store'larını güncelle
+  if (data.roles && data.permissions) {
     const { usePermissionStore } = await import('@/stores/permission-store')
     usePermissionStore.getState().setPermissions(data.roles, data.permissions)
   }
-
-  // Kullanıcı kimliğini de tazele (refresh response login ile aynı yapıda)
-  if (
-    typeof window !== 'undefined' &&
-    data?.userId !== undefined &&
-    data?.username
-  ) {
+  if (data.userId !== undefined && data.username) {
     const { useUserStore } = await import('@/stores/user-store')
     useUserStore.getState().setUser({
       id: data.userId,
