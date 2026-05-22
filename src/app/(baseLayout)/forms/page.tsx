@@ -8,8 +8,11 @@ import {
   StatusBadge,
 } from '@/app/_components'
 import { useAdminTheme, useDebounce } from '@/app/_hooks'
+import { ForceDeleteFormModal } from '@/app/_components/forms/ForceDeleteFormModal'
 import {
+  ApiError,
   deleteFormService,
+  forceDeleteFormService,
   getFormsService,
 } from '@/app/_services/forms.services'
 import type { FormSchema } from '@/types/form'
@@ -17,6 +20,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 export default function FormsListPage() {
   const router = useRouter()
@@ -24,6 +28,9 @@ export default function FormsListPage() {
   const { isDarkMode } = useAdminTheme()
   const [searchQuery, setSearchQuery] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<FormSchema | null>(null)
+  const [forceDeleteTarget, setForceDeleteTarget] = useState<FormSchema | null>(
+    null,
+  )
 
   // Fetch forms
   const { data, error, isError, isLoading } = useQuery({
@@ -33,15 +40,35 @@ export default function FormsListPage() {
     gcTime: 10 * 60 * 1000,
   })
 
-  // Delete mutation
+  // Normal delete — backend 409 dönerse force-delete modalını aç
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteFormService(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['forms'] })
       setDeleteTarget(null)
+      toast.success('Form silindi')
     },
-    onError: error => {
-      console.error('Delete error:', error)
+    onError: (error: Error) => {
+      setDeleteTarget(null)
+      if (error instanceof ApiError && error.isConflict) {
+        // İlişkili submission var → force-delete modalına geç
+        setForceDeleteTarget(deleteTarget)
+        return
+      }
+      toast.error(error.message || 'Form silinemedi')
+    },
+  })
+
+  // Force delete — submission'larla birlikte kalıcı sil
+  const forceDeleteMutation = useMutation({
+    mutationFn: (id: string) => forceDeleteFormService(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['forms'] })
+      setForceDeleteTarget(null)
+      toast.success('Form ve tüm gönderimler silindi')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Form zorla silinemedi')
     },
   })
 
@@ -207,7 +234,7 @@ export default function FormsListPage() {
         )}
       </div>
 
-      {/* Delete Confirmation */}
+      {/* Normal delete onayı */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
@@ -218,6 +245,19 @@ export default function FormsListPage() {
         cancelText="İptal"
         variant="danger"
         isLoading={deleteMutation.isPending}
+      />
+
+      {/* Force delete onayı — 409 Conflict sonrası gösterilir */}
+      <ForceDeleteFormModal
+        open={!!forceDeleteTarget}
+        formTitle={forceDeleteTarget?.title ?? ''}
+        onClose={() => setForceDeleteTarget(null)}
+        onConfirm={() => {
+          if (forceDeleteTarget) {
+            forceDeleteMutation.mutate(String(forceDeleteTarget.id))
+          }
+        }}
+        isLoading={forceDeleteMutation.isPending}
       />
     </>
   )

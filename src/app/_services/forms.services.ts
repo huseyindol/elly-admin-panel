@@ -1,3 +1,4 @@
+import { ApiError, unwrapOrThrow } from '@/lib/api/api-error'
 import { CreateFormInput, UpdateFormInput } from '@/schemas/form.schema'
 import {
   BaseResponse,
@@ -134,22 +135,25 @@ export const updateFormService = async (id: string, data: UpdateFormInput) => {
   }
 }
 
-// DELETE - Form sil
-export const deleteFormService = async (id: string) => {
-  try {
-    const response: BaseResponse<null> = await fetcher(`/api/v1/forms/${id}`, {
-      method: 'DELETE',
-    })
-    console.log('Deleting form:', response)
-    if (!response.result) {
-      throw new Error('Error deleting form', { cause: response.message })
-    }
-    return response
-  } catch (error) {
-    console.error('Error deleting form:', error)
-    throw error
-  }
+// DELETE - Form sil (ilişkili kayıt varsa backend 409 döner → ApiError.isConflict)
+export const deleteFormService = async (id: string): Promise<void> => {
+  const response = await fetcher<BaseResponse<null>>(`/api/v1/forms/${id}`, {
+    method: 'DELETE',
+  })
+  unwrapOrThrow(response, 'Form silinemedi')
 }
+
+// DELETE - Submission'larıyla birlikte zorla sil (/force endpoint)
+export const forceDeleteFormService = async (id: string): Promise<void> => {
+  const response = await fetcher<BaseResponse<null>>(
+    `/api/v1/forms/${id}/force`,
+    { method: 'DELETE' },
+  )
+  unwrapOrThrow(response, 'Form zorla silinemedi')
+}
+
+// Re-export ApiError so consumers can check .isConflict without a separate import
+export { ApiError }
 
 // ============================================
 // Form Submission Services
