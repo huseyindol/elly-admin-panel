@@ -23,6 +23,8 @@ export interface UserIdentity {
   username: string
   email: string
   userCode: string
+  firstName?: string
+  lastName?: string
 }
 
 interface UserState {
@@ -30,6 +32,8 @@ interface UserState {
   username: string | null
   email: string | null
   userCode: string | null
+  firstName: string | null
+  lastName: string | null
   isLoaded: boolean
 
   /** Login veya refresh sonrası kullanıcıyı store'a yaz */
@@ -52,10 +56,20 @@ export const useUserStore = create<UserState>()(
       username: null,
       email: null,
       userCode: null,
+      firstName: null,
+      lastName: null,
       isLoaded: false,
 
-      setUser: ({ id, username, email, userCode }) =>
-        set({ id, username, email, userCode, isLoaded: true }),
+      setUser: ({ id, username, email, userCode, firstName, lastName }) =>
+        set({
+          id,
+          username,
+          email,
+          userCode,
+          firstName: firstName ?? null,
+          lastName: lastName ?? null,
+          isLoaded: true,
+        }),
 
       clearUser: () =>
         set({
@@ -63,6 +77,8 @@ export const useUserStore = create<UserState>()(
           username: null,
           email: null,
           userCode: null,
+          firstName: null,
+          lastName: null,
           isLoaded: false,
         }),
 
@@ -78,6 +94,8 @@ export const useUserStore = create<UserState>()(
               username: response.data.username,
               email: response.data.email,
               userCode: s.userCode,
+              firstName: response.data.firstName ?? null,
+              lastName: response.data.lastName ?? null,
               isLoaded: true,
             }))
           }
@@ -109,4 +127,19 @@ export function useMyEmail(): string | null {
 
 export function useMyUserCode(): string | null {
   return useUserStore(s => s.userCode)
+}
+
+export function useMyFirstName(): string | null {
+  return useUserStore(s => s.firstName)
+}
+
+export function useMyLastName(): string | null {
+  return useUserStore(s => s.lastName)
+}
+
+export function useMyFullName(): string | null {
+  return useUserStore(s => {
+    const parts = [s.firstName, s.lastName].filter(Boolean)
+    return parts.length > 0 ? parts.join(' ') : s.username
+  })
 }

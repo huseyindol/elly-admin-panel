@@ -7,7 +7,7 @@ import React from 'react'
 import { PermissionGate } from '@/components/PermissionGate'
 import { usePermission } from '@/hooks/usePermission'
 import { usePermissionStore } from '@/stores/permission-store'
-import { useUserStore } from '@/stores/user-store'
+import { useMyFullName, useMyUserCode, useUserStore } from '@/stores/user-store'
 import { MODULES } from '@/types/permissions'
 import { useAdminTheme } from '../_hooks'
 import { Icons } from './Icons'
@@ -305,6 +305,19 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
     window.location.replace('/api/auth/logout')
   }
 
+  const fullName = useMyFullName()
+  const userCode = useMyUserCode()
+
+  // Avatar initials: userCode varsa ilk 2 harf, yoksa fullName'den
+  const avatarInitials = userCode
+    ? userCode.slice(0, 2).toUpperCase()
+    : (fullName ?? 'U')
+        .split(' ')
+        .map(w => w[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+
   // Kullanıcı rol etiketini belirle
   const roleLabel = roles.includes('SUPER_ADMIN')
     ? 'Süper Admin'
@@ -417,7 +430,7 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
           >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 text-sm font-semibold text-white">
-                HD
+                {avatarInitials}
               </div>
               <div className="min-w-0 flex-1">
                 <p
@@ -425,14 +438,14 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
                     isDarkMode ? 'text-white' : 'text-gray-900'
                   }`}
                 >
-                  Hüseyin Dol
+                  {fullName ?? userCode ?? 'Kullanıcı'}
                 </p>
                 <p
                   className={`truncate text-xs ${
                     isDarkMode ? 'text-slate-400' : 'text-gray-500'
                   }`}
                 >
-                  {roleLabel}
+                  {userCode ?? roleLabel}
                 </p>
               </div>
               <Icons.ChevronRight />
