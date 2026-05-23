@@ -11,8 +11,9 @@ export const MailAccountSchema = z.object({
     .max(65535, 'Port 1-65535 aralığında olmalıdır'),
   smtpUsername: z.string().min(1, 'SMTP kullanıcı adı zorunludur'),
   smtpPassword: z.string().optional(),
-  isDefault: z.boolean().default(false),
+  isPrimary: z.boolean().default(false),
   active: z.boolean().default(true),
+  tenantId: z.string().optional(),
 })
 
 export const CreateMailAccountSchema = MailAccountSchema.extend({

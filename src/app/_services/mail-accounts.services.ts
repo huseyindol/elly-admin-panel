@@ -2,9 +2,10 @@ import { BaseResponse } from '@/types/BaseResponse'
 import { MailAccount, MailAccountRequest } from '@/types/mail-account'
 import { fetcher } from '@/utils/services/fetcher'
 
-export const getMailAccountsService = async () => {
+export const getMailAccountsService = async (tenantId?: string) => {
+  const params = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : ''
   const response: BaseResponse<MailAccount[]> = await fetcher(
-    '/api/v1/mail-accounts',
+    `/api/v1/mail-accounts${params}`,
     { method: 'GET' },
   )
   if (!response.result) {
@@ -64,17 +65,6 @@ export const deleteMailAccountService = async (id: number) => {
   )
   if (!response.result) {
     throw new Error(response.message ?? 'Mail hesabı silinemedi')
-  }
-  return response
-}
-
-export const setDefaultMailAccountService = async (id: number) => {
-  const response: BaseResponse<MailAccount> = await fetcher(
-    `/api/v1/mail-accounts/${id}/default`,
-    { method: 'PUT' },
-  )
-  if (!response.result) {
-    throw new Error(response.message ?? 'Varsayılan hesap ayarlanamadı')
   }
   return response
 }

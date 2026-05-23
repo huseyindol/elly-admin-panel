@@ -6,6 +6,7 @@ import {
   CreateMailAccountInput,
   CreateMailAccountSchema,
 } from '@/schemas/mail-account'
+import { useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
@@ -23,6 +24,7 @@ export default function NewMailAccountPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<CreateMailAccountInput>({
     resolver: zodResolver(CreateMailAccountSchema),
@@ -33,10 +35,13 @@ export default function NewMailAccountPage() {
       smtpPort: 587,
       smtpUsername: '',
       smtpPassword: '',
-      isDefault: false,
+      isPrimary: false,
       active: true,
+      tenantId: '',
     },
   })
+
+  const isPrimaryValue = useWatch({ control, name: 'isPrimary' })
 
   const createMutation = useMutation({
     mutationFn: (data: CreateMailAccountInput) =>
@@ -264,20 +269,53 @@ export default function NewMailAccountPage() {
               </p>
             </div>
 
-            {/* Is Default */}
-            <div className="flex items-center gap-3">
-              <input
-                id="isDefault"
-                type="checkbox"
-                {...register('isDefault')}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500"
-              />
-              <label
-                htmlFor="isDefault"
-                className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}
-              >
-                Varsayılan hesap olarak ayarla
+            {/* Tenant ID */}
+            <div>
+              <label htmlFor="tenantId" className={labelClass}>
+                Tenant
               </label>
+              <input
+                id="tenantId"
+                type="text"
+                {...register('tenantId')}
+                className={inputClass}
+                placeholder="tenant1 (boş bırakılabilir)"
+              />
+              <p
+                className={`mt-1 text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
+              >
+                Hangi tenant'a ait olduğunu belirtir
+              </p>
+            </div>
+
+            {/* Is Primary */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <input
+                  id="isPrimary"
+                  type="checkbox"
+                  {...register('isPrimary')}
+                  className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500"
+                />
+                <label
+                  htmlFor="isPrimary"
+                  className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}
+                >
+                  Ana hesap olarak ayarla
+                </label>
+              </div>
+              {isPrimaryValue && (
+                <p
+                  className={`rounded-lg px-3 py-2 text-xs ${
+                    isDarkMode
+                      ? 'border border-amber-500/20 bg-amber-500/10 text-amber-300'
+                      : 'border border-amber-200 bg-amber-50 text-amber-700'
+                  }`}
+                >
+                  Bu tenant&apos;ın mevcut ana hesabı varsa otomatik olarak
+                  değiştirilecek.
+                </p>
+              )}
             </div>
 
             {/* Active */}

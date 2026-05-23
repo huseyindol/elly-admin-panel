@@ -1,23 +1,12 @@
 'use client'
 
-import { BaseResponse } from '@/types/BaseResponse'
-import { MailAccount } from '@/types/mail-account'
-import { fetcher } from '@/utils/services/fetcher'
+import { getMailAccountsService } from '@/app/_services/mail-accounts.services'
 import { useQuery } from '@tanstack/react-query'
 
-export function useMailAccounts() {
+export function useMailAccounts(tenantId?: string) {
   return useQuery({
-    queryKey: ['mail-accounts'],
-    queryFn: async () => {
-      const response: BaseResponse<MailAccount[]> = await fetcher(
-        '/api/v1/mail-accounts',
-        { method: 'GET' },
-      )
-      if (!response.result) {
-        throw new Error(response.message ?? 'Mail hesapları yüklenemedi')
-      }
-      return response
-    },
+    queryKey: ['mail-accounts', tenantId ?? ''],
+    queryFn: () => getMailAccountsService(tenantId),
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   })

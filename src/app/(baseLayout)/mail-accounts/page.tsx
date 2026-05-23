@@ -1,9 +1,10 @@
 'use client'
 
 import { useAdminTheme } from '@/app/_hooks'
+import { useMailAccounts } from '@/app/_hooks/useMailAccounts'
 import {
   deleteMailAccountService,
-  setDefaultMailAccountService,
+  verifyMailAccountService,
 } from '@/app/_services/mail-accounts.services'
 import { SmtpTestModal } from '@/components/mail-accounts/SmtpTestModal'
 import { MailAccount } from '@/types/mail-account'
@@ -11,66 +12,60 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { useMailAccounts } from '@/app/_hooks/useMailAccounts'
-
-interface ConfirmState {
-  type: 'delete' | 'setDefault'
-  account: MailAccount
-}
 
 export default function MailAccountsPage() {
   const { isDarkMode } = useAdminTheme()
   const queryClient = useQueryClient()
-  const { data, isLoading, isError, error } = useMailAccounts()
-  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null)
+
+  const [selectedTenantId, setSelectedTenantId] = useState<string>('')
+  const [deleteTarget, setDeleteTarget] = useState<MailAccount | null>(null)
   const [testModal, setTestModal] = useState<{
     accountId: number
     accountName: string
   } | null>(null)
+
+  // Tüm hesapları çek; tenant seçenekleri + client-side filtre için
+  const { data, isLoading, isError, error } = useMailAccounts()
+
+  const allAccounts = data?.data ?? []
+
+  // Tenant dropdown seçenekleri — benzersiz, sıralı
+  const tenantOptions = [
+    ...new Set(
+      allAccounts.map(a => a.tenantId).filter((id): id is string => !!id),
+    ),
+  ].sort()
+
+  // Client-side tenant filtresi
+  const accounts = selectedTenantId
+    ? allAccounts.filter(a => a.tenantId === selectedTenantId)
+    : allAccounts
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteMailAccountService(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mail-accounts'] })
       toast.success('Mail hesabı silindi')
-      setConfirmState(null)
+      setDeleteTarget(null)
     },
     onError: (err: Error) => {
       toast.error(err.message || 'Mail hesabı silinemedi')
+      setDeleteTarget(null)
     },
   })
 
-  const setDefaultMutation = useMutation({
-    mutationFn: (id: number) => setDefaultMailAccountService(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mail-accounts'] })
-      toast.success('Varsayılan hesap güncellendi')
-      setConfirmState(null)
-    },
-    onError: (err: Error) => {
-      toast.error(err.message || 'Varsayılan hesap ayarlanamadı')
-    },
+  const verifyMutation = useMutation({
+    mutationFn: (id: number) => verifyMailAccountService(id),
+    onSuccess: () => toast.success('SMTP bağlantısı başarılı ✓'),
+    onError: (err: Error) =>
+      toast.error(err.message || 'SMTP doğrulama başarısız'),
   })
 
-  const handleConfirm = () => {
-    if (!confirmState) return
-    if (confirmState.type === 'delete') {
-      deleteMutation.mutate(confirmState.account.id)
-    } else {
-      setDefaultMutation.mutate(confirmState.account.id)
-    }
-  }
-
-  const isConfirmPending =
-    deleteMutation.isPending || setDefaultMutation.isPending
-
-  const cardClass = `rounded-2xl p-5 ${
+  const cardClass = `rounded-2xl p-5 transition-all ${
     isDarkMode
       ? 'border border-slate-800/50 bg-slate-900/60'
       : 'border border-gray-200 bg-white'
   }`
-
-  const accounts = data?.data ?? []
 
   return (
     <>
@@ -95,6 +90,33 @@ export default function MailAccountsPage() {
             <span className="text-lg">+</span>
             <span>Yeni Hesap Ekle</span>
           </Link>
+        </div>
+
+        {/* Tenant Filtresi */}
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="tenant-filter"
+            className={`text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-gray-600'}`}
+          >
+            Tenant:
+          </label>
+          <select
+            id="tenant-filter"
+            value={selectedTenantId}
+            onChange={e => setSelectedTenantId(e.target.value)}
+            className={`rounded-xl px-3 py-2 text-sm outline-none transition-colors ${
+              isDarkMode
+                ? 'border border-slate-700/50 bg-slate-800/50 text-white focus:border-violet-500'
+                : 'border border-gray-200 bg-white text-gray-900 focus:border-violet-500'
+            }`}
+          >
+            <option value="">Tümü</option>
+            {tenantOptions.map(tid => (
+              <option key={tid} value={tid}>
+                {tid}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Error */}
@@ -135,7 +157,9 @@ export default function MailAccountsPage() {
             <p
               className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}
             >
-              Henüz mail hesabı eklenmemiş
+              {selectedTenantId
+                ? `"${selectedTenantId}" tenant'ına ait mail hesabı bulunamadı`
+                : 'Henüz mail hesabı eklenmemiş'}
             </p>
             <Link
               href="/mail-accounts/new"
@@ -152,7 +176,13 @@ export default function MailAccountsPage() {
             {accounts.map(account => (
               <div
                 key={account.id}
-                className={`${cardClass} ${!account.active ? 'opacity-60' : ''}`}
+                className={`${cardClass} ${!account.active ? 'opacity-60' : ''} ${
+                  account.isPrimary
+                    ? isDarkMode
+                      ? 'border-emerald-500/40 ring-1 ring-emerald-500/20'
+                      : 'border-emerald-400 ring-1 ring-emerald-200'
+                    : ''
+                }`}
               >
                 {/* Card Header */}
                 <div className="mb-3 flex items-start justify-between gap-2">
@@ -169,9 +199,29 @@ export default function MailAccountsPage() {
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
-                    {account.isDefault && (
-                      <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-400">
-                        Varsayılan
+                    {account.isPrimary && (
+                      <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                        Ana Hesap
+                      </span>
+                    )}
+                    {account.tenantId && (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          isDarkMode
+                            ? 'bg-slate-700 text-slate-300'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        {account.tenantId}
+                      </span>
+                    )}
+                    {!account.tenantId && (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${
+                          isDarkMode ? 'text-slate-600' : 'text-gray-400'
+                        }`}
+                      >
+                        Atanmamış
                       </span>
                     )}
                     <span
@@ -234,31 +284,22 @@ export default function MailAccountsPage() {
                     Test Et
                   </button>
 
-                  {!account.isDefault && (
-                    <button
-                      type="button"
-                      disabled={!account.active}
-                      onClick={() =>
-                        setConfirmState({ type: 'setDefault', account })
-                      }
-                      className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                        isDarkMode
-                          ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30'
-                          : 'bg-violet-50 text-violet-700 hover:bg-violet-100'
-                      }`}
-                      title={
-                        !account.active
-                          ? 'Pasif hesap varsayılan yapılamaz'
-                          : undefined
-                      }
-                    >
-                      Varsayılan Yap
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => verifyMutation.mutate(account.id)}
+                    disabled={verifyMutation.isPending}
+                    className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+                      isDarkMode
+                        ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
+                        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    }`}
+                  >
+                    Doğrula
+                  </button>
 
                   <button
                     type="button"
-                    onClick={() => setConfirmState({ type: 'delete', account })}
+                    onClick={() => setDeleteTarget(account)}
                     className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                       isDarkMode
                         ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30'
@@ -274,13 +315,13 @@ export default function MailAccountsPage() {
         )}
       </div>
 
-      {/* Confirm Dialog */}
-      {confirmState && (
+      {/* Delete Confirm Dialog */}
+      {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <button
             type="button"
             className="absolute inset-0 h-full w-full cursor-default border-0 bg-black/60"
-            onClick={() => setConfirmState(null)}
+            onClick={() => setDeleteTarget(null)}
             aria-label="Kapat"
           />
           <div
@@ -293,22 +334,20 @@ export default function MailAccountsPage() {
             <h3
               className={`mb-2 text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
             >
-              {confirmState.type === 'delete'
-                ? 'Hesabı Sil'
-                : 'Varsayılan Hesap Yap'}
+              Hesabı Sil
             </h3>
             <p
               className={`mb-6 text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-600'}`}
             >
-              {confirmState.type === 'delete'
-                ? `"${confirmState.account.name}" hesabını silmek istediğinizden emin misiniz? Bu hesabı kullanan formlar varsayılan hesaba geçecektir.`
-                : `"${confirmState.account.name}" hesabını varsayılan yapmak istediğinizden emin misiniz?`}
+              &quot;{deleteTarget.name}&quot; hesabını silmek istediğinizden
+              emin misiniz? Bu hesabı kullanan formlar varsayılan hesaba
+              geçecektir.
             </p>
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setConfirmState(null)}
-                disabled={isConfirmPending}
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleteMutation.isPending}
                 className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 ${
                   isDarkMode
                     ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
@@ -319,23 +358,17 @@ export default function MailAccountsPage() {
               </button>
               <button
                 type="button"
-                onClick={handleConfirm}
-                disabled={isConfirmPending}
-                className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-all disabled:opacity-50 ${
-                  confirmState.type === 'delete'
-                    ? 'bg-gradient-to-r from-rose-500 to-red-600 shadow-rose-500/30 hover:shadow-xl hover:shadow-rose-500/40'
-                    : 'bg-gradient-to-r from-violet-500 to-purple-600 shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40'
-                }`}
+                onClick={() => deleteMutation.mutate(deleteTarget.id)}
+                disabled={deleteMutation.isPending}
+                className="flex-1 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-rose-500/30 transition-all hover:shadow-xl hover:shadow-rose-500/40 disabled:opacity-50"
               >
-                {isConfirmPending ? (
+                {deleteMutation.isPending ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    <span>İşleniyor...</span>
+                    <span>Siliniyor...</span>
                   </span>
-                ) : confirmState.type === 'delete' ? (
-                  'Sil'
                 ) : (
-                  'Varsayılan Yap'
+                  'Sil'
                 )}
               </button>
             </div>
