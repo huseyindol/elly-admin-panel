@@ -11,6 +11,7 @@ export function useSidebarCollapsed() {
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored === 'true') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe localStorage read
       setIsCollapsed(true)
     }
     setMounted(true)

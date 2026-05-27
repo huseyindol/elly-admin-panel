@@ -43,7 +43,10 @@ export default function ChatPage() {
   const [refreshToken, setRefreshToken] = useState(0)
   const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null)
   const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('sidebar')
-  const [membershipBanner, setMembershipBanner] = useState<string | null>(null)
+  const [membershipBannerByGroup, setMembershipBannerByGroup] = useState<{
+    groupId: string
+    message: string
+  } | null>(null)
   const myLevel = useMyRoleLevel()
   const myUserId = useMyUserId()
 
@@ -53,11 +56,11 @@ export default function ChatPage() {
   )
   const canWrite = access?.canWrite ?? false
   const accessBanner = access?.denialMessage ?? null
+  const membershipBanner =
+    membershipBannerByGroup?.groupId === activeGroupId
+      ? membershipBannerByGroup.message
+      : null
   const composerBanner = membershipBanner ?? accessBanner
-
-  useEffect(() => {
-    setMembershipBanner(null)
-  }, [activeGroupId])
 
   useEffect(() => {
     if (!activeGroupId) return
@@ -70,7 +73,11 @@ export default function ChatPage() {
     if (membershipJoinedSeq === 0 || !membershipJoinedSignal) return
     const event = membershipJoinedSignal
     if (event.groupId === activeGroupId) {
-      setMembershipBanner(event.message)
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- WS membership signal
+      setMembershipBannerByGroup({
+        groupId: event.groupId,
+        message: event.message,
+      })
     }
     void queryClient.invalidateQueries({
       queryKey: chatKeys.access(event.groupId),
@@ -81,7 +88,11 @@ export default function ChatPage() {
     if (membershipRemovedSeq === 0 || !membershipRemovedSignal) return
     const event = membershipRemovedSignal
     if (event.groupId !== activeGroupId) return
-    setMembershipBanner(event.message)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- WS membership signal
+    setMembershipBannerByGroup({
+      groupId: event.groupId,
+      message: event.message,
+    })
     void queryClient.invalidateQueries({
       queryKey: chatKeys.access(event.groupId),
     })
@@ -97,7 +108,14 @@ export default function ChatPage() {
     const err = chatErrorSignal
     if (err.groupId && err.groupId !== activeGroupId) return
     toast.error(err.message)
-    setMembershipBanner(err.message)
+    const bannerGroupId = err.groupId ?? activeGroupId
+    if (bannerGroupId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- WS error signal
+      setMembershipBannerByGroup({
+        groupId: bannerGroupId,
+        message: err.message,
+      })
+    }
     if (err.groupId) {
       void queryClient.invalidateQueries({
         queryKey: chatKeys.access(err.groupId),
@@ -242,7 +260,12 @@ export default function ChatPage() {
                     canWrite={canWrite}
                     banner={composerBanner}
                     onWriteForbidden={message => {
-                      setMembershipBanner(message)
+                      if (activeGroupId) {
+                        setMembershipBannerByGroup({
+                          groupId: activeGroupId,
+                          message,
+                        })
+                      }
                       void refetchAccess()
                     }}
                   />

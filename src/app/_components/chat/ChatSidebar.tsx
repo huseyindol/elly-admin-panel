@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getMyGroupsService } from '@/app/_services/chat.services'
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import { visibilityLabel, useMyRoleLevel } from '@/utils/chat-role'
@@ -47,23 +47,26 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const membershipRemovedSeq = useChatWsStore(s => s.membershipRemovedSeq)
   const unreadCounts = useChatWsStore(s => s.unreadCounts)
 
-  const upsertGroupInList = (group: ChatGroup) => {
-    setGroups(prev => {
-      if (prev.some(g => g.id === group.id)) return prev
-      const next = [group, ...prev]
-      if (connected) subscribeToAllGroups(next, myLevel)
-      return next
-    })
-  }
+  const upsertGroupInList = useCallback(
+    (group: ChatGroup) => {
+      setGroups(prev => {
+        if (prev.some(g => g.id === group.id)) return prev
+        const next = [group, ...prev]
+        if (connected) subscribeToAllGroups(next, myLevel)
+        return next
+      })
+    },
+    [connected, myLevel, subscribeToAllGroups],
+  )
 
-  const reloadGroupsFromApi = () => {
+  const reloadGroupsFromApi = useCallback(() => {
     getMyGroupsService()
       .then(g => {
         setGroups(g)
         if (connected) subscribeToAllGroups(g, myLevel)
       })
       .catch(() => {})
-  }
+  }, [connected, myLevel, subscribeToAllGroups])
 
   // Grupları yükle ve tüm gruplara mesaj sub'ı at
   useEffect(() => {
@@ -86,8 +89,15 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
       return
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- WS new group signal
     upsertGroupInList(signal)
-  }, [newGroupSeq, newGroupSignal, myLevel, connected, subscribeToAllGroups])
+  }, [
+    newGroupSeq,
+    newGroupSignal,
+    myLevel,
+    reloadGroupsFromApi,
+    upsertGroupInList,
+  ])
 
   // Davet / tekrar dahil olma sinyali — üye olduğu için visibility filtresi YOK
   useEffect(() => {
@@ -95,6 +105,7 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
     const event = membershipJoinedSignal
     const group = event.group
     if (group) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- WS invite signal
       upsertGroupInList(group)
       return
     }
@@ -102,9 +113,8 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   }, [
     membershipJoinedSeq,
     membershipJoinedSignal,
-    connected,
-    myLevel,
-    subscribeToAllGroups,
+    reloadGroupsFromApi,
+    upsertGroupInList,
   ])
 
   // Gruptan çıkarılma — aktif grup değilse sidebar'dan kaldır
