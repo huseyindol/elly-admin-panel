@@ -31,6 +31,8 @@ export function ChatWindow({ groupId }: Props) {
   const { isDarkMode } = useAdminTheme()
   const { messages, prependHistory, sendRead, markMessageDeleted } =
     useChatWsStore()
+  // TC routing için aktif grubun tenantId'si
+  const activeGroupTenantId = useChatWsStore(s => s.activeGroupTenantId)
   const groupMessages = messages[groupId] ?? []
   const bottomRef = useRef<HTMLDivElement>(null)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -41,14 +43,21 @@ export function ChatWindow({ groupId }: Props) {
   const oldestId = groupMessages[0]?.id
 
   useEffect(() => {
-    getHistoryService(groupId)
+    let cancelled = false
+
+    getHistoryService(groupId, undefined, 50, activeGroupTenantId)
       .then(msgs => {
+        if (cancelled) return
         prependHistory(groupId, msgs)
         if (msgs.length < 50) setHasMore(false)
         sendRead(groupId)
       })
       .catch(() => {})
-  }, [groupId, prependHistory, sendRead])
+
+    return () => {
+      cancelled = true
+    }
+  }, [groupId, prependHistory, sendRead, activeGroupTenantId])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -58,18 +67,30 @@ export function ChatWindow({ groupId }: Props) {
     if (loadingMore || !hasMore || !oldestId) return
     setLoadingMore(true)
     try {
-      const older = await getHistoryService(groupId, oldestId)
+      const older = await getHistoryService(
+        groupId,
+        oldestId,
+        50,
+        activeGroupTenantId,
+      )
       if (older.length < 50) setHasMore(false)
       prependHistory(groupId, older)
     } finally {
       setLoadingMore(false)
     }
-  }, [groupId, oldestId, loadingMore, hasMore, prependHistory])
+  }, [
+    groupId,
+    oldestId,
+    loadingMore,
+    hasMore,
+    prependHistory,
+    activeGroupTenantId,
+  ])
 
   const handleDelete = async (messageId: string) => {
     setDeletingId(messageId)
     try {
-      await deleteMessageService(messageId)
+      await deleteMessageService(messageId, activeGroupTenantId)
       markMessageDeleted(groupId, messageId)
     } catch {
       // backend 403 → sessizce geç
@@ -170,11 +191,17 @@ export function ChatWindow({ groupId }: Props) {
 
       <div className="flex flex-col gap-2">
         {groupMessages.map((msg, idx) => {
-          const isOwn = myUserId !== null && msg.senderId === myUserId
+          // Polymorphic: admin mi visitor mi?
+          const isAdmin = msg.senderType === 'ADMIN'
+          const isVisitor = msg.senderType === 'VISITOR'
+          // "Benim mesajım" = admin && senderId benim userId'im
+          const isOwn =
+            isAdmin && myUserId !== null && msg.senderId === myUserId
           const prev = groupMessages[idx - 1]
           const isGrouped =
             prev !== undefined &&
             prev.senderId === msg.senderId &&
+            prev.senderType === msg.senderType &&
             !prev.deleted &&
             new Date(msg.createdAt).getTime() -
               new Date(prev.createdAt).getTime() <
@@ -198,15 +225,28 @@ export function ChatWindow({ groupId }: Props) {
                   isOwn ? 'items-end' : 'items-start'
                 }`}
               >
-                {/* Gönderen adı — grup içinde yalnızca başka kullanıcılar için ve gruplanmamış ilk mesajda */}
+                {/* Gönderen adı + rozet — kendi mesajında ve gruplanmış ilk mesajda göster */}
                 {!isOwn && !isGrouped && (
-                  <span
-                    className={`mb-0.5 px-1 text-xs font-medium ${
-                      isDarkMode ? 'text-violet-300' : 'text-violet-600'
-                    }`}
-                  >
-                    {msg.senderUsername}
-                  </span>
+                  <div className="mb-0.5 flex items-center gap-1.5 px-1">
+                    <span
+                      className={`text-xs font-medium ${
+                        isDarkMode ? 'text-violet-300' : 'text-violet-600'
+                      }`}
+                    >
+                      {msg.senderUsername}
+                    </span>
+                    {/* Polymorphic sender rozeti */}
+                    {isAdmin && (
+                      <span className="rounded-full bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-400">
+                        Admin
+                      </span>
+                    )}
+                    {isVisitor && (
+                      <span className="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+                        Ziyaretçi
+                      </span>
+                    )}
+                  </div>
                 )}
 
                 {msg.parentId && (
@@ -230,9 +270,13 @@ export function ChatWindow({ groupId }: Props) {
                     className={`relative rounded-2xl px-3 py-2 shadow-sm ${
                       isOwn
                         ? 'rounded-br-md bg-gradient-to-br from-violet-500 to-purple-600 text-white'
-                        : isDarkMode
-                          ? 'rounded-bl-md bg-slate-800 text-slate-100'
-                          : 'rounded-bl-md bg-gray-100 text-gray-800'
+                        : isVisitor
+                          ? isDarkMode
+                            ? 'rounded-bl-md bg-amber-900/30 text-amber-100'
+                            : 'rounded-bl-md bg-amber-50 text-amber-900'
+                          : isDarkMode
+                            ? 'rounded-bl-md bg-slate-800 text-slate-100'
+                            : 'rounded-bl-md bg-gray-100 text-gray-800'
                     }`}
                   >
                     {/* File mesajları için ikon başlık */}
@@ -276,7 +320,7 @@ export function ChatWindow({ groupId }: Props) {
                     )}
                   </div>
 
-                  {/* Hover delete — absolute, layout shift yapmaz */}
+                  {/* Hover delete */}
                   {canDelete && (
                     <button
                       type="button"
@@ -299,7 +343,7 @@ export function ChatWindow({ groupId }: Props) {
                   )}
                 </div>
 
-                {/* Zaman damgası — baloncuğun altında küçük */}
+                {/* Zaman damgası */}
                 <span
                   className={`mt-0.5 px-1 text-[10px] ${
                     isDarkMode ? 'text-slate-500' : 'text-gray-400'

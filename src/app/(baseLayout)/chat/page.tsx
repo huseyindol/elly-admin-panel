@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useChatConnection } from '@/hooks/use-chat-connection'
 import { ChatSidebar } from '@/app/_components/chat/ChatSidebar'
 import { ChatWindow } from '@/app/_components/chat/ChatWindow'
@@ -13,34 +14,96 @@ import {
   deleteGroupService,
   getGroupService,
 } from '@/app/_services/chat.services'
+import { useChatGroupAccess, chatKeys } from '@/app/_hooks/useChatGroupAccess'
 import { useMyRoleLevel } from '@/utils/chat-role'
 import { useMyUserId } from '@/stores/user-store'
 import { useAdminTheme } from '@/app/_hooks'
 import type { ChatGroup } from '@/types/chat'
 import { AlertCircle, Users, Trash2, ChevronLeft, X } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function ChatPage() {
   useChatConnection()
 
   const { isDarkMode } = useAdminTheme()
   const activeGroupId = useChatWsStore(s => s.activeGroupId)
+  const activeGroupTenantId = useChatWsStore(s => s.activeGroupTenantId)
   const connected = useChatWsStore(s => s.connected)
   const unsubscribeFromGroup = useChatWsStore(s => s.unsubscribeFromGroup)
+  const membershipJoinedSignal = useChatWsStore(s => s.membershipJoinedSignal)
+  const membershipJoinedSeq = useChatWsStore(s => s.membershipJoinedSeq)
+  const membershipRemovedSignal = useChatWsStore(s => s.membershipRemovedSignal)
+  const membershipRemovedSeq = useChatWsStore(s => s.membershipRemovedSeq)
+  const chatErrorSignal = useChatWsStore(s => s.chatErrorSignal)
+  const chatErrorSeq = useChatWsStore(s => s.chatErrorSeq)
+  const queryClient = useQueryClient()
   const [showMembers, setShowMembers] = useState(false)
   const [showDeleteGroup, setShowDeleteGroup] = useState(false)
   const [deletingGroup, setDeletingGroup] = useState(false)
   const [refreshToken, setRefreshToken] = useState(0)
   const [activeGroup, setActiveGroup] = useState<ChatGroup | null>(null)
   const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('sidebar')
+  const [membershipBanner, setMembershipBanner] = useState<string | null>(null)
   const myLevel = useMyRoleLevel()
   const myUserId = useMyUserId()
 
+  const { data: access, refetch: refetchAccess } = useChatGroupAccess(
+    activeGroupId,
+    activeGroupTenantId,
+  )
+  const canWrite = access?.canWrite ?? false
+  const accessBanner = access?.denialMessage ?? null
+  const composerBanner = membershipBanner ?? accessBanner
+
+  useEffect(() => {
+    setMembershipBanner(null)
+  }, [activeGroupId])
+
   useEffect(() => {
     if (!activeGroupId) return
-    getGroupService(activeGroupId)
+    getGroupService(activeGroupId, activeGroupTenantId)
       .then(setActiveGroup)
       .catch(() => {})
-  }, [activeGroupId])
+  }, [activeGroupId, activeGroupTenantId])
+
+  useEffect(() => {
+    if (membershipJoinedSeq === 0 || !membershipJoinedSignal) return
+    const event = membershipJoinedSignal
+    if (event.groupId === activeGroupId) {
+      setMembershipBanner(event.message)
+    }
+    void queryClient.invalidateQueries({
+      queryKey: chatKeys.access(event.groupId),
+    })
+  }, [membershipJoinedSeq, membershipJoinedSignal, activeGroupId, queryClient])
+
+  useEffect(() => {
+    if (membershipRemovedSeq === 0 || !membershipRemovedSignal) return
+    const event = membershipRemovedSignal
+    if (event.groupId !== activeGroupId) return
+    setMembershipBanner(event.message)
+    void queryClient.invalidateQueries({
+      queryKey: chatKeys.access(event.groupId),
+    })
+  }, [
+    membershipRemovedSeq,
+    membershipRemovedSignal,
+    activeGroupId,
+    queryClient,
+  ])
+
+  useEffect(() => {
+    if (chatErrorSeq === 0 || !chatErrorSignal) return
+    const err = chatErrorSignal
+    if (err.groupId && err.groupId !== activeGroupId) return
+    toast.error(err.message)
+    setMembershipBanner(err.message)
+    if (err.groupId) {
+      void queryClient.invalidateQueries({
+        queryKey: chatKeys.access(err.groupId),
+      })
+    }
+  }, [chatErrorSeq, chatErrorSignal, activeGroupId, queryClient])
 
   const isOwner =
     activeGroup !== null &&
@@ -53,7 +116,7 @@ export default function ChatPage() {
     if (!activeGroupId) return
     setDeletingGroup(true)
     try {
-      await deleteGroupService(activeGroupId)
+      await deleteGroupService(activeGroupId, activeGroupTenantId)
       unsubscribeFromGroup()
       setShowMembers(false)
       setShowDeleteGroup(false)
@@ -173,7 +236,16 @@ export default function ChatPage() {
                 <div
                   className={`border-t p-3 sm:p-4 ${isDarkMode ? 'border-slate-800/50' : 'border-gray-200'}`}
                 >
-                  <ChatInput groupId={activeGroupId} />
+                  <ChatInput
+                    groupId={activeGroupId}
+                    tenantId={activeGroupTenantId}
+                    canWrite={canWrite}
+                    banner={composerBanner}
+                    onWriteForbidden={message => {
+                      setMembershipBanner(message)
+                      void refetchAccess()
+                    }}
+                  />
                 </div>
               </div>
 

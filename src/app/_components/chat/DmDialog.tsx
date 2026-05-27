@@ -37,7 +37,8 @@ export function DmDialog({ isOpen, onClose, onCreated }: Props) {
     try {
       const group = await getOrCreateDmService(id)
       onCreated(group)
-      subscribeToGroup(group.id)
+      // DM her zaman Admin Chat kapsamında (tenantId=null)
+      subscribeToGroup(group.id, null)
       onClose()
       setUserId('')
     } catch (e: unknown) {

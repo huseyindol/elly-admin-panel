@@ -6,7 +6,14 @@ import { useChatWsStore } from '@/stores/chat-ws-store'
 import { visibilityLabel, useMyRoleLevel } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
 import type { ChatGroup } from '@/types/chat'
-import { MessageSquare, Users, Plus, Lock, MessageCircle } from 'lucide-react'
+import {
+  MessageSquare,
+  Users,
+  Plus,
+  Lock,
+  MessageCircle,
+  Globe,
+} from 'lucide-react'
 import { CreateGroupDialog } from './CreateGroupDialog'
 import { DmDialog } from './DmDialog'
 
@@ -15,11 +22,15 @@ interface Props {
   onGroupSelect?: () => void
 }
 
+type ChatTab = 'AC' | 'TC'
+
 export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const { isDarkMode } = useAdminTheme()
   const [groups, setGroups] = useState<ChatGroup[]>([])
   const [showCreate, setShowCreate] = useState(false)
   const [showDm, setShowDm] = useState(false)
+  const [activeTab, setActiveTab] = useState<ChatTab>('AC')
+  const [tenantFilter, setTenantFilter] = useState<string>('')
   const myLevel = useMyRoleLevel()
 
   const activeGroupId = useChatWsStore(s => s.activeGroupId)
@@ -28,9 +39,31 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const subscribeToAllGroups = useChatWsStore(s => s.subscribeToAllGroups)
   const clearUnread = useChatWsStore(s => s.clearUnread)
   const newGroupSignal = useChatWsStore(s => s.newGroupSignal)
+  const newGroupSeq = useChatWsStore(s => s.newGroupSeq)
   const deletedGroupSignal = useChatWsStore(s => s.deletedGroupSignal)
-  const invitedGroupSignal = useChatWsStore(s => s.invitedGroupSignal)
+  const membershipJoinedSignal = useChatWsStore(s => s.membershipJoinedSignal)
+  const membershipJoinedSeq = useChatWsStore(s => s.membershipJoinedSeq)
+  const membershipRemovedSignal = useChatWsStore(s => s.membershipRemovedSignal)
+  const membershipRemovedSeq = useChatWsStore(s => s.membershipRemovedSeq)
   const unreadCounts = useChatWsStore(s => s.unreadCounts)
+
+  const upsertGroupInList = (group: ChatGroup) => {
+    setGroups(prev => {
+      if (prev.some(g => g.id === group.id)) return prev
+      const next = [group, ...prev]
+      if (connected) subscribeToAllGroups(next, myLevel)
+      return next
+    })
+  }
+
+  const reloadGroupsFromApi = () => {
+    getMyGroupsService()
+      .then(g => {
+        setGroups(g)
+        if (connected) subscribeToAllGroups(g, myLevel)
+      })
+      .catch(() => {})
+  }
 
   // Grupları yükle ve tüm gruplara mesaj sub'ı at
   useEffect(() => {
@@ -42,52 +75,66 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
       .catch(() => {})
   }, [connected, refreshToken, myLevel, subscribeToAllGroups])
 
-  // Yeni grup sinyalini dinle — yetki kontrolünden geçenleri sidebar'a ekle
+  // Yeni grup sinyali (/topic/groups/new — herkese yayın)
   useEffect(() => {
-    if (!newGroupSignal) return
-
+    if (newGroupSeq === 0 || !newGroupSignal) return
     const signal = newGroupSignal
-    // İşlendi olarak işaretle — bir sonraki bildirimi yakalayabilelim
-    useChatWsStore.setState({ newGroupSignal: null })
 
-    if (signal.visibilityLevel > myLevel) return
-    if (groups.some(g => g.id === signal.id)) return
+    // visibilityLevel yüksek gruplar davetli üyelere yine de görünmeli — API kaynağı doğru
+    if (signal.visibilityLevel > myLevel) {
+      reloadGroupsFromApi()
+      return
+    }
 
-    const next = [signal, ...groups]
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- consuming a one-shot WS signal
-    setGroups(next)
-    if (connected) subscribeToAllGroups(next, myLevel)
-  }, [newGroupSignal, myLevel, connected, groups, subscribeToAllGroups])
+    upsertGroupInList(signal)
+  }, [newGroupSeq, newGroupSignal, myLevel, connected, subscribeToAllGroups])
 
-  // Davet sinyali — bir gruba dahil edildiğimde sidebar'a ekle
-  // (newGroupSignal'den farkı: kişisel topic'ten gelir, visibilityLevel
-  // kontrolüne gerek yok — davet zaten yetki demektir)
+  // Davet / tekrar dahil olma sinyali — üye olduğu için visibility filtresi YOK
   useEffect(() => {
-    if (!invitedGroupSignal) return
+    if (membershipJoinedSeq === 0 || !membershipJoinedSignal) return
+    const event = membershipJoinedSignal
+    const group = event.group
+    if (group) {
+      upsertGroupInList(group)
+      return
+    }
+    reloadGroupsFromApi()
+  }, [
+    membershipJoinedSeq,
+    membershipJoinedSignal,
+    connected,
+    myLevel,
+    subscribeToAllGroups,
+  ])
 
-    const signal = invitedGroupSignal
-    useChatWsStore.setState({ invitedGroupSignal: null })
-
-    if (groups.some(g => g.id === signal.id)) return
-
-    const next = [signal, ...groups]
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- consuming a one-shot WS signal
+  // Gruptan çıkarılma — aktif grup değilse sidebar'dan kaldır
+  useEffect(() => {
+    if (membershipRemovedSeq === 0 || !membershipRemovedSignal) return
+    const event = membershipRemovedSignal
+    if (event.groupId === activeGroupId) return
+    if (!groups.some(g => g.id === event.groupId)) return
+    const next = groups.filter(g => g.id !== event.groupId)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGroups(next)
     if (connected) subscribeToAllGroups(next, myLevel)
-  }, [invitedGroupSignal, myLevel, connected, groups, subscribeToAllGroups])
+  }, [
+    membershipRemovedSeq,
+    membershipRemovedSignal,
+    activeGroupId,
+    groups,
+    connected,
+    myLevel,
+    subscribeToAllGroups,
+  ])
 
-  // Silinen grup sinyali — listeden çıkar + aktif gruba bakıyorsak paneli kapat
+  // Silinen grup sinyali
   useEffect(() => {
     if (!deletedGroupSignal) return
-
     const deletedId = deletedGroupSignal
-    // İşlendi olarak işaretle
     useChatWsStore.setState({ deletedGroupSignal: null })
-
     if (!groups.some(g => g.id === deletedId)) return
-
     const next = groups.filter(g => g.id !== deletedId)
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- consuming a one-shot WS signal
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGroups(next)
     if (connected) subscribeToAllGroups(next, myLevel)
     if (activeGroupId === deletedId) {
@@ -102,14 +149,43 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
     subscribeToAllGroups,
   ])
 
-  const handleGroupClick = (groupId: string) => {
-    subscribeToGroup(groupId)
-    clearUnread(groupId)
+  const handleGroupClick = (group: ChatGroup) => {
+    subscribeToGroup(group.id, group.tenantId)
+    clearUnread(group.id)
     onGroupSelect?.()
   }
 
+  // AC: tenantId === null; TC: tenantId !== null
+  const acGroups = groups.filter(g => g.tenantId === null)
+  const tcGroups = groups.filter(g => g.tenantId !== null)
+
+  // TC'deki benzersiz tenant listesi — filtre dropdown için
+  const tenantOptions = [
+    ...new Set(tcGroups.map(g => g.tenantId as string)),
+  ].sort()
+
+  // Seçili tab'a ve tenant filtresine göre görüntülenecek gruplar
+  const visibleGroups =
+    activeTab === 'AC'
+      ? acGroups
+      : tenantFilter
+        ? tcGroups.filter(g => g.tenantId === tenantFilter)
+        : tcGroups
+
+  const tabClass = (tab: ChatTab) =>
+    `flex-1 py-1.5 text-xs font-medium transition-colors rounded-lg ${
+      activeTab === tab
+        ? isDarkMode
+          ? 'bg-slate-700 text-white'
+          : 'bg-white text-gray-900 shadow-sm'
+        : isDarkMode
+          ? 'text-slate-400 hover:text-white'
+          : 'text-gray-500 hover:text-gray-700'
+    }`
+
   return (
     <div className="flex h-full flex-col">
+      {/* Header */}
       <div
         className={`flex items-center justify-between border-b px-4 py-3 ${
           isDarkMode ? 'border-slate-700/50' : 'border-gray-200'
@@ -152,24 +228,105 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
         </div>
       </div>
 
+      {/* AC / TC Tabs */}
+      <div
+        className={`px-3 py-2 ${isDarkMode ? 'bg-slate-900/50' : 'bg-gray-50/80'}`}
+      >
+        <div
+          className={`flex gap-1 rounded-xl p-1 ${
+            isDarkMode ? 'bg-slate-800/60' : 'bg-gray-100'
+          }`}
+        >
+          <button
+            type="button"
+            className={tabClass('AC')}
+            onClick={() => setActiveTab('AC')}
+          >
+            Admin Chat
+            {acGroups.length > 0 && (
+              <span
+                className={`ml-1 rounded-full px-1 text-[10px] ${
+                  isDarkMode
+                    ? 'bg-slate-600 text-slate-300'
+                    : 'bg-white text-gray-500'
+                }`}
+              >
+                {acGroups.length}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            className={tabClass('TC')}
+            onClick={() => {
+              setActiveTab('TC')
+              setTenantFilter('')
+            }}
+          >
+            Tenant Chat
+            {tcGroups.length > 0 && (
+              <span
+                className={`ml-1 rounded-full px-1 text-[10px] ${
+                  isDarkMode
+                    ? 'bg-slate-600 text-slate-300'
+                    : 'bg-white text-gray-500'
+                }`}
+              >
+                {tcGroups.length}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Tenant Filter — sadece TC tab'ında göster */}
+      {activeTab === 'TC' && tenantOptions.length > 1 && (
+        <div
+          className={`border-b px-3 pb-2 ${isDarkMode ? 'border-slate-800/50' : 'border-gray-100'}`}
+        >
+          <select
+            value={tenantFilter}
+            onChange={e => setTenantFilter(e.target.value)}
+            className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none transition-colors ${
+              isDarkMode
+                ? 'border border-slate-700 bg-slate-800 text-slate-300 focus:border-violet-500'
+                : 'border border-gray-200 bg-white text-gray-700 focus:border-violet-400'
+            }`}
+          >
+            <option value="">Tüm Tenant&apos;lar</option>
+            {tenantOptions.map(tid => (
+              <option key={tid} value={tid}>
+                {tid}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Group List */}
       <div className="flex-1 overflow-y-auto">
-        {groups.length === 0 && (
+        {visibleGroups.length === 0 && (
           <p
             className={`px-4 py-6 text-center text-sm ${
               isDarkMode ? 'text-slate-500' : 'text-gray-400'
             }`}
           >
-            Henüz konuşma yok
+            {activeTab === 'AC'
+              ? 'Henüz admin konuşması yok'
+              : 'Henüz tenant konuşması yok'}
           </p>
         )}
-        {groups.map(group => {
+
+        {visibleGroups.map(group => {
           const unread = unreadCounts[group.id] ?? 0
           const isActive = activeGroupId === group.id
+          const isTc = group.tenantId !== null
+
           return (
             <button
               key={group.id}
               type="button"
-              onClick={() => handleGroupClick(group.id)}
+              onClick={() => handleGroupClick(group)}
               className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
                 isActive
                   ? isDarkMode
@@ -185,6 +342,7 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
               ) : (
                 <MessageSquare className="h-4 w-4 shrink-0" />
               )}
+
               <span
                 className={`min-w-0 flex-1 truncate text-sm ${
                   unread > 0 && !isActive ? 'font-semibold' : ''
@@ -193,7 +351,7 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
                 {group.name ?? 'DM'}
               </span>
 
-              {/* Unread badge — aktif grup için göstermez */}
+              {/* Unread badge */}
               {unread > 0 && !isActive && (
                 <span
                   className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-violet-500 px-1.5 text-[10px] font-semibold text-white"
@@ -203,25 +361,37 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
                 </span>
               )}
 
-              {/* Görünürlük rozeti / kilit — sadece grup */}
-              {group.type !== 'DM' && unread === 0 && (
-                <span
-                  title={visibilityLabel(group.visibilityLevel)}
-                  className="shrink-0"
-                >
-                  {group.visibilityLevel >= 4 ? (
-                    <Lock className="h-3 w-3 opacity-50" />
-                  ) : (
-                    <span
-                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                        isDarkMode
-                          ? 'bg-slate-700 text-slate-400'
-                          : 'bg-gray-100 text-gray-500'
-                      }`}
-                    >
-                      {visibilityLabel(group.visibilityLevel)}
+              {/* Rozet — unread varsa gösterme */}
+              {unread === 0 && (
+                <span className="shrink-0">
+                  {isTc ? (
+                    // TC: tenant adı + ziyaretçi işareti
+                    <span className="flex items-center gap-1">
+                      <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                        {group.tenantId}
+                      </span>
+                      {group.visitorAccess && (
+                        <span title="Ziyaretçilere açık">
+                          <Globe className="h-3 w-3 text-amber-400" />
+                        </span>
+                      )}
                     </span>
-                  )}
+                  ) : group.type !== 'DM' ? (
+                    // AC: görünürlük rozeti veya kilit
+                    group.visibilityLevel >= 4 ? (
+                      <Lock className="h-3 w-3 opacity-50" />
+                    ) : (
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                          isDarkMode
+                            ? 'bg-slate-700 text-slate-400'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
+                        {visibilityLabel(group.visibilityLevel)}
+                      </span>
+                    )
+                  ) : null}
                 </span>
               )}
 
@@ -236,19 +406,13 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
       <CreateGroupDialog
         isOpen={showCreate}
         onClose={() => setShowCreate(false)}
-        onCreated={g => setGroups(prev => [g, ...prev])}
+        onCreated={g => upsertGroupInList(g)}
       />
 
       <DmDialog
         isOpen={showDm}
         onClose={() => setShowDm(false)}
-        onCreated={g => {
-          setGroups(prev => {
-            // DM zaten listede varsa tekrar ekleme
-            if (prev.some(existing => existing.id === g.id)) return prev
-            return [g, ...prev]
-          })
-        }}
+        onCreated={g => upsertGroupInList(g)}
       />
     </div>
   )

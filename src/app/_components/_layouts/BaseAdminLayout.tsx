@@ -1,6 +1,6 @@
 'use client'
 import { Header, Sidebar } from '@/app/_components'
-import { useAdminTheme } from '@/app/_hooks'
+import { useAdminTheme, useSidebarCollapsed } from '@/app/_hooks'
 import { useState } from 'react'
 import { Toaster } from 'sonner'
 
@@ -11,6 +11,7 @@ export default function BaseAdminLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { isDarkMode } = useAdminTheme()
+  const { isCollapsed, toggleCollapse } = useSidebarCollapsed()
 
   return (
     <div
@@ -33,10 +34,19 @@ export default function BaseAdminLayout({
       </div>
 
       <div className="relative flex w-full overflow-x-hidden">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          isCollapsed={isCollapsed}
+          onToggleCollapse={toggleCollapse}
+        />
 
         <main className="min-h-screen w-0 flex-1 lg:ml-0">
-          <Header onToggleSidebar={() => setSidebarOpen(true)} />
+          <Header
+            onToggleSidebar={() => setSidebarOpen(true)}
+            isCollapsed={isCollapsed}
+            onToggleCollapse={toggleCollapse}
+          />
           {children}
         </main>
       </div>

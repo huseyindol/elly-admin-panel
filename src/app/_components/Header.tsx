@@ -5,9 +5,15 @@ import { Icons } from './Icons'
 
 interface HeaderProps {
   onToggleSidebar: () => void
+  isCollapsed: boolean
+  onToggleCollapse: () => void
 }
 
-export function Header({ onToggleSidebar }: HeaderProps) {
+export function Header({
+  onToggleSidebar,
+  isCollapsed,
+  onToggleCollapse,
+}: HeaderProps) {
   const { isDarkMode, toggleTheme } = useAdminTheme()
 
   return (
@@ -25,8 +31,20 @@ export function Header({ onToggleSidebar }: HeaderProps) {
                 ? 'text-slate-400 hover:bg-slate-800'
                 : 'text-gray-500 hover:bg-gray-100'
             }`}
+            aria-label="Menüyü aç"
           >
             <Icons.Menu />
+          </button>
+          <button
+            onClick={onToggleCollapse}
+            className={`hidden rounded-xl p-2 transition-colors lg:flex ${
+              isDarkMode
+                ? 'text-slate-400 hover:bg-slate-800'
+                : 'text-gray-500 hover:bg-gray-100'
+            }`}
+            aria-label={isCollapsed ? 'Menüyü genişlet' : 'Menüyü daralt'}
+          >
+            {isCollapsed ? <Icons.ChevronRight /> : <Icons.ChevronLeft />}
           </button>
           <div>
             <h2

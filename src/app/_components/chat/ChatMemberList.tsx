@@ -1,13 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   getMembersService,
   removeMemberService,
   addMemberService,
 } from '@/app/_services/chat.services'
+import { chatKeys } from '@/app/_hooks/useChatGroupAccess'
 import { useMyRoleLevel, canInvite } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
+import { useChatWsStore } from '@/stores/chat-ws-store'
 import { PermissionGate } from '@/components/PermissionGate'
 import type { ChatMember, RoleLevel } from '@/types/chat'
 
@@ -28,16 +31,19 @@ export function ChatMemberList({ groupId }: Props) {
   const [inviteUserId, setInviteUserId] = useState('')
   const [inviting, setInviting] = useState(false)
   const myLevel = useMyRoleLevel()
+  const tenantId = useChatWsStore(s => s.activeGroupTenantId)
+  const queryClient = useQueryClient()
 
   useEffect(() => {
-    getMembersService(groupId)
+    getMembersService(groupId, tenantId)
       .then(setMembers)
       .catch(() => {})
-  }, [groupId])
+  }, [groupId, tenantId])
 
   const handleRemove = async (userId: number) => {
-    await removeMemberService(groupId, userId)
+    await removeMemberService(groupId, userId, tenantId)
     setMembers(prev => prev.filter(m => m.userId !== userId))
+    void queryClient.invalidateQueries({ queryKey: chatKeys.access(groupId) })
   }
 
   const handleInvite = async () => {
@@ -45,9 +51,10 @@ export function ChatMemberList({ groupId }: Props) {
     if (!userId) return
     setInviting(true)
     try {
-      const member = await addMemberService(groupId, userId)
+      const member = await addMemberService(groupId, userId, tenantId)
       setMembers(prev => [...prev, member])
       setInviteUserId('')
+      void queryClient.invalidateQueries({ queryKey: chatKeys.access(groupId) })
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Davet başarısız')
     } finally {

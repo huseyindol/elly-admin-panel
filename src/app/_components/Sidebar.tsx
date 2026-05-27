@@ -30,11 +30,13 @@ function NavLink({
   active,
   isDarkMode,
   onClick,
+  isCollapsed,
 }: Readonly<{
   item: MenuItem
   active: boolean
   isDarkMode: boolean
   onClick: () => void
+  isCollapsed: boolean
 }>) {
   let linkClass: string
   if (active) {
@@ -52,14 +54,23 @@ function NavLink({
     <Link
       href={item.href}
       onClick={onClick}
-      className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${linkClass}`}
+      title={isCollapsed ? item.label : undefined}
+      className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+        isCollapsed ? 'lg:justify-center lg:gap-0 lg:px-2 lg:py-3' : ''
+      } ${linkClass}`}
     >
       <span className={active ? 'text-violet-400' : ''}>
         <item.icon />
       </span>
-      <span className="font-medium">{item.label}</span>
+      <span className={`font-medium ${isCollapsed ? 'lg:hidden' : ''}`}>
+        {item.label}
+      </span>
       {active && (
-        <span className="nav-active-dot ml-auto h-2 w-2 rounded-full bg-violet-400" />
+        <span
+          className={`nav-active-dot ml-auto h-2 w-2 rounded-full bg-violet-400 ${
+            isCollapsed ? 'lg:hidden' : ''
+          }`}
+        />
       )}
     </Link>
   )
@@ -195,6 +206,8 @@ const menuGroups: MenuGroup[] = [
 interface SidebarProps {
   isOpen: boolean
   onClose: () => void
+  isCollapsed: boolean
+  onToggleCollapse: () => void
 }
 
 /** Menü öğesini PermissionGate ile saran yardımcı bileşen */
@@ -203,11 +216,13 @@ function PermissionMenuItem({
   active,
   isDarkMode,
   onClick,
+  isCollapsed,
 }: Readonly<{
   item: MenuItem
   active: boolean
   isDarkMode: boolean
   onClick: () => void
+  isCollapsed: boolean
 }>) {
   const navLink = (
     <NavLink
@@ -215,6 +230,7 @@ function PermissionMenuItem({
       active={active}
       isDarkMode={isDarkMode}
       onClick={onClick}
+      isCollapsed={isCollapsed}
     />
   )
 
@@ -230,11 +246,13 @@ function MenuGroupSection({
   isDarkMode,
   isActive,
   onClose,
+  isCollapsed,
 }: Readonly<{
   group: MenuGroup
   isDarkMode: boolean
   isActive: (href: string) => boolean
   onClose: () => void
+  isCollapsed: boolean
 }>) {
   const { hasPermission, isSuperAdmin } = usePermission()
 
@@ -257,7 +275,7 @@ function MenuGroupSection({
           <p
             className={`px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest ${
               isDarkMode ? 'text-slate-600' : 'text-gray-400'
-            }`}
+            } ${isCollapsed ? 'lg:hidden' : ''}`}
           >
             {group.title}
           </p>
@@ -270,13 +288,19 @@ function MenuGroupSection({
           active={isActive(item.href)}
           isDarkMode={isDarkMode}
           onClick={onClose}
+          isCollapsed={isCollapsed}
         />
       ))}
     </>
   )
 }
 
-export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
+export function Sidebar({
+  isOpen,
+  onClose,
+  isCollapsed,
+  onToggleCollapse,
+}: Readonly<SidebarProps>) {
   const pathname = usePathname()
   const { isDarkMode } = useAdminTheme()
   const { roles } = usePermission()
@@ -346,24 +370,32 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
       {/* Sidebar */}
       <aside
         className={`fixed left-0 top-0 z-50 h-screen w-72 transform transition-all duration-300 ease-out lg:sticky ${
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        } ${
+          isCollapsed ? 'lg:w-20' : ''
+        } ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} ${
           isDarkMode
             ? 'border-r border-slate-800/50 bg-slate-900'
             : 'border-r border-gray-200/50 bg-white'
         }`}
       >
         <div
-          className="flex h-full flex-col p-6"
+          className={`flex h-full flex-col p-6 ${isCollapsed ? 'lg:p-3' : ''}`}
           style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
         >
           {/* Logo */}
-          <div className="mb-8 flex items-center justify-between">
-            <Link href="/dashboard" className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/30">
+          <div
+            className={`mb-8 flex items-center justify-between ${
+              isCollapsed ? 'lg:flex-col lg:gap-3' : ''
+            }`}
+          >
+            <Link
+              href="/dashboard"
+              className={`flex items-center gap-3 ${isCollapsed ? 'lg:gap-0' : ''}`}
+              title={isCollapsed ? 'Elly CMS' : undefined}
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/30">
                 <span className="text-lg font-bold text-white">E</span>
               </div>
-              <div>
+              <div className={isCollapsed ? 'lg:hidden' : ''}>
                 <h1
                   className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                 >
@@ -383,8 +415,20 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
                   ? 'text-slate-400 hover:bg-slate-800'
                   : 'text-gray-500 hover:bg-gray-100'
               }`}
+              aria-label="Menüyü kapat"
             >
               <Icons.X />
+            </button>
+            <button
+              onClick={onToggleCollapse}
+              className={`hidden rounded-lg p-2 transition-colors lg:flex ${
+                isDarkMode
+                  ? 'text-slate-400 hover:bg-slate-800'
+                  : 'text-gray-500 hover:bg-gray-100'
+              }`}
+              aria-label={isCollapsed ? 'Menüyü genişlet' : 'Menüyü daralt'}
+            >
+              {isCollapsed ? <Icons.ChevronRight /> : <Icons.ChevronLeft />}
             </button>
           </div>
 
@@ -397,6 +441,7 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
                 isDarkMode={isDarkMode}
                 isActive={isActive}
                 onClose={onClose}
+                isCollapsed={isCollapsed}
               />
             ))}
 
@@ -408,31 +453,43 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
             {/* Logout Button */}
             <button
               onClick={onLogout}
+              title={isCollapsed ? 'Çıkış Yap' : undefined}
               className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                isCollapsed ? 'lg:justify-center lg:gap-0 lg:px-2 lg:py-3' : ''
+              } ${
                 isDarkMode
                   ? 'text-slate-400 hover:bg-rose-500/10 hover:text-rose-400'
                   : 'text-gray-600 hover:bg-rose-50 hover:text-rose-600'
               }`}
             >
               <Icons.LogOut />
-              <span className="font-medium">Çıkış Yap</span>
+              <span className={`font-medium ${isCollapsed ? 'lg:hidden' : ''}`}>
+                Çıkış Yap
+              </span>
             </button>
           </nav>
 
           {/* User Profile — Profil sayfasına link */}
           <Link
             href="/profile"
+            title={isCollapsed ? (fullName ?? userCode ?? 'Profil') : undefined}
             className={`mt-4 block rounded-2xl p-4 transition-colors ${
+              isCollapsed ? 'lg:p-2' : ''
+            } ${
               isDarkMode
                 ? 'border border-slate-700/50 bg-slate-800/50 hover:bg-slate-700/50'
                 : 'border border-gray-200 bg-gray-100 hover:bg-gray-200'
             }`}
           >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 text-sm font-semibold text-white">
+            <div
+              className={`flex items-center gap-3 ${isCollapsed ? 'lg:justify-center lg:gap-0' : ''}`}
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 text-sm font-semibold text-white">
                 {avatarInitials}
               </div>
-              <div className="min-w-0 flex-1">
+              <div
+                className={`min-w-0 flex-1 ${isCollapsed ? 'lg:hidden' : ''}`}
+              >
                 <p
                   className={`truncate text-sm font-medium ${
                     isDarkMode ? 'text-white' : 'text-gray-900'
@@ -448,7 +505,9 @@ export function Sidebar({ isOpen, onClose }: Readonly<SidebarProps>) {
                   {userCode ?? roleLabel}
                 </p>
               </div>
-              <Icons.ChevronRight />
+              <span className={isCollapsed ? 'lg:hidden' : ''}>
+                <Icons.ChevronRight />
+              </span>
             </div>
           </Link>
         </div>
