@@ -502,7 +502,7 @@ export function Sidebar({
                     isDarkMode ? 'text-slate-400' : 'text-gray-500'
                   }`}
                 >
-                  {userCode ?? roleLabel}
+                  {roleLabel}
                 </p>
               </div>
               <span className={isCollapsed ? 'lg:hidden' : ''}>
