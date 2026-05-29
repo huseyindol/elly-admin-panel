@@ -5,6 +5,8 @@ import { useAdminTheme } from '@/app/_hooks'
 import { createGroupService } from '@/app/_services/chat.services'
 import type { ChatGroup } from '@/types/chat'
 import { useMyRoleLevel, visibilityLabel } from '@/utils/chat-role'
+import { getGlobalCookies } from '@/context/CookieContext'
+import { CookieEnum } from '@/utils/constant/cookieConstant'
 import { useState } from 'react'
 
 interface Props {
@@ -20,11 +22,12 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [scope, setScope] = useState<Scope>('ADMIN')
-  const [tenantId, setTenantId] = useState('')
   const [visitorAccess, setVisitorAccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const myLevel = useMyRoleLevel()
+  // TC tenant'ı oturum cookie'sinden gelir; kullanıcı değiştiremez.
+  const sessionTenantId = getGlobalCookies()[CookieEnum.TENANT_ID] || ''
 
   const inputClass = `w-full rounded-xl border px-3 py-2 text-sm outline-none transition-colors focus:ring-2 focus:ring-violet-500/30 ${
     isDarkMode
@@ -35,8 +38,8 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
   const validate = (): boolean => {
     const errs: Record<string, string> = {}
     if (!name.trim()) errs.name = 'Grup adı zorunlu'
-    if (scope === 'TENANT' && !tenantId.trim())
-      errs.tenantId = 'Tenant Chat için tenant ID gerekli'
+    if (scope === 'TENANT' && !sessionTenantId)
+      errs.tenantId = 'Oturumunuzda tenant bilgisi yok; TC grubu oluşturulamaz'
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -45,7 +48,6 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
     setName('')
     setDescription('')
     setScope('ADMIN')
-    setTenantId('')
     setVisitorAccess(false)
     setErrors({})
     onClose()
@@ -59,7 +61,7 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
         name: name.trim(),
         description: description.trim() || undefined,
         ...(scope === 'TENANT' && {
-          tenantId: tenantId.trim(),
+          tenantId: sessionTenantId,
           visitorAccess,
         }),
       })
@@ -143,7 +145,6 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
                 checked={scope === 'ADMIN'}
                 onChange={() => {
                   setScope('ADMIN')
-                  setTenantId('')
                   setVisitorAccess(false)
                   setErrors(p => ({ ...p, tenantId: '' }))
                 }}
@@ -208,20 +209,24 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
           <div className="space-y-3">
             <div>
               <label
+                htmlFor="tc-tenant"
                 className={`mb-1.5 block text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}
               >
-                Tenant ID <span className="text-rose-400">*</span>
+                Tenant <span className="text-rose-400">*</span>
               </label>
               <input
+                id="tc-tenant"
                 type="text"
-                placeholder="örn. tenant1"
-                value={tenantId}
-                onChange={e => {
-                  setTenantId(e.target.value)
-                  if (errors.tenantId) setErrors(p => ({ ...p, tenantId: '' }))
-                }}
-                className={inputClass}
+                value={sessionTenantId}
+                readOnly
+                placeholder="(oturumda tenant bilgisi yok)"
+                className={`${inputClass} cursor-not-allowed opacity-80`}
               />
+              <p
+                className={`mt-1 text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
+              >
+                Oturumunuzdaki tenant otomatik kullanılır.
+              </p>
               {errors.tenantId && (
                 <p className="mt-1 text-xs text-rose-400">{errors.tenantId}</p>
               )}

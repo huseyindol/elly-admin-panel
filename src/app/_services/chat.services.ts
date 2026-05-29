@@ -13,9 +13,14 @@ import type { BaseResponse } from '@/types/BaseResponse'
 const tenantHeader = (tenantId?: string | null): Record<string, string> =>
   tenantId ? { 'X-Tenant-Id': tenantId } : {}
 
-export const getMyGroupsService = async (): Promise<ChatGroup[]> => {
+export const getMyGroupsService = async (
+  tenantId?: string | null,
+): Promise<ChatGroup[]> => {
+  // tenantId verilirse X-Tenant-Id eklenir → o tenant'ın TC grupları döner.
+  // Verilmezse header yok → backend basedb bağlamını kullanır (AC grupları).
   const res: BaseResponse<ChatGroup[]> = await fetcher('/api/v1/chat/groups', {
     method: 'GET',
+    headers: tenantHeader(tenantId),
   })
   if (!res.result) throw new Error(res.message ?? 'Gruplar yüklenemedi')
   return res.data

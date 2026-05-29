@@ -5,6 +5,8 @@ import { getMyGroupsService } from '@/app/_services/chat.services'
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import { visibilityLabel, useMyRoleLevel } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
+import { getGlobalCookies } from '@/context/CookieContext'
+import { CookieEnum } from '@/utils/constant/cookieConstant'
 import type { ChatGroup } from '@/types/chat'
 import {
   MessageSquare,
@@ -33,6 +35,12 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const [tenantFilter, setTenantFilter] = useState<string>('')
   const myLevel = useMyRoleLevel()
 
+  // Oturum tenant'ı — login'de set edilen `tenantId` cookie'si (HttpOnly değil,
+  // client-side okunabilir). TC gruplarını X-Tenant-Id ile çekmek için kullanılır.
+  const [sessionTenantId] = useState<string | null>(
+    () => getGlobalCookies()[CookieEnum.TENANT_ID] || null,
+  )
+
   const activeGroupId = useChatWsStore(s => s.activeGroupId)
   const connected = useChatWsStore(s => s.connected)
   const subscribeToGroup = useChatWsStore(s => s.subscribeToGroup)
@@ -60,23 +68,30 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   )
 
   const reloadGroupsFromApi = useCallback(() => {
-    getMyGroupsService()
-      .then(g => {
-        setGroups(g)
-        if (connected) subscribeToAllGroups(g, myLevel)
+    // AC grupları: header'sız (backend basedb bağlamı).
+    // TC grupları: X-Tenant-Id ile oturum tenant'ından (varsa).
+    // İki sonuç id'ye göre tekilleştirilip birleştirilir.
+    const acPromise = getMyGroupsService()
+    const tcPromise = sessionTenantId
+      ? getMyGroupsService(sessionTenantId).catch(() => [] as ChatGroup[])
+      : Promise.resolve<ChatGroup[]>([])
+
+    Promise.all([acPromise, tcPromise])
+      .then(([acGroups, tcGroups]) => {
+        const byId = new Map<string, ChatGroup>()
+        for (const g of acGroups) byId.set(g.id, g)
+        for (const g of tcGroups) byId.set(g.id, g)
+        const merged = [...byId.values()]
+        setGroups(merged)
+        if (connected) subscribeToAllGroups(merged, myLevel)
       })
       .catch(() => {})
-  }, [connected, myLevel, subscribeToAllGroups])
+  }, [sessionTenantId, connected, myLevel, subscribeToAllGroups])
 
   // Grupları yükle ve tüm gruplara mesaj sub'ı at
   useEffect(() => {
-    getMyGroupsService()
-      .then(g => {
-        setGroups(g)
-        if (connected) subscribeToAllGroups(g, myLevel)
-      })
-      .catch(() => {})
-  }, [connected, refreshToken, myLevel, subscribeToAllGroups])
+    reloadGroupsFromApi()
+  }, [reloadGroupsFromApi, refreshToken])
 
   // Yeni grup sinyali (/topic/groups/new — herkese yayın)
   useEffect(() => {
