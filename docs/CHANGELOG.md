@@ -19,6 +19,9 @@ Kayıt formatı:
 
 ### Added
 
+- **2FA / MFA (Prompt 10):** TOTP tabanlı iki adımlı doğrulama
+  - `src/types/mfa.ts`, `src/app/_services/mfa.services.ts` — status / setup / setupVerify / disable / verifyLogin servisleri
+  - `src/app/_components/security/` — `SecuritySettings`, `MfaSetupDialog` (QR + secret), `MfaDisableDialog` (şifreyle kapatma)
 - `tmp_e2e_test/chat-test.ts` — Chat modülü için 4 eşzamanlı kullanıcıyla 8 test senaryosunu doğrulayan Playwright E2E test betiği
 - `docs/tests/chat-e2e/` — Chat E2E testine ait test planı, görev listesi, detaylı Türkçe bulgular ve test ekran görüntüleri arşivi
 - `.cursor/rules/playwright-test-reporting.mdc` — E2E test çıktılarının `docs/tests/{islem-adi}/` altında bağıl (relative) görsel yolları ile arşivlenmesini zorunlu kılan Cursor kuralı
@@ -30,6 +33,14 @@ Kayıt formatı:
 
 ### Changed
 
+- **2FA (Prompt 10):**
+  - `src/app/(baseLayout)/settings/page.tsx` — boş placeholder yerine "Hesap Güvenliği" 2FA bölümü
+  - `src/app/(layoutLess)/login/page.tsx` — `mfaRequired` ise login 2. adımı (6 haneli kod ekranı); cookie yazımı `applyLoginSuccess` helper'ına ayrıldı
+  - `src/utils/services/fetcher.ts` — `/auth/mfa/verify` Authorization strip-list'e eklendi (JWT'siz, sadece mfaToken)
+  - `src/types/AuthResponse.ts` — `LoginResponse`'a `mfaRequired?` + `mfaToken?` alanları
+- **Chat GUEST sender (Prompt 9):**
+  - `src/types/chat.ts` — `ChatMessageSenderType`'a `'GUEST'` eklendi
+  - `src/app/_components/chat/ChatWindow.tsx` — anonim ziyaretçi için "Misafir" rozeti + balon stili, `senderUsername` boşsa "Misafir" fallback (düz metin / XSS güvenli)
 - `src/app/_components/Sidebar.tsx` — "CMS Yönetim" bölümüne "Mail Hesapları" (`/mail-accounts`) eklendi
 - `.cursor/rules/new-page.mdc` — Sidebar adımı "zorunlu" olarak güncellendi
 - `src/app/_services/email-templates.services.ts` — v4 hazır: tam CRUD (`/api/v1/email-templates`) + classpath yardımcı
@@ -60,6 +71,10 @@ Kayıt formatı:
 - **Email Logs:** `EmailLogsClient` gereksiz re-render önlendi
 - **OverviewCard + QueueTable:** Manuel refetch butonu eklendi, auto-refresh hata durumunda durduruluyor
 - **useDebounce hook:** Temiz reimplementation
+
+### Infra
+
+- `qrcode.react@4.2.0` eklendi — 2FA kurulum dialog'unda otpauth QR kodu render'ı için
 
 ---
 
