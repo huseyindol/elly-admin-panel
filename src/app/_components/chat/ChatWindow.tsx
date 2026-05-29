@@ -191,10 +191,11 @@ export function ChatWindow({ groupId }: Props) {
 
       <div className="flex flex-col gap-2">
         {groupMessages.map((msg, idx) => {
-          // Polymorphic: admin mi visitor mi?
+          // Polymorphic: admin / kayıtlı ziyaretçi / anonim misafir
           const isAdmin = msg.senderType === 'ADMIN'
           const isVisitor = msg.senderType === 'VISITOR'
-          // "Benim mesajım" = admin && senderId benim userId'im
+          const isGuest = msg.senderType === 'GUEST'
+          // GUEST'te senderId/visitorId null → "benim mesajım" yalnızca admin için anlamlı
           const isOwn =
             isAdmin && myUserId !== null && msg.senderId === myUserId
           const prev = groupMessages[idx - 1]
@@ -228,12 +229,13 @@ export function ChatWindow({ groupId }: Props) {
                 {/* Gönderen adı + rozet — kendi mesajında ve gruplanmış ilk mesajda göster */}
                 {!isOwn && !isGrouped && (
                   <div className="mb-0.5 flex items-center gap-1.5 px-1">
+                    {/* senderUsername daima düz metin (JSX escape) — stored-XSS engeli */}
                     <span
                       className={`text-xs font-medium ${
                         isDarkMode ? 'text-violet-300' : 'text-violet-600'
                       }`}
                     >
-                      {msg.senderUsername}
+                      {msg.senderUsername || 'Misafir'}
                     </span>
                     {/* Polymorphic sender rozeti */}
                     {isAdmin && (
@@ -244,6 +246,11 @@ export function ChatWindow({ groupId }: Props) {
                     {isVisitor && (
                       <span className="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
                         Ziyaretçi
+                      </span>
+                    )}
+                    {isGuest && (
+                      <span className="rounded-full bg-orange-500/20 px-1.5 py-0.5 text-[10px] font-medium text-orange-400">
+                        Misafir
                       </span>
                     )}
                   </div>
@@ -274,9 +281,13 @@ export function ChatWindow({ groupId }: Props) {
                           ? isDarkMode
                             ? 'rounded-bl-md bg-amber-900/30 text-amber-100'
                             : 'rounded-bl-md bg-amber-50 text-amber-900'
-                          : isDarkMode
-                            ? 'rounded-bl-md bg-slate-800 text-slate-100'
-                            : 'rounded-bl-md bg-gray-100 text-gray-800'
+                          : isGuest
+                            ? isDarkMode
+                              ? 'rounded-bl-md bg-orange-900/30 text-orange-100'
+                              : 'rounded-bl-md bg-orange-50 text-orange-900'
+                            : isDarkMode
+                              ? 'rounded-bl-md bg-slate-800 text-slate-100'
+                              : 'rounded-bl-md bg-gray-100 text-gray-800'
                     }`}
                   >
                     {/* File mesajları için ikon başlık */}

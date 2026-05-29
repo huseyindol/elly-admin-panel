@@ -1,6 +1,6 @@
 export type ChatGroupType = 'GROUP' | 'DM'
 export type ChatMessageType = 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
-export type ChatMessageSenderType = 'ADMIN' | 'VISITOR'
+export type ChatMessageSenderType = 'ADMIN' | 'VISITOR' | 'GUEST'
 export type ChatMemberRole = 'OWNER' | 'MEMBER'
 export type PresenceStatus = 'ONLINE' | 'OFFLINE'
 // Role hierarchy: VIEWER=1, EDITOR=2, ADMIN=3, SUPER_ADMIN=4
@@ -33,12 +33,13 @@ export interface ChatMember {
 export interface ChatMessage {
   id: string
   groupId: string
-  /** ADMIN = yönetici, VISITOR = tenant ziyaretçisi */
+  /** ADMIN = yönetici, VISITOR = kayıtlı tenant user'ı, GUEST = anonim ziyaretçi */
   senderType: ChatMessageSenderType
-  /** Admin ise basedb users.id; visitor ise null */
+  /** Admin ise basedb users.id; visitor/guest ise null */
   senderId: number | null
-  /** Visitor ise tenant DB visitor_identities.id; admin ise null */
+  /** Visitor ise tenant DB visitor_identities.id; admin/guest ise null */
   visitorId: number | null
+  /** Backend tarafından çözümlenmiş görünen ad (GUEST için denormalize edilmiş) */
   senderUsername: string
   content: string
   contentType: ChatMessageType
