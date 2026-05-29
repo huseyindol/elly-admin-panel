@@ -11,6 +11,10 @@ export interface LoginResponse {
   expiredDate: number
   roles: string[]
   permissions: string[]
+  /** 2FA açıksa login yanıtında true gelir; token null'dır, mfaToken doludur */
+  mfaRequired?: boolean
+  /** 2FA challenge token'ı (kısa ömürlü ~5dk) — sadece bellekte tut, persist etme */
+  mfaToken?: string
 }
 
 export type LoginResponseType = BaseResponse<LoginResponse>

@@ -17,10 +17,11 @@ import {
   updateGlobalCookie,
   useCookie,
 } from '@/context/CookieContext'
+import { verifyLoginMfaService } from '@/app/_services/mfa.services'
 import { LoginInput, LoginSchema } from '@/schemas/user'
 import { usePermissionStore } from '@/stores/permission-store'
 import { useUserStore } from '@/stores/user-store'
-import { LoginResponseType } from '@/types/AuthResponse'
+import { LoginResponse, LoginResponseType } from '@/types/AuthResponse'
 import {
   CookieEnum,
   deriveMaxAgeFromExpiredDate,
@@ -32,6 +33,7 @@ import {
   Building2,
   Eye,
   EyeOff,
+  KeyRound,
   Lock,
   Mail,
   Shield,
@@ -54,6 +56,13 @@ const AdminLoginPage = () => {
   const [generalError, setGeneralError] = useState('')
   const { updateCookie } = useCookie()
   const router = useRouter()
+
+  // 2FA challenge adımı durumu
+  const [step, setStep] = useState<'login' | 'mfa'>('login')
+  const [mfaToken, setMfaToken] = useState('')
+  const [pendingTenantId, setPendingTenantId] = useState('')
+  const [mfaCode, setMfaCode] = useState('')
+  const [verifyingMfa, setVerifyingMfa] = useState(false)
 
   // Önceki oturumdan kalan cookie / store değerlerini temizle.
   // Login ekranına ulaşan kullanıcı zaten oturum açmıyor — kalan auth
@@ -86,6 +95,48 @@ const AdminLoginPage = () => {
     },
   })
 
+  /**
+   * Login (veya 2FA verify) başarılı olduğunda cookie'leri + store'ları yazar
+   * ve dashboard'a yönlendirir. Normal login ile 2FA verify birebir aynı
+   * oturumu kurar.
+   */
+  const applyLoginSuccess = (data: LoginResponse, tenantId: string) => {
+    // accessToken / expiredDate cookie'lerinin ömrü backend'in döndüğü
+    // expiredDate'e bağlı; refreshToken / userCode / tenantId sabit 6 ay
+    const accessTtl = deriveMaxAgeFromExpiredDate(data.expiredDate)
+
+    updateGlobalCookie(CookieEnum.ACCESS_TOKEN, data.token, accessTtl)
+    updateGlobalCookie(CookieEnum.REFRESH_TOKEN, data.refreshToken)
+    updateGlobalCookie(
+      CookieEnum.EXPIRED_DATE,
+      String(data.expiredDate),
+      accessTtl,
+    )
+    updateGlobalCookie(CookieEnum.USER_CODE, data.userCode)
+    if (tenantId) {
+      updateGlobalCookie(CookieEnum.TENANT_ID, tenantId)
+    }
+    updateCookie(CookieEnum.ACCESS_TOKEN, data.token, accessTtl)
+    updateCookie(CookieEnum.REFRESH_TOKEN, data.refreshToken)
+    updateCookie(CookieEnum.EXPIRED_DATE, String(data.expiredDate), accessTtl)
+    if (tenantId) {
+      updateCookie(CookieEnum.TENANT_ID, tenantId)
+    }
+
+    // İzinleri ve kullanıcı kimliğini Zustand store'lara yaz (persist → localStorage)
+    usePermissionStore
+      .getState()
+      .setPermissions(data.roles ?? [], data.permissions ?? [])
+    useUserStore.getState().setUser({
+      id: data.userId,
+      username: data.username,
+      email: data.email,
+      userCode: data.userCode,
+    })
+
+    router.push('/dashboard')
+  }
+
   const onSubmit = async (formData: LoginInput) => {
     setGeneralError('')
     clearErrors()
@@ -110,55 +161,47 @@ const AdminLoginPage = () => {
         return
       }
 
-      // accessToken / expiredDate cookie'lerinin ömrü backend'in döndüğü
-      // expiredDate'e bağlı; refreshToken / userCode / tenantId sabit 6 ay
-      const accessTtl = deriveMaxAgeFromExpiredDate(response.data.expiredDate)
-
-      updateGlobalCookie(
-        CookieEnum.ACCESS_TOKEN,
-        response.data.token,
-        accessTtl,
-      )
-      updateGlobalCookie(CookieEnum.REFRESH_TOKEN, response.data.refreshToken)
-      updateGlobalCookie(
-        CookieEnum.EXPIRED_DATE,
-        String(response.data.expiredDate),
-        accessTtl,
-      )
-      updateGlobalCookie(CookieEnum.USER_CODE, response.data.userCode)
-      if (formData.tenantId) {
-        updateGlobalCookie(CookieEnum.TENANT_ID, formData.tenantId)
-      }
-      updateCookie(CookieEnum.ACCESS_TOKEN, response.data.token, accessTtl)
-      updateCookie(CookieEnum.REFRESH_TOKEN, response.data.refreshToken)
-      updateCookie(
-        CookieEnum.EXPIRED_DATE,
-        String(response.data.expiredDate),
-        accessTtl,
-      )
-      if (formData.tenantId) {
-        updateCookie(CookieEnum.TENANT_ID, formData.tenantId)
+      // 2FA açıksa token gelmez; mfaToken ile 2. adıma geç
+      if (response.data?.mfaRequired && response.data?.mfaToken) {
+        setMfaToken(response.data.mfaToken)
+        setPendingTenantId(formData.tenantId ?? '')
+        setMfaCode('')
+        setGeneralError('')
+        setStep('mfa')
+        return
       }
 
-      // İzinleri ve kullanıcı kimliğini Zustand store'lara yaz (persist → localStorage)
-      usePermissionStore
-        .getState()
-        .setPermissions(
-          response.data.roles ?? [],
-          response.data.permissions ?? [],
-        )
-      useUserStore.getState().setUser({
-        id: response.data.userId,
-        username: response.data.username,
-        email: response.data.email,
-        userCode: response.data.userCode,
-      })
-
-      router.push('/dashboard')
+      applyLoginSuccess(response.data, formData.tenantId ?? '')
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setGeneralError(`Hata: ${message}`)
     }
+  }
+
+  const onVerifyMfa = async () => {
+    if (!/^\d{6}$/.test(mfaCode)) {
+      setGeneralError('6 haneli kod girin')
+      return
+    }
+    setVerifyingMfa(true)
+    setGeneralError('')
+    try {
+      const data = await verifyLoginMfaService(mfaToken, mfaCode)
+      applyLoginSuccess(data, pendingTenantId)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Kod geçersiz veya süresi doldu'
+      setGeneralError(message)
+    } finally {
+      setVerifyingMfa(false)
+    }
+  }
+
+  const backToLogin = () => {
+    setStep('login')
+    setMfaToken('')
+    setMfaCode('')
+    setGeneralError('')
   }
 
   return (
@@ -167,140 +210,199 @@ const AdminLoginPage = () => {
         {/* Header */}
         <div className="text-center">
           <div className="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-            <Shield className="h-8 w-8 text-primary" />
+            {step === 'mfa' ? (
+              <KeyRound className="h-8 w-8 text-primary" />
+            ) : (
+              <Shield className="h-8 w-8 text-primary" />
+            )}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Girişi</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {step === 'mfa' ? 'İki Adımlı Doğrulama' : 'Admin Girişi'}
+          </h1>
           <p className="mt-2 text-muted-foreground">
-            Yönetim paneline erişmek için giriş yapınız
+            {step === 'mfa'
+              ? 'Authenticator uygulamanızdaki 6 haneli kodu girin'
+              : 'Yönetim paneline erişmek için giriş yapınız'}
           </p>
         </div>
 
-        {/* Login Form */}
+        {/* Login / MFA Form */}
         <Card className="border-2">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-center text-2xl">Hoş Geldiniz</CardTitle>
+            <CardTitle className="text-center text-2xl">
+              {step === 'mfa' ? 'Doğrulama Kodu' : 'Hoş Geldiniz'}
+            </CardTitle>
             <CardDescription className="text-center">
-              Hesabınıza giriş yaparak devam edin
+              {step === 'mfa'
+                ? 'Hesabınızı korumak için ikinci adım gerekli'
+                : 'Hesabınıza giriş yaparak devam edin'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {generalError && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{generalError}</AlertDescription>
-                </Alert>
-              )}
+            {step === 'mfa' ? (
+              <div className="space-y-4">
+                {generalError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{generalError}</AlertDescription>
+                  </Alert>
+                )}
 
-              {/* Email Field */}
-              <div className="space-y-2">
-                <Label htmlFor="usernameOrEmail">
-                  E-posta Adresi veya Kullanıcı Adı
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <div className="space-y-2">
+                  <Label htmlFor="mfaCode">Doğrulama Kodu</Label>
                   <Input
-                    id="usernameOrEmail"
-                    placeholder="admin@example.com veya admin"
-                    {...register('usernameOrEmail')}
-                    className="pl-10"
-                    disabled={isSubmitting}
-                    autoComplete="usernameOrEmail"
+                    id="mfaCode"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={mfaCode}
+                    onChange={e => {
+                      setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+                      if (generalError) setGeneralError('')
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') onVerifyMfa()
+                    }}
+                    disabled={verifyingMfa}
+                    autoFocus
+                    className="text-center font-mono text-lg tracking-[0.5em]"
                   />
                 </div>
-                {errors.usernameOrEmail && (
-                  <p className="text-sm text-destructive">
-                    {errors.usernameOrEmail.message}
-                  </p>
-                )}
-              </div>
 
-              {/* Tenant Field */}
-              <div className="space-y-2">
-                <Label htmlFor="tenantId">Tenant ID (opsiyonel)</Label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="tenantId"
-                    placeholder="Tenant ID (ör. tenant1, basedb)"
-                    {...register('tenantId')}
-                    className="pl-10"
-                    disabled={isSubmitting}
-                    autoComplete="organization"
-                  />
+                <Button
+                  type="button"
+                  className="w-full"
+                  onClick={onVerifyMfa}
+                  disabled={verifyingMfa || mfaCode.length !== 6}
+                >
+                  {verifyingMfa ? (
+                    <>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                      Doğrulanıyor...
+                    </>
+                  ) : (
+                    'Doğrula ve Giriş Yap'
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={backToLogin}
+                  disabled={verifyingMfa}
+                >
+                  Girişe geri dön
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {generalError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{generalError}</AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="usernameOrEmail">
+                    E-posta Adresi veya Kullanıcı Adı
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="usernameOrEmail"
+                      placeholder="admin@example.com veya admin"
+                      {...register('usernameOrEmail')}
+                      className="pl-10"
+                      disabled={isSubmitting}
+                      autoComplete="usernameOrEmail"
+                    />
+                  </div>
+                  {errors.usernameOrEmail && (
+                    <p className="text-sm text-destructive">
+                      {errors.usernameOrEmail.message}
+                    </p>
+                  )}
                 </div>
-              </div>
 
-              {/* Password Field */}
-              <div className="space-y-2">
-                <Label htmlFor="password">Şifre</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Şifrenizi giriniz"
-                    {...register('password')}
-                    className="pl-10 pr-10"
-                    disabled={isSubmitting}
-                    autoComplete="current-password"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                    disabled={isSubmitting}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
+                {/* Tenant Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="tenantId">Tenant ID (opsiyonel)</Label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="tenantId"
+                      placeholder="Tenant ID (ör. tenant1, basedb)"
+                      {...register('tenantId')}
+                      className="pl-10"
+                      disabled={isSubmitting}
+                      autoComplete="organization"
+                    />
+                  </div>
                 </div>
-                {errors.password && (
-                  <p className="text-sm text-destructive">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
 
-              {/* Submit Button */}
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                    Giriş Yapılıyor...
-                  </>
-                ) : (
-                  'Giriş Yap'
-                )}
-              </Button>
-            </form>
+                {/* Password Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="password">Şifre</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Şifrenizi giriniz"
+                      {...register('password')}
+                      className="pl-10 pr-10"
+                      disabled={isSubmitting}
+                      autoComplete="current-password"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={isSubmitting}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-sm text-destructive">
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                      Giriş Yapılıyor...
+                    </>
+                  ) : (
+                    'Giriş Yap'
+                  )}
+                </Button>
+              </form>
+            )}
           </CardContent>
         </Card>
 
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground">
           <p>© 2024 Yönetim Paneli. Tüm hakları saklıdır.</p>
-        </div>
-
-        {/* Demo Credentials */}
-        <div className="bg-muted/50 rounded-lg p-4 text-sm">
-          <p className="mb-2 text-center font-medium">Demo Bilgileri</p>
-          <div className="space-y-1 text-muted-foreground">
-            <p>
-              <strong>Zod Validasyonu:</strong> Form otomatik olarak e-posta
-              formatını ve şifre uzunluğunu kontrol eder.
-            </p>
-            <p>
-              Kullanıcı oluşturmak için{' '}
-              <code className="rounded bg-muted px-1">POST /api/users</code>{' '}
-              endpoint'ini kullanın.
-            </p>
-          </div>
         </div>
       </div>
     </div>

@@ -1,3 +1,5 @@
+import { SecuritySettings } from '@/app/_components/security/SecuritySettings'
+
 export const metadata = {
   title: 'Ayarlar',
 }
@@ -10,14 +12,15 @@ export default function SettingsPage() {
           Ayarlar
         </h1>
         <p className="text-sm text-gray-500 dark:text-slate-400">
-          Panel ayarları yakında burada olacak.
+          Hesap ve güvenlik ayarlarınızı yönetin.
         </p>
       </header>
 
-      <div className="flex items-center justify-center rounded-2xl border border-dashed border-gray-300 py-24 dark:border-slate-700">
-        <p className="text-sm text-gray-400 dark:text-slate-500">
-          Henüz yapılandırılacak bir ayar yok.
-        </p>
+      <div className="space-y-4">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-slate-600">
+          Hesap Güvenliği
+        </h2>
+        <SecuritySettings />
       </div>
     </div>
   )
