@@ -55,43 +55,56 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const membershipRemovedSeq = useChatWsStore(s => s.membershipRemovedSeq)
   const unreadCounts = useChatWsStore(s => s.unreadCounts)
 
-  const upsertGroupInList = useCallback(
-    (group: ChatGroup) => {
-      setGroups(prev => {
-        if (prev.some(g => g.id === group.id)) return prev
-        const next = [group, ...prev]
-        if (connected) subscribeToAllGroups(next, myLevel)
-        return next
-      })
-    },
-    [connected, myLevel, subscribeToAllGroups],
-  )
+  const upsertGroupInList = useCallback((group: ChatGroup) => {
+    setGroups(prev =>
+      prev.some(g => g.id === group.id) ? prev : [group, ...prev],
+    )
+  }, [])
 
-  const reloadGroupsFromApi = useCallback(() => {
-    // AC grupları: header'sız (backend basedb bağlamı).
-    // TC grupları: X-Tenant-Id ile oturum tenant'ından (varsa).
-    // İki sonuç id'ye göre tekilleştirilip birleştirilir.
-    const acPromise = getMyGroupsService()
-    const tcPromise = sessionTenantId
-      ? getMyGroupsService(sessionTenantId).catch(() => [] as ChatGroup[])
-      : Promise.resolve<ChatGroup[]>([])
-
-    Promise.all([acPromise, tcPromise])
-      .then(([acGroups, tcGroups]) => {
-        const byId = new Map<string, ChatGroup>()
-        for (const g of acGroups) byId.set(g.id, g)
-        for (const g of tcGroups) byId.set(g.id, g)
-        const merged = [...byId.values()]
-        setGroups(merged)
-        if (connected) subscribeToAllGroups(merged, myLevel)
-      })
+  // AC grupları — header'sız (backend basedb bağlamı). Sayfa açılışında tek istek.
+  // AC kısmını değiştirir, yüklüyse TC gruplarını korur.
+  const loadAcGroups = useCallback(() => {
+    getMyGroupsService()
+      .then(ac =>
+        setGroups(prev => [...prev.filter(g => g.tenantId !== null), ...ac]),
+      )
       .catch(() => {})
-  }, [sessionTenantId, connected, myLevel, subscribeToAllGroups])
+  }, [])
 
-  // Grupları yükle ve tüm gruplara mesaj sub'ı at
+  // TC grupları — yalnızca TC sekmesi seçiliyken X-Tenant-Id ile çekilir.
+  // TC kısmını değiştirir, AC gruplarını korur.
+  const loadTcGroups = useCallback(() => {
+    if (!sessionTenantId) return
+    getMyGroupsService(sessionTenantId)
+      .then(tc =>
+        setGroups(prev => [...prev.filter(g => g.tenantId === null), ...tc]),
+      )
+      .catch(() => {})
+  }, [sessionTenantId])
+
+  // WS sinyalleri için yeniden çekme — AC her zaman, TC yalnızca o sekme açıksa.
+  const refetchGroups = useCallback(() => {
+    loadAcGroups()
+    if (activeTab === 'TC') loadTcGroups()
+  }, [loadAcGroups, loadTcGroups, activeTab])
+
+  // Mount + refreshToken: yalnızca AC (tek istek).
   useEffect(() => {
-    reloadGroupsFromApi()
-  }, [reloadGroupsFromApi, refreshToken])
+    loadAcGroups()
+  }, [loadAcGroups, refreshToken])
+
+  // TC sekmesi seçildiğinde TC gruplarını çek.
+  useEffect(() => {
+    if (activeTab === 'TC') loadTcGroups()
+  }, [activeTab, loadTcGroups, refreshToken])
+
+  // Tek abonelik kaynağı — bağlantı kurulu ve grup listesi doluyken tüm
+  // gruplara mesaj sub'ı at. Fetch'ten ayrı olduğu için fetch'i tetiklemez.
+  useEffect(() => {
+    if (connected && groups.length > 0) {
+      subscribeToAllGroups(groups, myLevel)
+    }
+  }, [connected, groups, myLevel, subscribeToAllGroups])
 
   // Yeni grup sinyali (/topic/groups/new — herkese yayın)
   useEffect(() => {
@@ -100,19 +113,13 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
 
     // visibilityLevel yüksek gruplar davetli üyelere yine de görünmeli — API kaynağı doğru
     if (signal.visibilityLevel > myLevel) {
-      reloadGroupsFromApi()
+      refetchGroups()
       return
     }
 
     // eslint-disable-next-line react-hooks/set-state-in-effect -- WS new group signal
     upsertGroupInList(signal)
-  }, [
-    newGroupSeq,
-    newGroupSignal,
-    myLevel,
-    reloadGroupsFromApi,
-    upsertGroupInList,
-  ])
+  }, [newGroupSeq, newGroupSignal, myLevel, refetchGroups, upsertGroupInList])
 
   // Davet / tekrar dahil olma sinyali — üye olduğu için visibility filtresi YOK
   useEffect(() => {
@@ -124,11 +131,11 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
       upsertGroupInList(group)
       return
     }
-    reloadGroupsFromApi()
+    refetchGroups()
   }, [
     membershipJoinedSeq,
     membershipJoinedSignal,
-    reloadGroupsFromApi,
+    refetchGroups,
     upsertGroupInList,
   ])
 
@@ -138,19 +145,9 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
     const event = membershipRemovedSignal
     if (event.groupId === activeGroupId) return
     if (!groups.some(g => g.id === event.groupId)) return
-    const next = groups.filter(g => g.id !== event.groupId)
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setGroups(next)
-    if (connected) subscribeToAllGroups(next, myLevel)
-  }, [
-    membershipRemovedSeq,
-    membershipRemovedSignal,
-    activeGroupId,
-    groups,
-    connected,
-    myLevel,
-    subscribeToAllGroups,
-  ])
+    setGroups(groups.filter(g => g.id !== event.groupId))
+  }, [membershipRemovedSeq, membershipRemovedSignal, activeGroupId, groups])
 
   // Silinen grup sinyali
   useEffect(() => {
@@ -158,21 +155,12 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
     const deletedId = deletedGroupSignal
     useChatWsStore.setState({ deletedGroupSignal: null })
     if (!groups.some(g => g.id === deletedId)) return
-    const next = groups.filter(g => g.id !== deletedId)
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setGroups(next)
-    if (connected) subscribeToAllGroups(next, myLevel)
+    setGroups(groups.filter(g => g.id !== deletedId))
     if (activeGroupId === deletedId) {
       useChatWsStore.getState().unsubscribeFromGroup()
     }
-  }, [
-    deletedGroupSignal,
-    activeGroupId,
-    groups,
-    connected,
-    myLevel,
-    subscribeToAllGroups,
-  ])
+  }, [deletedGroupSignal, activeGroupId, groups])
 
   const handleGroupClick = (group: ChatGroup) => {
     subscribeToGroup(group.id, group.tenantId)
