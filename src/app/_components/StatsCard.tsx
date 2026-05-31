@@ -32,16 +32,22 @@ export function StatsCard({ stat, index }: StatsCardProps) {
         >
           <stat.icon />
         </div>
-        <div
-          className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-            stat.trend === 'up'
-              ? 'bg-emerald-500/20 text-emerald-400'
-              : 'bg-rose-500/20 text-rose-400'
-          }`}
-        >
-          {stat.trend === 'up' ? <Icons.TrendingUp /> : <Icons.TrendingDown />}
-          {stat.change}
-        </div>
+        {stat.change && stat.trend && (
+          <div
+            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+              stat.trend === 'up'
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : 'bg-rose-500/20 text-rose-400'
+            }`}
+          >
+            {stat.trend === 'up' ? (
+              <Icons.TrendingUp />
+            ) : (
+              <Icons.TrendingDown />
+            )}
+            {stat.change}
+          </div>
+        )}
       </div>
       <h3
         className={`mb-1 text-sm font-medium ${

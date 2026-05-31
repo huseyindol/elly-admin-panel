@@ -4,8 +4,9 @@ import React from 'react'
 export interface StatData {
   title: string
   value: string
-  change: string
-  trend: 'up' | 'down'
+  /** Opsiyonel değişim rozeti (geçmiş veri yoksa gösterilmez) */
+  change?: string
+  trend?: 'up' | 'down'
   icon: () => React.ReactNode
   gradient: string
 }
