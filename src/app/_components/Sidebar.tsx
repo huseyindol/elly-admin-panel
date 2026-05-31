@@ -207,7 +207,6 @@ interface SidebarProps {
   isOpen: boolean
   onClose: () => void
   isCollapsed: boolean
-  onToggleCollapse: () => void
 }
 
 /** Menü öğesini PermissionGate ile saran yardımcı bileşen */
@@ -299,7 +298,6 @@ export function Sidebar({
   isOpen,
   onClose,
   isCollapsed,
-  onToggleCollapse,
 }: Readonly<SidebarProps>) {
   const pathname = usePathname()
   const { isDarkMode } = useAdminTheme()
@@ -418,17 +416,6 @@ export function Sidebar({
               aria-label="Menüyü kapat"
             >
               <Icons.X />
-            </button>
-            <button
-              onClick={onToggleCollapse}
-              className={`hidden rounded-lg p-2 transition-colors lg:flex ${
-                isDarkMode
-                  ? 'text-slate-400 hover:bg-slate-800'
-                  : 'text-gray-500 hover:bg-gray-100'
-              }`}
-              aria-label={isCollapsed ? 'Menüyü genişlet' : 'Menüyü daralt'}
-            >
-              {isCollapsed ? <Icons.ChevronRight /> : <Icons.ChevronLeft />}
             </button>
           </div>
 

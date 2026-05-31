@@ -38,7 +38,6 @@ export default function BaseAdminLayout({
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           isCollapsed={isCollapsed}
-          onToggleCollapse={toggleCollapse}
         />
 
         <main className="min-h-screen w-0 flex-1 lg:ml-0">
