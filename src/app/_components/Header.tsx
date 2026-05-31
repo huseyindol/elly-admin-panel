@@ -1,6 +1,7 @@
 'use client'
 
 import { useAdminTheme } from '../_hooks'
+import { CommandPalette } from './CommandPalette'
 import { Icons } from './Icons'
 
 interface HeaderProps {
@@ -65,35 +66,8 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Search */}
-          <div
-            className={`hidden items-center gap-2 rounded-xl px-4 py-2.5 md:flex ${
-              isDarkMode
-                ? 'border border-slate-700/50 bg-slate-800/50'
-                : 'border border-gray-200 bg-white'
-            }`}
-          >
-            <Icons.Search />
-            <input
-              id="search"
-              type="text"
-              placeholder="Ara..."
-              className={`w-48 bg-transparent text-sm outline-none ${
-                isDarkMode
-                  ? 'text-white placeholder-slate-500'
-                  : 'text-gray-900 placeholder-gray-400'
-              }`}
-            />
-            <kbd
-              className={`rounded px-2 py-1 text-xs ${
-                isDarkMode
-                  ? 'bg-slate-700 text-slate-300'
-                  : 'bg-gray-100 text-gray-500'
-              }`}
-            >
-              ⌘K
-            </kbd>
-          </div>
+          {/* Search — ⌘K komut paleti */}
+          <CommandPalette />
 
           {/* Theme Toggle */}
           <button
