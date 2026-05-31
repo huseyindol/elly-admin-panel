@@ -1,6 +1,7 @@
 'use client'
 import { Header, Sidebar } from '@/app/_components'
 import { useAdminTheme, useSidebarCollapsed } from '@/app/_hooks'
+import { useChatConnection } from '@/hooks/use-chat-connection'
 import { useState } from 'react'
 import { Toaster } from 'sonner'
 
@@ -12,6 +13,10 @@ export default function BaseAdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { isDarkMode } = useAdminTheme()
   const { isCollapsed, toggleCollapse } = useSidebarCollapsed()
+
+  // WS bağlantısı admin oturumu boyunca global — chat + bildirimler aynı bağlantıyı
+  // kullanır (zil her sayfada olduğu için bağlantı yalnız chat sayfasında değil).
+  useChatConnection()
 
   return (
     <div

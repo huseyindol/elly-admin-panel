@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useChatConnection } from '@/hooks/use-chat-connection'
 import { ChatSidebar } from '@/app/_components/chat/ChatSidebar'
 import { ChatWindow } from '@/app/_components/chat/ChatWindow'
 import { ChatInput } from '@/app/_components/chat/ChatInput'
@@ -23,8 +22,7 @@ import { AlertCircle, Users, Trash2, ChevronLeft, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function ChatPage() {
-  useChatConnection()
-
+  // WS bağlantısı artık BaseAdminLayout'ta global olarak kuruluyor.
   const { isDarkMode } = useAdminTheme()
   const activeGroupId = useChatWsStore(s => s.activeGroupId)
   const activeGroupTenantId = useChatWsStore(s => s.activeGroupTenantId)
