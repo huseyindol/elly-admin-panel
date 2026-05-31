@@ -12,6 +12,7 @@ import type {
   ChatTyping,
   ChatWsError,
 } from '@/types/chat'
+import type { AppNotification } from '@/types/notification'
 
 interface ChatWsState {
   client: Client | null
@@ -36,6 +37,11 @@ interface ChatWsState {
   /** Mesaj gönderme reddedildiğinde kişisel hata kuyruğu */
   chatErrorSignal: ChatWsError | null
   chatErrorSeq: number
+  /** Yeni bildirim sinyali (WS /user/queue/notifications) — Header tüketir */
+  notificationSignal: AppNotification | null
+  notificationSeq: number
+  /** WS'ten gelen okunmamış bildirim sayısı (kaynak-doğruluk) */
+  notificationUnreadCount: number | null
   /** groupId → okunmamış mesaj sayısı (sidebar badge için) */
   unreadCounts: Record<string, number>
 
@@ -92,6 +98,9 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
   membershipRemovedSeq: 0,
   chatErrorSignal: null,
   chatErrorSeq: 0,
+  notificationSignal: null,
+  notificationSeq: 0,
+  notificationUnreadCount: null,
   unreadCounts: {},
 
   globalSubs: [],
@@ -191,6 +200,26 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
               // ignore parse errors
             }
           }),
+          // Bildirimler — chat ile aynı WS bağlantısı (yeni bağlantı yok)
+          client.subscribe('/user/queue/notifications', msg => {
+            try {
+              const n: AppNotification = JSON.parse(msg.body)
+              set(s => ({
+                notificationSignal: n,
+                notificationSeq: s.notificationSeq + 1,
+              }))
+            } catch {
+              // ignore parse errors
+            }
+          }),
+          client.subscribe('/user/queue/notifications/unread-count', msg => {
+            try {
+              const data = JSON.parse(msg.body) as { count: number }
+              set({ notificationUnreadCount: data.count })
+            } catch {
+              // ignore parse errors
+            }
+          }),
         ]
 
         set(s => ({ globalSubs: [...s.globalSubs, ...personalSubs] }))
@@ -277,6 +306,9 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
       membershipRemovedSeq: 0,
       chatErrorSignal: null,
       chatErrorSeq: 0,
+      notificationSignal: null,
+      notificationSeq: 0,
+      notificationUnreadCount: null,
     })
   },
 

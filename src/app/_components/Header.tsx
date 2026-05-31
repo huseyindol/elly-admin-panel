@@ -3,6 +3,7 @@
 import { useAdminTheme } from '../_hooks'
 import { CommandPalette } from './CommandPalette'
 import { Icons } from './Icons'
+import { NotificationBell } from './NotificationBell'
 
 interface HeaderProps {
   onToggleSidebar: () => void
@@ -82,18 +83,7 @@ export function Header({
           </button>
 
           {/* Notifications */}
-          <button
-            className={`relative rounded-xl p-2.5 transition-colors ${
-              isDarkMode
-                ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <Icons.Bell />
-            <span className="notification-badge absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-xs font-medium text-white">
-              5
-            </span>
-          </button>
+          <NotificationBell />
         </div>
       </div>
     </header>

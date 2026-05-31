@@ -19,6 +19,12 @@ Kayıt formatı:
 
 ### Added
 
+- **Bildirim (Notification) UI** — header zil ikonu gerçek, kalıcı bildirimlerle:
+  - `src/types/notification.ts`, `src/app/_services/notifications.services.ts` (list / unread-count / read / read-all / delete)
+  - `src/app/_hooks/useNotifications.ts` (TanStack Query + WS→query köprüsü)
+  - `src/app/_components/NotificationBell.tsx` — rozet + dropdown (okundu/sil/tümünü okundu, tıkla→`link`)
+  - `chat-ws-store`'a `/user/queue/notifications` + `.../unread-count` abonelikleri (chat ile aynı WS)
+  - WS bağlantısı `BaseAdminLayout`'a taşındı (global; zil her sayfada canlı)
 - **⌘K Komut Paleti** — `src/app/_components/CommandPalette.tsx`: header arama kutusu yerine; sayfa/modül navigasyonu, permission filtreli, klavye ile gezinme (⌘K aç/kapa, ↑/↓, Enter, Esc)
 - **Dashboard gerçek veri** — `src/app/(baseLayout)/dashboard/page.tsx` mock e-ticaret yerine gerçek CMS metrikleri (Yazı/Form/Kullanıcı/Aktif Mail/Chat/E-posta kartları + "Son E-postalar" ve "Son Yazılar" listeleri, TanStack Query)
 - `docs/notifications/BACKEND_NOTIFICATIONS_PROMPT.md` — backend bildirim (notification) domaini için kopyala-yapıştır prompt
