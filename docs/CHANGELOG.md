@@ -19,6 +19,9 @@ Kayıt formatı:
 
 ### Added
 
+- **⌘K Komut Paleti** — `src/app/_components/CommandPalette.tsx`: header arama kutusu yerine; sayfa/modül navigasyonu, permission filtreli, klavye ile gezinme (⌘K aç/kapa, ↑/↓, Enter, Esc)
+- **Dashboard gerçek veri** — `src/app/(baseLayout)/dashboard/page.tsx` mock e-ticaret yerine gerçek CMS metrikleri (Yazı/Form/Kullanıcı/Aktif Mail/Chat/E-posta kartları + "Son E-postalar" ve "Son Yazılar" listeleri, TanStack Query)
+- `docs/notifications/BACKEND_NOTIFICATIONS_PROMPT.md` — backend bildirim (notification) domaini için kopyala-yapıştır prompt
 - **2FA / MFA (Prompt 10):** TOTP tabanlı iki adımlı doğrulama
   - `src/types/mfa.ts`, `src/app/_services/mfa.services.ts` — status / setup / setupVerify / disable / verifyLogin servisleri
   - `src/app/_components/security/` — `SecuritySettings`, `MfaSetupDialog` (QR + secret), `MfaDisableDialog` (şifreyle kapatma)
@@ -33,6 +36,8 @@ Kayıt formatı:
 
 ### Changed
 
+- **Sidebar collapse toggle tekilleştirildi** — iki kopya butondan biri kaldırıldı; `Header.tsx`'deki kaldı, `Sidebar.tsx`'deki + `onToggleCollapse` prop'u kaldırıldı (`BaseAdminLayout.tsx`)
+- `src/app/_components/StatsCard.tsx` + `types.ts` — `StatData.change/trend` opsiyonel; değişim rozeti yalnızca veri varsa gösterilir
 - **2FA (Prompt 10):**
   - `src/app/(baseLayout)/settings/page.tsx` — boş placeholder yerine "Hesap Güvenliği" 2FA bölümü
   - `src/app/(layoutLess)/login/page.tsx` — `mfaRequired` ise login 2. adımı (6 haneli kod ekranı); cookie yazımı `applyLoginSuccess` helper'ına ayrıldı
