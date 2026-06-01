@@ -250,7 +250,8 @@ export default function ChatPage() {
                   <ChatTypingIndicator groupId={activeGroupId} />
                 </div>
                 <div
-                  className={`border-t p-3 sm:p-4 ${isDarkMode ? 'border-slate-800/50' : 'border-gray-200'}`}
+                  className={`border-t px-3 pt-3 sm:px-4 sm:pt-4 ${isDarkMode ? 'border-slate-800/50' : 'border-gray-200'}`}
+                  style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
                 >
                   <ChatInput
                     groupId={activeGroupId}
