@@ -75,6 +75,13 @@
     @apply border-border;
   }
 
+  /* Prevent iOS/Android auto-zoom on input focus (triggered when font-size < 16px) */
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1em);
+  }
+
   body {
     @apply bg-background font-sans text-foreground;
     font-feature-settings:
