@@ -251,7 +251,9 @@ export default function ChatPage() {
                 </div>
                 <div
                   className={`border-t px-3 pt-3 sm:px-4 sm:pt-4 ${isDarkMode ? 'border-slate-800/50' : 'border-gray-200'}`}
-                  style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
+                  style={{
+                    paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
+                  }}
                 >
                   <ChatInput
                     groupId={activeGroupId}
