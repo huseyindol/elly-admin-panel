@@ -4,6 +4,7 @@ import SockJS from 'sockjs-client'
 import { getGlobalCookies } from '@/context/CookieContext'
 import { CookieEnum } from '@/utils/constant/cookieConstant'
 import { getMyUserId } from '@/utils/chat-role'
+import { refreshAccessToken } from '@/utils/services/fetcher'
 import type {
   ChatGroup,
   ChatMembershipEvent,
@@ -136,6 +137,41 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
       reconnectDelay: 5000,
       heartbeatIncoming: 25000,
       heartbeatOutgoing: 25000,
+
+      // Her (yeniden) bağlanmadan önce token'ı tazele. Token süresi dolduğunda
+      // (örn. heartbeat sırasında server bağlantıyı kapatınca) STOMP eski token'la
+      // yeniden bağlanmaya çalışır; burada sessizce /api/auth/refresh ile yenileyip
+      // yeni token'la bağlanırız → logout olmadan. HttpOnly refreshToken proxy'de
+      // server-side okunur, HttpOnly cookie'ler korunur.
+      beforeConnect: async () => {
+        let accessToken = getGlobalCookies()[CookieEnum.ACCESS_TOKEN]
+        const expiredDate = Number(getGlobalCookies()[CookieEnum.EXPIRED_DATE])
+        const needsRefresh =
+          !accessToken ||
+          !Number.isFinite(expiredDate) ||
+          Date.now() >= expiredDate - 5000
+
+        if (needsRefresh) {
+          try {
+            const res = await refreshAccessToken()
+            accessToken =
+              res.data?.token ?? getGlobalCookies()[CookieEnum.ACCESS_TOKEN]
+          } catch {
+            // refresh gerçekten başarısız (refreshToken da geçersiz) → oturum bitti
+            if (
+              typeof window !== 'undefined' &&
+              !window.location.pathname.startsWith('/login')
+            ) {
+              window.location.replace('/api/auth/logout')
+            }
+            return
+          }
+        }
+
+        if (accessToken) {
+          client.connectHeaders = { Authorization: `Bearer ${accessToken}` }
+        }
+      },
 
       onConnect: (_frame: IFrame) => {
         // connectedSeq her başarılı bağlantıda artar → ChatSidebar abonelik

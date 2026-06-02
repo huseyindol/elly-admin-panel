@@ -217,3 +217,21 @@ const csrRefreshToken = async (): Promise<RefreshTokenResponseType> => {
 
   return response
 }
+
+/**
+ * Tek-uçuş (deduped) sessiz token yenileme.
+ *
+ * REST 401 akışı ile WS `beforeConnect` aynı `refreshTokenPromise` singleton'ını
+ * paylaşır → eşzamanlı çift refresh olmaz. HttpOnly refreshToken `/api/auth/refresh`
+ * proxy'sinde server-side okunur; HttpOnly cookie'ler korunur (model değişmez).
+ *
+ * Başarısızsa (refreshToken da geçersiz) reject eder — çağıran logout yapar.
+ */
+export const refreshAccessToken = (): Promise<RefreshTokenResponseType> => {
+  if (!refreshTokenPromise) {
+    refreshTokenPromise = csrRefreshToken().finally(() => {
+      refreshTokenPromise = null
+    })
+  }
+  return refreshTokenPromise
+}
