@@ -17,12 +17,16 @@ import type { AppNotification } from '@/types/notification'
 interface ChatWsState {
   client: Client | null
   connected: boolean
+  /** Her başarılı (re)connect'te artar — abonelikleri yeniden kurmak için tetik */
+  connectedSeq: number
   activeGroupId: string | null
   /** Aktif grubun tenantId'si — TC routing ve X-Tenant-Id header için */
   activeGroupTenantId: string | null
   messages: Record<string, ChatMessage[]>
   presence: Record<number, 'ONLINE' | 'OFFLINE'>
-  typingUsers: Record<string, Set<string>>
+  /** groupId → (userId → username). userId ile anahtarlı ki mesaj gelince
+   *  senderId ile güvenilir şekilde temizlenebilsin (username uyuşmazlığı olmaz). */
+  typingUsers: Record<string, Map<number, string>>
   /** Yeni grup bildirim sinyali — sidebar dinler */
   newGroupSignal: ChatGroup | null
   newGroupSeq: number
@@ -61,6 +65,8 @@ interface ChatWsState {
   sendTyping: (groupId: string) => void
   sendRead: (groupId: string) => void
   prependHistory: (groupId: string, messages: ChatMessage[]) => void
+  /** Tek mesaj ekler (REST gönderim yanıtı için optimistic insert; id ile dedup) */
+  addMessage: (groupId: string, message: ChatMessage) => void
   markMessageDeleted: (groupId: string, messageId: string) => void
 }
 
@@ -84,6 +90,7 @@ function mergeChatMessages(
 export const useChatWsStore = create<ChatWsState>((set, get) => ({
   client: null,
   connected: false,
+  connectedSeq: 0,
   activeGroupId: null,
   activeGroupTenantId: null,
   messages: {},
@@ -131,7 +138,9 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
       heartbeatOutgoing: 25000,
 
       onConnect: (_frame: IFrame) => {
-        set({ connected: true })
+        // connectedSeq her başarılı bağlantıda artar → ChatSidebar abonelik
+        // effect'i, `connected` zaten true kalmış olsa bile yeniden tetiklenir.
+        set(s => ({ connected: true, connectedSeq: s.connectedSeq + 1 }))
 
         // Global sub: presence
         const presenceSub = client.subscribe('/topic/presence', msg => {
@@ -353,11 +362,16 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
             const existing = s.messages[group.id] ?? []
             if (existing.some(m => m.id === data.id)) return s
 
+            // Mesaj geldi → gönderenin "yazıyor"unu hemen temizle (userId ile)
+            const typingMap = new Map(s.typingUsers[group.id] ?? [])
+            if (data.senderId != null) typingMap.delete(data.senderId)
+
             return {
               messages: {
                 ...s.messages,
                 [group.id]: [...existing, data],
               },
+              typingUsers: { ...s.typingUsers, [group.id]: typingMap },
               unreadCounts:
                 s.activeGroupId === group.id
                   ? s.unreadCounts
@@ -414,6 +428,21 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
         [groupId]: mergeChatMessages(s.messages[groupId] ?? [], messages),
       },
     }))
+  },
+
+  addMessage: (groupId, message) => {
+    set(s => {
+      // Gönderince kendi "yazıyor"unu da temizle (userId ile)
+      const typingMap = new Map(s.typingUsers[groupId] ?? [])
+      if (message.senderId != null) typingMap.delete(message.senderId)
+      return {
+        messages: {
+          ...s.messages,
+          [groupId]: mergeChatMessages(s.messages[groupId] ?? [], [message]),
+        },
+        typingUsers: { ...s.typingUsers, [groupId]: typingMap },
+      }
+    })
   },
 
   markMessageDeleted: (groupId, messageId) => {
@@ -556,24 +585,47 @@ function attachActiveGroupSubs(
     ? `/topic/tenant/${tenantId}/group/${groupId}`
     : `/topic/group/${groupId}`
 
+  // Aktif grubun mesajları — allGroupSubs zamanlamasından bağımsız garanti.
+  // Aynı mesaj allGroupSubs'tan da gelebilir; id ile dedup edilir (çift yok).
+  subs.push(
+    client.subscribe(baseTopic, msg => {
+      try {
+        const data: ChatMessage = JSON.parse(msg.body)
+        set(s => {
+          const existing = s.messages[groupId] ?? []
+          if (existing.some(m => m.id === data.id)) return s
+          // Mesaj geldi → gönderenin "yazıyor"unu temizle (userId ile)
+          const typingMap = new Map(s.typingUsers[groupId] ?? [])
+          if (data.senderId != null) typingMap.delete(data.senderId)
+          return {
+            messages: { ...s.messages, [groupId]: [...existing, data] },
+            typingUsers: { ...s.typingUsers, [groupId]: typingMap },
+          }
+        })
+      } catch {
+        // ignore parse errors
+      }
+    }),
+  )
+
   subs.push(
     client.subscribe(`${baseTopic}/typing`, msg => {
       const data: ChatTyping = JSON.parse(msg.body)
       set(s => {
-        const typingSet = new Set(s.typingUsers[groupId] ?? [])
+        const map = new Map(s.typingUsers[groupId] ?? [])
         if (data.typing) {
-          typingSet.add(data.username)
+          map.set(data.userId, data.username)
           setTimeout(() => {
             set(prev => {
-              const t = new Set(prev.typingUsers[groupId] ?? [])
-              t.delete(data.username)
-              return { typingUsers: { ...prev.typingUsers, [groupId]: t } }
+              const m = new Map(prev.typingUsers[groupId] ?? [])
+              m.delete(data.userId)
+              return { typingUsers: { ...prev.typingUsers, [groupId]: m } }
             })
-          }, 5500)
+          }, 2500)
         } else {
-          typingSet.delete(data.username)
+          map.delete(data.userId)
         }
-        return { typingUsers: { ...s.typingUsers, [groupId]: typingSet } }
+        return { typingUsers: { ...s.typingUsers, [groupId]: map } }
       })
     }),
   )

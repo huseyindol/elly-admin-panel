@@ -31,7 +31,7 @@ export function ChatInput({
   const [content, setContent] = useState('')
   const [uploading, setUploading] = useState(false)
   const [sending, setSending] = useState(false)
-  const { sendTyping } = useChatWsStore()
+  const { sendTyping, addMessage } = useChatWsStore()
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -61,13 +61,22 @@ export function ChatInput({
     contentType: ChatMessageType = 'TEXT',
   ) => {
     if (!canWrite) return
+    // Bekleyen typing event'ini iptal et — gönderimden sonra geç bir
+    // "typing:true" sızıp karşı tarafta "yazıyor"u yeniden tetiklemesin.
+    if (typingTimeout.current) {
+      clearTimeout(typingTimeout.current)
+      typingTimeout.current = null
+    }
     setSending(true)
     try {
-      await sendMessageService(
+      // REST yanıtı dolu içerikli mesajı döner → hemen ekle (optimistic).
+      // WS echo'su aynı id ile gelirse dedup edilir (boş echo'yu da eler).
+      const created = await sendMessageService(
         groupId,
         { content: payloadContent, contentType },
         tenantId,
       )
+      addMessage(groupId, created)
     } catch (err) {
       handleSendError(err)
       throw err

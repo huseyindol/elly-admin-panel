@@ -1,14 +1,19 @@
 'use client'
 
 import { useChatWsStore } from '@/stores/chat-ws-store'
+import { useMyUserId } from '@/stores/user-store'
 
 interface Props {
   groupId: string
 }
 
 export function ChatTypingIndicator({ groupId }: Props) {
-  const typingSet = useChatWsStore(s => s.typingUsers[groupId])
-  const typingUsers = [...(typingSet ?? [])]
+  const typingMap = useChatWsStore(s => s.typingUsers[groupId])
+  const myUserId = useMyUserId()
+  // userId → username map'inden, kendini (userId ile) çıkararak isimleri al
+  const typingUsers = [...(typingMap?.entries() ?? [])]
+    .filter(([userId]) => userId !== myUserId)
+    .map(([, username]) => username)
 
   if (typingUsers.length === 0) return null
 

@@ -43,6 +43,7 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
 
   const activeGroupId = useChatWsStore(s => s.activeGroupId)
   const connected = useChatWsStore(s => s.connected)
+  const connectedSeq = useChatWsStore(s => s.connectedSeq)
   const subscribeToGroup = useChatWsStore(s => s.subscribeToGroup)
   const subscribeToAllGroups = useChatWsStore(s => s.subscribeToAllGroups)
   const clearUnread = useChatWsStore(s => s.clearUnread)
@@ -100,11 +101,13 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
 
   // Tek abonelik kaynağı — bağlantı kurulu ve grup listesi doluyken tüm
   // gruplara mesaj sub'ı at. Fetch'ten ayrı olduğu için fetch'i tetiklemez.
+  // connectedSeq: WS her (yeniden) bağlandığında artar → `connected` zaten
+  // true kalmış olsa bile abonelikler yeniden kurulur (mesajlar canlı gelir).
   useEffect(() => {
     if (connected && groups.length > 0) {
       subscribeToAllGroups(groups, myLevel)
     }
-  }, [connected, groups, myLevel, subscribeToAllGroups])
+  }, [connected, connectedSeq, groups, myLevel, subscribeToAllGroups])
 
   // Yeni grup sinyali (/topic/groups/new — herkese yayın)
   useEffect(() => {
