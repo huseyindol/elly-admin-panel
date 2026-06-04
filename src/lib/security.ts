@@ -93,7 +93,9 @@ export function generateCSP(): string {
     "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
     "img-src 'self' data: https: blob:",
     "worker-src 'self' blob:",
-    "connect-src 'self' https://vercel.live https://*.vercel-insights.com https://www.google-analytics.com https://raw.githubusercontent.com https://avatars.githubusercontent.com http://localhost:8080 https://api.huseyindol.com https://cdn.jsdelivr.net",
+    // WebSocket (SockJS/STOMP chat + bildirim) için wss:// / ws:// host'ları
+    // ayrıca eklenmeli — CSP'de https:// host'u wss:// şemasını kapsamaz.
+    "connect-src 'self' https://vercel.live https://*.vercel-insights.com https://www.google-analytics.com https://raw.githubusercontent.com https://avatars.githubusercontent.com http://localhost:8080 ws://localhost:8080 https://api.huseyindol.com wss://api.huseyindol.com https://cdn.jsdelivr.net",
     "frame-src 'self' https://vercel.live",
     "object-src 'none'",
     "base-uri 'self'",
