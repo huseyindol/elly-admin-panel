@@ -6,7 +6,10 @@
   "editor.formatOnType": false,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "explicit"
+    // Import sırası elle korunur — kaydederken otomatik alfabetik sıralama YAPMA.
+    "source.organizeImports": "never",
+    // Sıralamayı bozmadan yalnızca kullanılmayan import'ları temizle.
+    "source.removeUnusedImports": "explicit"
   },
 
   // Dosya türlerine özel ayarlar
