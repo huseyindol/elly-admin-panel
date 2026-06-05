@@ -1,23 +1,23 @@
 'use client'
 
 import { useMemo } from 'react'
-import { useCookie } from '@/context/CookieContext'
-import { CookieEnum } from '@/utils/constant/cookieConstant'
 import type { Permission } from '@/types/cms'
-import { extractPermissionsFromToken } from '@/lib/auth/permissions'
+import { useMyPermissions } from './useMyPermissions'
 
 /**
- * Client-side permission kontrolü. UI'da buton disable / tooltip / route
- * guard için kullanılır. Kaynak: `accessToken` cookie'sindeki JWT claim'leri.
+ * Client-side permission kontrolü (UI buton disable / tooltip / gate).
+ *
+ * Kaynak: GET /api/v1/users/me/permissions (sunucu). Access token JWE (şifreli:
+ * alg=dir, enc=A256GCM) olduğundan client'ta decode EDİLEMEZ — bu yüzden izinler
+ * token'dan değil endpoint'ten alınır. İzinler yüklenene kadar `false` döner
+ * (buton kısa süre disabled kalır, veri gelince aktifleşir).
  */
 export function usePermission(required: Permission | string): boolean {
-  const { cookies } = useCookie()
-  const token = cookies[CookieEnum.ACCESS_TOKEN]
-
-  return useMemo(() => {
-    if (!token) return false
-    return extractPermissionsFromToken(token).includes(required)
-  }, [token, required])
+  const { data } = useMyPermissions()
+  return useMemo(
+    () => (data?.permissions ?? []).includes(required as string),
+    [data, required],
+  )
 }
 
 /**
@@ -27,15 +27,13 @@ export function usePermission(required: Permission | string): boolean {
 export function usePermissions<K extends string>(
   map: Record<K, Permission | string>,
 ): Record<K, boolean> {
-  const { cookies } = useCookie()
-  const token = cookies[CookieEnum.ACCESS_TOKEN]
-
+  const { data } = useMyPermissions()
   return useMemo(() => {
-    const perms = token ? extractPermissionsFromToken(token) : []
+    const perms = data?.permissions ?? []
     const result = {} as Record<K, boolean>
     for (const key in map) {
-      result[key] = perms.includes(map[key])
+      result[key] = perms.includes(map[key] as string)
     }
     return result
-  }, [token, map])
+  }, [data, map])
 }
