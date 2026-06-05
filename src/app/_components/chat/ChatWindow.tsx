@@ -41,6 +41,21 @@ function getFileName(url: string): string {
   }
 }
 
+/**
+ * Gönderen kimliği — ardışık mesaj gruplaması için. GUEST/VISITOR'da `senderId`
+ * null olduğundan tek başına yetmez (farklı ziyaretçiler aynı grupta görünür);
+ * GUEST → sessionId, VISITOR → visitorId, ADMIN → senderId kullanılır.
+ * Kimlik belirsizse mesaj kendi grubunda kalır (yanlış gruplama olmaz).
+ */
+function senderIdentity(msg: ChatMessage): string {
+  if (msg.senderType === 'ADMIN' && msg.senderId != null)
+    return `a:${msg.senderId}`
+  if (msg.senderType === 'VISITOR' && msg.visitorId != null)
+    return `v:${msg.visitorId}`
+  if (msg.senderType === 'GUEST' && msg.sessionId) return `g:${msg.sessionId}`
+  return `id:${msg.id}`
+}
+
 export function ChatWindow({ groupId }: Props) {
   const { isDarkMode } = useAdminTheme()
   const { messages, prependHistory, sendRead, markMessageDeleted } =
@@ -293,8 +308,7 @@ export function ChatWindow({ groupId }: Props) {
           const prev = groupMessages[idx - 1]
           const isGrouped =
             prev !== undefined &&
-            prev.senderId === msg.senderId &&
-            prev.senderType === msg.senderType &&
+            senderIdentity(prev) === senderIdentity(msg) &&
             !prev.deleted &&
             new Date(msg.createdAt).getTime() -
               new Date(prev.createdAt).getTime() <
