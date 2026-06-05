@@ -19,6 +19,11 @@ Kayıt formatı:
 
 ### Added
 
+- **Chat Ban (TC)** — Tenant Chat sohbetinde GUEST/VISITOR banla/ban kaldır:
+  - `chat.services.ts` — `banUserService` / `unbanUserService` / `listBansService` (X-Tenant-Id)
+  - `types/chat.ts` — `ChatMessage.sessionId`, `DtoChatBan`, `ChatBanEvent`; `utils/chat-role.ts` — `banKey`
+  - `chat-ws-store` — `bannedKeys` + `/topic/tenant/{tid}/group/{gid}/bans` aboneliği (canlı BANNED/UNBANNED)
+  - `ChatWindow` — banlı rozeti (chat:read) + "⋯" moderasyon menüsü Banla/Ban kaldır (yalnız chat:manage, AC'de yok)
 - **Bildirim (Notification) UI** — header zil ikonu gerçek, kalıcı bildirimlerle:
   - `src/types/notification.ts`, `src/app/_services/notifications.services.ts` (list / unread-count / read / read-all / delete)
   - `src/app/_hooks/useNotifications.ts` (TanStack Query + WS→query köprüsü)

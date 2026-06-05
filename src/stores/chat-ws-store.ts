@@ -3,9 +3,10 @@ import { Client, type IFrame, type StompSubscription } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import { getGlobalCookies } from '@/context/CookieContext'
 import { CookieEnum } from '@/utils/constant/cookieConstant'
-import { getMyUserId } from '@/utils/chat-role'
+import { banKey, getMyUserId } from '@/utils/chat-role'
 import { refreshAccessToken } from '@/utils/services/fetcher'
 import type {
+  ChatBanEvent,
   ChatGroup,
   ChatMembershipEvent,
   ChatMessage,
@@ -49,6 +50,8 @@ interface ChatWsState {
   notificationUnreadCount: number | null
   /** groupId → okunmamış mesaj sayısı (sidebar badge için) */
   unreadCounts: Record<string, number>
+  /** Aktif TC grubunun banlı anahtarları (s:<sessionId> / v:<visitorId>) */
+  bannedKeys: Set<string>
 
   /** presence + /topic/groups/new gibi WS ömrü boyunca duran sub'lar */
   globalSubs: StompSubscription[]
@@ -69,6 +72,8 @@ interface ChatWsState {
   /** Tek mesaj ekler (REST gönderim yanıtı için optimistic insert; id ile dedup) */
   addMessage: (groupId: string, message: ChatMessage) => void
   markMessageDeleted: (groupId: string, messageId: string) => void
+  /** Aktif grup açılışında ban listesini (listBans) set eder */
+  setBannedKeys: (keys: Set<string>) => void
 }
 
 /** Aynı id'li mesajları birleştirir; createdAt'e göre sıralar. */
@@ -110,6 +115,7 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
   notificationSeq: 0,
   notificationUnreadCount: null,
   unreadCounts: {},
+  bannedKeys: new Set<string>(),
 
   globalSubs: [],
   activeGroupSubs: [],
@@ -358,7 +364,12 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
   },
 
   subscribeToGroup: (groupId: string, tenantId?: string | null) => {
-    set({ activeGroupId: groupId, activeGroupTenantId: tenantId ?? null })
+    // Grup değişiminde ban listesini sıfırla — ChatWindow yeniden yükler.
+    set({
+      activeGroupId: groupId,
+      activeGroupTenantId: tenantId ?? null,
+      bannedKeys: new Set<string>(),
+    })
 
     const { client } = get()
     if (client?.connected) {
@@ -491,6 +502,8 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
       },
     }))
   },
+
+  setBannedKeys: keys => set({ bannedKeys: keys }),
 }))
 
 /** Tam DtoChatMembershipEvent payload'unu parse eder. */
@@ -671,6 +684,28 @@ function attachActiveGroupSubs(
       // okundu göstergesi — genişletilebilir
     }),
   )
+
+  // Ban/unban olayları — yalnızca TC grupları (tenantId var). Mesaj listesine
+  // DOKUNMA; sadece bannedKeys'i günceller (rozet + input kilidi için).
+  if (tenantId) {
+    subs.push(
+      client.subscribe(`${baseTopic}/bans`, msg => {
+        try {
+          const ev: ChatBanEvent = JSON.parse(msg.body)
+          const key = banKey(ev.sessionId, ev.visitorId)
+          if (!key) return
+          set(s => {
+            const next = new Set(s.bannedKeys)
+            if (ev.action === 'BANNED') next.add(key)
+            else next.delete(key)
+            return { bannedKeys: next }
+          })
+        } catch {
+          // ignore parse errors
+        }
+      }),
+    )
+  }
 
   // Önceki aktif grup sub'larını temizle
   set(s => {

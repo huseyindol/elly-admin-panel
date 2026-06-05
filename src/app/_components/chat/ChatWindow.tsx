@@ -4,11 +4,25 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import {
   getHistoryService,
   deleteMessageService,
+  listBansService,
+  banUserService,
+  unbanUserService,
 } from '@/app/_services/chat.services'
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import { useAdminTheme } from '@/app/_hooks'
 import { useMyUserId } from '@/stores/user-store'
-import { Trash2, Paperclip, FileText, ImageIcon } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
+import { banKey } from '@/utils/chat-role'
+import {
+  Trash2,
+  Paperclip,
+  FileText,
+  ImageIcon,
+  MoreVertical,
+  Ban,
+  ShieldCheck,
+} from 'lucide-react'
+import { toast } from 'sonner'
 import type { ChatMessage } from '@/types/chat'
 
 interface Props {
@@ -33,14 +47,92 @@ export function ChatWindow({ groupId }: Props) {
     useChatWsStore()
   // TC routing için aktif grubun tenantId'si
   const activeGroupTenantId = useChatWsStore(s => s.activeGroupTenantId)
+  const bannedKeys = useChatWsStore(s => s.bannedKeys)
+  const setBannedKeys = useChatWsStore(s => s.setBannedKeys)
   const groupMessages = messages[groupId] ?? []
   const bottomRef = useRef<HTMLDivElement>(null)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [banMenuId, setBanMenuId] = useState<string | null>(null)
+  const [banBusyId, setBanBusyId] = useState<string | null>(null)
   const myUserId = useMyUserId()
+  const { hasPermission } = usePermission()
+  const canManageBans = hasPermission('chat:manage')
+  const isTc = activeGroupTenantId !== null
   const oldestId = groupMessages[0]?.id
+
+  // TC grup açılışında ban listesini yükle → bannedKeys (rozet + menü).
+  // AC grupta ban yok; subscribeToGroup zaten sıfırlıyor.
+  useEffect(() => {
+    if (!activeGroupTenantId) return
+    let cancelled = false
+    listBansService(groupId, activeGroupTenantId)
+      .then(bans => {
+        if (cancelled) return
+        const keys = new Set<string>()
+        for (const b of bans) {
+          const k = banKey(b.sessionId, b.visitorId)
+          if (k) keys.add(k)
+        }
+        setBannedKeys(keys)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [groupId, activeGroupTenantId, setBannedKeys])
+
+  // Mesajdan ban hedefi: GUEST → sessionId, VISITOR → visitorId. ADMIN → null.
+  const banTarget = (
+    msg: ChatMessage,
+  ): { sessionId?: string; visitorId?: number } | null => {
+    if (msg.senderType === 'GUEST' && msg.sessionId)
+      return { sessionId: msg.sessionId }
+    if (msg.senderType === 'VISITOR' && msg.visitorId != null)
+      return { visitorId: msg.visitorId }
+    return null
+  }
+
+  const handleBan = async (msg: ChatMessage) => {
+    const target = banTarget(msg)
+    if (!target) return
+    setBanBusyId(msg.id)
+    try {
+      await banUserService(groupId, target, activeGroupTenantId)
+      const k = banKey(msg.sessionId, msg.visitorId)
+      // optimistic — WS BANNED olayı da gelip aynı key'i ekleyecek (idempotent)
+      if (k) setBannedKeys(new Set(bannedKeys).add(k))
+      toast.success('Kullanıcı banlandı')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Kullanıcı banlanamadı')
+    } finally {
+      setBanBusyId(null)
+      setBanMenuId(null)
+    }
+  }
+
+  const handleUnban = async (msg: ChatMessage) => {
+    const target = banTarget(msg)
+    if (!target) return
+    setBanBusyId(msg.id)
+    try {
+      await unbanUserService(groupId, target, activeGroupTenantId)
+      const k = banKey(msg.sessionId, msg.visitorId)
+      if (k) {
+        const next = new Set(bannedKeys)
+        next.delete(k)
+        setBannedKeys(next)
+      }
+      toast.success('Ban kaldırıldı')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Ban kaldırılamadı')
+    } finally {
+      setBanBusyId(null)
+      setBanMenuId(null)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -209,6 +301,11 @@ export function ChatWindow({ groupId }: Props) {
               5 * 60 * 1000
           const isActive = activeId === msg.id
           const canDelete = isOwn && !msg.deleted
+          // TC ban: GUEST/VISITOR mesajları banlanabilir (kendi/ADMIN hariç)
+          const msgKey = banKey(msg.sessionId, msg.visitorId)
+          const isBanned = msgKey !== null && bannedKeys.has(msgKey)
+          const canBanThis =
+            isTc && !isOwn && (isGuest || isVisitor) && msgKey !== null
 
           return (
             <div
@@ -251,6 +348,11 @@ export function ChatWindow({ groupId }: Props) {
                     {isGuest && (
                       <span className="rounded-full bg-orange-500/20 px-1.5 py-0.5 text-[10px] font-medium text-orange-400">
                         Misafir
+                      </span>
+                    )}
+                    {isBanned && (
+                      <span className="rounded-full bg-rose-500/20 px-1.5 py-0.5 text-[10px] font-medium text-rose-400">
+                        banlı
                       </span>
                     )}
                   </div>
@@ -351,6 +453,81 @@ export function ChatWindow({ groupId }: Props) {
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
+                  )}
+
+                  {/* Moderasyon (ban/unban) — TC, chat:manage, GUEST/VISITOR */}
+                  {canBanThis && canManageBans && (
+                    <div className="relative shrink-0">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setBanMenuId(prev =>
+                            prev === msg.id ? null : msg.id,
+                          )
+                        }
+                        className={`rounded-full p-1 transition-opacity ${
+                          isActive || banMenuId === msg.id
+                            ? 'opacity-100'
+                            : 'opacity-0 group-hover:opacity-100'
+                        } ${
+                          isDarkMode
+                            ? 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                            : 'bg-white text-gray-400 shadow-sm hover:bg-gray-100 hover:text-gray-700'
+                        }`}
+                        aria-label="Moderasyon menüsü"
+                        title="Moderasyon"
+                      >
+                        <MoreVertical className="h-3.5 w-3.5" />
+                      </button>
+
+                      {banMenuId === msg.id && (
+                        <>
+                          <button
+                            type="button"
+                            aria-label="Kapat"
+                            onClick={() => setBanMenuId(null)}
+                            className="fixed inset-0 z-10 cursor-default"
+                          />
+                          <div
+                            className={`absolute left-0 top-7 z-20 w-36 overflow-hidden rounded-xl border shadow-xl ${
+                              isDarkMode
+                                ? 'border-slate-700 bg-slate-900'
+                                : 'border-gray-200 bg-white'
+                            }`}
+                          >
+                            {isBanned ? (
+                              <button
+                                type="button"
+                                disabled={banBusyId === msg.id}
+                                onClick={() => handleUnban(msg)}
+                                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium transition-colors disabled:opacity-50 ${
+                                  isDarkMode
+                                    ? 'text-emerald-400 hover:bg-slate-800'
+                                    : 'text-emerald-600 hover:bg-gray-50'
+                                }`}
+                              >
+                                <ShieldCheck className="h-3.5 w-3.5" />
+                                Ban kaldır
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={banBusyId === msg.id}
+                                onClick={() => handleBan(msg)}
+                                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium transition-colors disabled:opacity-50 ${
+                                  isDarkMode
+                                    ? 'text-rose-400 hover:bg-slate-800'
+                                    : 'text-rose-600 hover:bg-gray-50'
+                                }`}
+                              >
+                                <Ban className="h-3.5 w-3.5" />
+                                Banla
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
 

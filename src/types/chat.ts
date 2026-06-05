@@ -39,6 +39,8 @@ export interface ChatMessage {
   senderId: number | null
   /** Visitor ise tenant DB visitor_identities.id; admin/guest ise null */
   visitorId: number | null
+  /** Guest ise anonim oturum id'si (ban hedefi); admin/visitor ise null */
+  sessionId: string | null
   /** Backend tarafından çözümlenmiş görünen ad (GUEST için denormalize edilmiş) */
   senderUsername: string
   content: string
@@ -100,4 +102,25 @@ export interface ChatWsError {
   errorCode: string
   message: string
   groupId: string | null
+}
+
+/** TC (tenant chat) ban kaydı — GUEST (sessionId) veya VISITOR (visitorId) hedefi */
+export interface DtoChatBan {
+  id: string
+  groupId: string
+  sessionId: string | null
+  visitorId: number | null
+  bannedByUserId: number
+  bannedByUsername: string | null
+  reason: string | null
+  createdAt: string
+}
+
+/** WebSocket /topic/tenant/{tenantId}/group/{groupId}/bans payload */
+export interface ChatBanEvent {
+  action: 'BANNED' | 'UNBANNED'
+  groupId: string
+  sessionId: string | null
+  visitorId: number | null
+  byUsername: string | null
 }

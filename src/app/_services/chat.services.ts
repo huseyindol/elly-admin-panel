@@ -5,6 +5,7 @@ import type {
   ChatGroupAccess,
   ChatMember,
   ChatMessage,
+  DtoChatBan,
   SendMessagePayload,
 } from '@/types/chat'
 import type { BaseResponse } from '@/types/BaseResponse'
@@ -198,5 +199,60 @@ export const uploadChatFileService = async (file: File): Promise<string> => {
     body: formData,
   })
   if (!res.result) throw new Error(res.message ?? 'Dosya yüklenemedi')
+  return res.data
+}
+
+// ===== TC (tenant chat) ban — yalnız TC gruplarında, X-Tenant-Id ile =====
+
+/**
+ * GUEST (sessionId) veya VISITOR (visitorId) banlar. Tam olarak BİR hedef.
+ * chat:manage (EDITOR+) gerekir.
+ */
+export const banUserService = async (
+  groupId: string,
+  body: { sessionId?: string; visitorId?: number; reason?: string },
+  tenantId?: string | null,
+): Promise<DtoChatBan> => {
+  const res: BaseResponse<DtoChatBan> = await fetcher(
+    `/api/v1/chat/groups/${groupId}/bans`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...tenantHeader(tenantId),
+      },
+      body: JSON.stringify(body),
+    },
+  )
+  if (!res.result) throw new Error(res.message ?? 'Kullanıcı banlanamadı')
+  return res.data
+}
+
+/** Ban kaldırır (sessionId veya visitorId query). chat:manage gerekir. */
+export const unbanUserService = async (
+  groupId: string,
+  target: { sessionId?: string; visitorId?: number },
+  tenantId?: string | null,
+): Promise<void> => {
+  const params = new URLSearchParams()
+  if (target.sessionId) params.set('sessionId', target.sessionId)
+  if (target.visitorId != null)
+    params.set('visitorId', String(target.visitorId))
+  await fetcher<null>(
+    `/api/v1/chat/groups/${groupId}/bans?${params.toString()}`,
+    { method: 'DELETE', headers: tenantHeader(tenantId) },
+  )
+}
+
+/** Grubun ban listesi. chat:read yeterli (rozet için). */
+export const listBansService = async (
+  groupId: string,
+  tenantId?: string | null,
+): Promise<DtoChatBan[]> => {
+  const res: BaseResponse<DtoChatBan[]> = await fetcher(
+    `/api/v1/chat/groups/${groupId}/bans`,
+    { method: 'GET', headers: tenantHeader(tenantId) },
+  )
+  if (!res.result) throw new Error(res.message ?? 'Ban listesi alınamadı')
   return res.data
 }

@@ -123,6 +123,19 @@ export async function getMyUsername(): Promise<string | null> {
   return profile?.username ?? null
 }
 
+/**
+ * TC ban anahtarı — GUEST (sessionId) için `s:<id>`, VISITOR (visitorId) için
+ * `v:<id>`. Banlanamayan (ADMIN) için null. Store + ChatWindow ortak kullanır.
+ */
+export function banKey(
+  sessionId: string | null | undefined,
+  visitorId: number | null | undefined,
+): string | null {
+  if (sessionId) return `s:${sessionId}`
+  if (visitorId != null) return `v:${visitorId}`
+  return null
+}
+
 export function visibilityLabel(level: number): string {
   const labels: Record<number, string> = {
     1: 'Herkese Açık',
