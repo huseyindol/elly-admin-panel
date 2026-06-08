@@ -85,6 +85,7 @@ export default function DashboardPage() {
             value: fmt(posts.data?.length),
             icon: Icons.File,
             gradient: 'from-violet-500 to-purple-600',
+            href: '/posts',
           },
         ]
       : []),
@@ -95,6 +96,7 @@ export default function DashboardPage() {
             value: fmt(forms.data?.length),
             icon: Icons.ClipboardList,
             gradient: 'from-cyan-500 to-blue-600',
+            href: '/forms',
           },
         ]
       : []),
@@ -105,6 +107,7 @@ export default function DashboardPage() {
             value: fmt(users.data?.length),
             icon: Icons.Users,
             gradient: 'from-emerald-500 to-teal-600',
+            href: '/users',
           },
         ]
       : []),
@@ -115,6 +118,7 @@ export default function DashboardPage() {
             value: fmt(activeMail.data?.length),
             icon: Icons.AtSign,
             gradient: 'from-orange-500 to-rose-500',
+            href: '/mail-accounts',
           },
         ]
       : []),
@@ -125,6 +129,7 @@ export default function DashboardPage() {
             value: fmt(chatGroups.data?.length),
             icon: Icons.MessageSquare,
             gradient: 'from-fuchsia-500 to-pink-600',
+            href: '/chat',
           },
         ]
       : []),
@@ -135,6 +140,7 @@ export default function DashboardPage() {
             value: fmt(emails.data?.totalElements),
             icon: Icons.Inbox,
             gradient: 'from-amber-500 to-orange-600',
+            href: '/email-logs',
           },
         ]
       : []),

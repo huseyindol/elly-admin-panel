@@ -9,6 +9,8 @@ export interface StatData {
   trend?: 'up' | 'down'
   icon: () => React.ReactNode
   gradient: string
+  /** Tıklayınca gidilecek sayfa (verilirse kart link olur) */
+  href?: string
 }
 
 export interface Order {
