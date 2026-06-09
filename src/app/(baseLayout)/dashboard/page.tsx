@@ -1,7 +1,10 @@
 'use client'
 
 import { Icons, StatsGrid, type StatData } from '@/app/_components'
+import { StorageUsageWidget } from '@/app/_components/storage/StorageUsageWidget'
 import { useAdminTheme } from '@/app/_hooks'
+import { getAssetsPagedService } from '@/app/_services/assets.services'
+import { getBannersSummaryService } from '@/app/_services/banners.services'
 import { getEmailLogsService } from '@/app/_services/email-logs.services'
 import { getFormsSummaryService } from '@/app/_services/forms.services'
 import { getActiveMailAccountsService } from '@/app/_services/mail-accounts.services'
@@ -44,6 +47,8 @@ export default function DashboardPage() {
   const canMail = can(`${MODULES.MAIL}:read`)
   const canChat = can(`${MODULES.CHAT}:read`)
   const canEmails = can(`${MODULES.EMAILS}:read`)
+  const canBanners = can(`${MODULES.BANNERS}:read`)
+  const canAssets = can(`${MODULES.ASSETS}:read`)
 
   const posts = useQuery({
     queryKey: ['dashboard', 'posts'],
@@ -74,6 +79,16 @@ export default function DashboardPage() {
     queryKey: ['dashboard', 'emails'],
     queryFn: () => getEmailLogsService({ size: 8 }),
     enabled: canEmails,
+  })
+  const banners = useQuery({
+    queryKey: ['dashboard', 'banners'],
+    queryFn: async () => (await getBannersSummaryService()).data,
+    enabled: canBanners,
+  })
+  const assets = useQuery({
+    queryKey: ['dashboard', 'assets'],
+    queryFn: async () => (await getAssetsPagedService(0, 1)).data,
+    enabled: canAssets,
   })
 
   // Yalnızca yetkili olunan metrik kartları gösterilir.
@@ -144,6 +159,28 @@ export default function DashboardPage() {
           },
         ]
       : []),
+    ...(canBanners
+      ? [
+          {
+            title: 'Bannerlar',
+            value: fmt(banners.data?.length),
+            icon: Icons.Image,
+            gradient: 'from-sky-500 to-indigo-600',
+            href: '/banners',
+          },
+        ]
+      : []),
+    ...(canAssets
+      ? [
+          {
+            title: 'Medya',
+            value: fmt(assets.data?.totalElements),
+            icon: Icons.Layers,
+            gradient: 'from-lime-500 to-green-600',
+            href: '/assets',
+          },
+        ]
+      : []),
   ]
 
   const cardClass = `rounded-2xl p-5 ${
@@ -156,12 +193,13 @@ export default function DashboardPage() {
   const recentPosts = posts.data?.slice(0, 8) ?? []
   const recentEmails = emails.data?.content ?? []
 
-  const hasAnyContent = stats.length > 0 || canEmails || canPosts
-
   return (
     <div className="space-y-6 p-6">
       {/* Stat Cards */}
       {stats.length > 0 && <StatsGrid stats={stats} />}
+
+      {/* Depolama kullanımı — oturum tenant'ının kotası (salt-okunur) */}
+      <StorageUsageWidget />
 
       {/* Lists — yalnızca yetkili olunan bölümler */}
       {(canEmails || canPosts) && (
@@ -289,19 +327,6 @@ export default function DashboardPage() {
               </ul>
             </section>
           )}
-        </div>
-      )}
-
-      {/* Hiç yetkili alan yoksa */}
-      {!hasAnyContent && (
-        <div
-          className={`rounded-2xl border border-dashed py-24 text-center ${
-            isDarkMode
-              ? 'border-slate-700 text-slate-500'
-              : 'border-gray-300 text-gray-400'
-          }`}
-        >
-          <p className="text-sm">Görüntülenecek bir özet bulunmuyor.</p>
         </div>
       )}
     </div>
