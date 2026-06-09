@@ -5,7 +5,6 @@ import {
   type ResponsiveImages,
   type ResponsiveImageType,
 } from '@/app/_components'
-import { ContentTenantSelector } from '@/app/_components/content/ContentTenantSelector'
 import { useAdminTheme } from '@/app/_hooks'
 import {
   BannerImageFiles,
@@ -13,7 +12,6 @@ import {
   updateBannerService,
 } from '@/app/_services/banners.services'
 import { getImageUrl } from '@/app/_utils/urlUtils'
-import { useContentTenantId } from '@/stores/content-tenant-store'
 import { generateAltTextAction } from '@/actions/generate-field'
 import AiFieldButton from '@/components/ui/AiFieldButton'
 import { UpdateBannerInput, UpdateBannerSchema } from '@/schemas/banner.schema'
@@ -84,8 +82,6 @@ export default function EditBannerPage() {
   const bannerId = params.id as string
   const queryClient = useQueryClient()
   const { isDarkMode } = useAdminTheme()
-  // Seçili içerik tenant'ı (null = basedb) — okuma/güncelleme bu bağlamda
-  const tenantId = useContentTenantId()
 
   // Image input mode: upload files or enter URLs
   const [imageInputMode, setImageInputMode] = useState<ImageInputMode>('upload')
@@ -115,8 +111,8 @@ export default function EditBannerPage() {
     isError,
     error,
   } = useQuery({
-    queryKey: ['banner', bannerId, tenantId],
-    queryFn: () => getBannerByIdService(bannerId, tenantId),
+    queryKey: ['banner', bannerId],
+    queryFn: () => getBannerByIdService(bannerId),
     enabled: !!bannerId,
   })
 
@@ -231,7 +227,7 @@ export default function EditBannerPage() {
           tablet: newFiles.tablet?.file ?? null,
           mobile: newFiles.mobile?.file ?? null,
         }
-        return updateBannerService(bannerId, data, imageFiles, tenantId)
+        return updateBannerService(bannerId, data, imageFiles)
       } else {
         // URL mode - send URLs in data.images
         const dataWithImages: UpdateBannerInput = {
@@ -242,7 +238,7 @@ export default function EditBannerPage() {
             mobile: displayUrls.mobile || undefined,
           },
         }
-        return updateBannerService(bannerId, dataWithImages, {}, tenantId)
+        return updateBannerService(bannerId, dataWithImages, {})
       }
     },
     onSuccess: () => {
@@ -369,9 +365,6 @@ export default function EditBannerPage() {
           Banner bilgilerini güncelleyin
         </p>
       </div>
-
-      {/* İçerik Tenant seçici — okuma/güncelleme bu tenant bağlamında yapılır */}
-      <ContentTenantSelector />
 
       {/* Error Message */}
       {updateMutation.isError && (

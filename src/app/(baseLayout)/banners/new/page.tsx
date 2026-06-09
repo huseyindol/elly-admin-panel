@@ -6,13 +6,11 @@ import {
   type ResponsiveImages,
   type ResponsiveImageType,
 } from '@/app/_components'
-import { ContentTenantSelector } from '@/app/_components/content/ContentTenantSelector'
 import { useAdminTheme } from '@/app/_hooks'
 import {
   BannerImageFiles,
   createBannerService,
 } from '@/app/_services/banners.services'
-import { useContentTenantId } from '@/stores/content-tenant-store'
 import { generateAltTextAction } from '@/actions/generate-field'
 import AiFieldButton from '@/components/ui/AiFieldButton'
 import { CreateBannerInput, CreateBannerSchema } from '@/schemas/banner.schema'
@@ -30,8 +28,6 @@ export default function NewBannerPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { isDarkMode } = useAdminTheme()
-  // Seçili içerik tenant'ı (null = basedb) — yeni banner bu tenant'a yazılır
-  const tenantId = useContentTenantId()
 
   // Image input mode: upload files or enter URLs
   const [imageInputMode, setImageInputMode] = useState<ImageInputMode>('upload')
@@ -127,7 +123,7 @@ export default function NewBannerPage() {
           tablet: images.tablet.file,
           mobile: images.mobile.file,
         }
-        return createBannerService(data, imageFiles, tenantId)
+        return createBannerService(data, imageFiles)
       } else {
         // URL mode - send URLs in data.images
         if (!imageUrls.desktop) {
@@ -142,7 +138,7 @@ export default function NewBannerPage() {
           },
         }
         // No files to upload
-        return createBannerService(dataWithImages, {}, tenantId)
+        return createBannerService(dataWithImages, {})
       }
     },
     onSuccess: () => {
@@ -220,9 +216,6 @@ export default function NewBannerPage() {
           Yeni bir banner oluşturun
         </p>
       </div>
-
-      {/* İçerik Tenant seçici — banner bu tenant'a yazılır */}
-      <ContentTenantSelector />
 
       {/* Error Message */}
       {createMutation.isError && (

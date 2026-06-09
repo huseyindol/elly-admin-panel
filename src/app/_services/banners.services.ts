@@ -6,16 +6,14 @@ import {
   BaseResponse,
 } from '@/types/BaseResponse'
 import { fetcher } from '@/utils/services/fetcher'
-import { tenantHeader } from '@/utils/tenantHeader'
 
 // GET - Tüm bannerları listele
-export const getBannerService = async (tenantId?: string | null) => {
+export const getBannerService = async () => {
   try {
     const response: BannerListResponseType = await fetcher(
       '/api/v1/banners/list',
       {
         method: 'GET',
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Get banners:', response)
@@ -30,16 +28,12 @@ export const getBannerService = async (tenantId?: string | null) => {
 }
 
 // GET - Tek banner getir (ID ile)
-export const getBannerByIdService = async (
-  id: string,
-  tenantId?: string | null,
-) => {
+export const getBannerByIdService = async (id: string) => {
   try {
     const response: BannerResponseType = await fetcher(
       `/api/v1/banners/${id}`,
       {
         method: 'GET',
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Get banner by ID:', response)
@@ -65,7 +59,6 @@ export interface BannerImageFiles {
 export const createBannerService = async (
   data: CreateBannerInput,
   imageFiles: BannerImageFiles,
-  tenantId?: string | null,
 ) => {
   try {
     const formData = new FormData()
@@ -99,7 +92,6 @@ export const createBannerService = async (
       method: 'POST',
       body: formData,
       // Content-Type otomatik olarak multipart/form-data olarak ayarlanır
-      headers: tenantHeader(tenantId),
     })
     console.log('Creating banner:', response)
     if (!response.result) {
@@ -119,7 +111,6 @@ export const updateBannerService = async (
   id: string,
   data: UpdateBannerInput,
   imageFiles?: BannerImageFiles,
-  tenantId?: string | null,
 ) => {
   try {
     const formData = new FormData()
@@ -154,7 +145,6 @@ export const updateBannerService = async (
       {
         method: 'PUT',
         body: formData,
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Updating banner:', response)
@@ -170,16 +160,12 @@ export const updateBannerService = async (
 }
 
 // DELETE - Banner sil
-export const deleteBannerService = async (
-  id: string,
-  tenantId?: string | null,
-) => {
+export const deleteBannerService = async (id: string) => {
   try {
     const response: BaseResponse<null> = await fetcher(
       `/api/v1/banners/${id}`,
       {
         method: 'DELETE',
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Deleting banner:', response)
@@ -194,13 +180,12 @@ export const deleteBannerService = async (
 }
 
 // GET - Banner özet listesi (Component atamaları için)
-export const getBannersSummaryService = async (tenantId?: string | null) => {
+export const getBannersSummaryService = async () => {
   try {
     const response: BannerSummaryListResponseType = await fetcher(
       '/api/v1/banners/list/summary',
       {
         method: 'GET',
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Get banners summary:', response)
@@ -217,13 +202,12 @@ export const getBannersSummaryService = async (tenantId?: string | null) => {
 }
 
 // GET - Sub-folder listesini getir
-export const getSubFoldersService = async (tenantId?: string | null) => {
+export const getSubFoldersService = async () => {
   try {
     const response: BaseResponse<string[]> = await fetcher(
       '/api/v1/banners/sub-folders',
       {
         method: 'GET',
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Get sub-folders:', response)
@@ -238,21 +222,17 @@ export const getSubFoldersService = async (tenantId?: string | null) => {
 }
 
 // GET - Sub-folder'a göre bannerları getir
-export const getBannersBySubFolderService = async (
-  subFolder: string,
-  tenantId?: string | null,
-) => {
+export const getBannersBySubFolderService = async (subFolder: string) => {
   try {
     // subFolder 'all' ise veya boş ise tüm listeyi getir
     if (!subFolder || subFolder === 'all') {
-      return getBannerService(tenantId)
+      return getBannerService()
     }
 
     const response: BannerListResponseType = await fetcher(
       `/api/v1/banners/list/${subFolder}`,
       {
         method: 'GET',
-        headers: tenantHeader(tenantId),
       },
     )
     console.log(`Get banners for ${subFolder}:`, response)
@@ -272,16 +252,15 @@ export const getBannersBySubFolderService = async (
 // getBannersBySubFolderService kullanarak listeyi alır
 export const getBannersSummaryBySubFolderService = async (
   subFolder: string,
-  tenantId?: string | null,
 ): Promise<BannerSummaryListResponseType> => {
   try {
     // subFolder 'all' ise veya boş ise tüm özet listeyi getir
     if (!subFolder || subFolder === 'all') {
-      return getBannersSummaryService(tenantId)
+      return getBannersSummaryService()
     }
 
     // Sub-folder'a göre banner listesini al ve döndür
-    const response = await getBannersBySubFolderService(subFolder, tenantId)
+    const response = await getBannersBySubFolderService(subFolder)
     return response as unknown as BannerSummaryListResponseType
   } catch (error) {
     console.error(`Error get banners summary for ${subFolder}:`, error)

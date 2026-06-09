@@ -1,6 +1,5 @@
 import { BaseResponse } from '@/types/BaseResponse'
 import { fetcher } from '@/utils/services/fetcher'
-import { tenantHeader } from '@/utils/tenantHeader'
 
 export interface AssetResponse {
   id: number
@@ -30,14 +29,12 @@ export const getAssetsPagedService = async (
   page = 0,
   size = 10,
   sort = 'id,asc',
-  tenantId?: string | null,
 ) => {
   try {
     const response: AssetPagedResponseType = await fetcher(
       `/api/v1/assets/list/paged?page=${page}&size=${size}&sort=${sort}`,
       {
         method: 'GET',
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Get assets paged:', response)
@@ -57,14 +54,12 @@ export const searchAssetsByNamePagedService = async (
   page = 0,
   size = 10,
   sort = 'id,asc',
-  tenantId?: string | null,
 ) => {
   try {
     const response: AssetPagedResponseType = await fetcher(
       `/api/v1/assets/${encodeURIComponent(name)}/paged?page=${page}&size=${size}&sort=${sort}`,
       {
         method: 'GET',
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Search assets by name paged:', response)
@@ -87,14 +82,12 @@ export const searchAssetsBySubFolderAndNameService = async (
   page = 0,
   size = 10,
   sort = 'id,asc',
-  tenantId?: string | null,
 ) => {
   try {
     const response: AssetPagedResponseType = await fetcher(
       `/api/v1/assets/${encodeURIComponent(subFolder)}/${encodeURIComponent(name)}/paged?page=${page}&size=${size}&sort=${sort}`,
       {
         method: 'GET',
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Search assets by subfolder and name paged:', response)
@@ -112,13 +105,12 @@ export const searchAssetsBySubFolderAndNameService = async (
 
 // GET - SubFolder listesi
 export type SubFoldersResponseType = BaseResponse<string[]>
-export const getSubFoldersService = async (tenantId?: string | null) => {
+export const getSubFoldersService = async () => {
   try {
     const response: SubFoldersResponseType = await fetcher(
       '/api/v1/assets/sub-folders',
       {
         method: 'GET',
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Get sub-folders:', response)
@@ -133,16 +125,12 @@ export const getSubFoldersService = async (tenantId?: string | null) => {
 }
 
 // GET - Asset getir (ID ile)
-export const getAssetByIdService = async (
-  id: string | number,
-  tenantId?: string | null,
-) => {
+export const getAssetByIdService = async (id: string | number) => {
   try {
     const response: AssetResponseType = await fetcher(
       `/api/v1/assets/id/${id}`,
       {
         method: 'GET',
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Get asset by ID:', response)
@@ -157,16 +145,12 @@ export const getAssetByIdService = async (
 }
 
 // GET - Asset getir (isim ile)
-export const getAssetByNameService = async (
-  name: string,
-  tenantId?: string | null,
-) => {
+export const getAssetByNameService = async (name: string) => {
   try {
     const response: AssetResponseType = await fetcher(
       `/api/v1/assets/${name}`,
       {
         method: 'GET',
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Get asset by name:', response)
@@ -181,11 +165,7 @@ export const getAssetByNameService = async (
 }
 
 // POST - Asset yükle (multipart/form-data)
-export const uploadAssetService = async (
-  file: File,
-  subFolder?: string,
-  tenantId?: string | null,
-) => {
+export const uploadAssetService = async (file: File, subFolder?: string) => {
   try {
     const formData = new FormData()
     formData.append('file', file)
@@ -196,7 +176,6 @@ export const uploadAssetService = async (
     const response: AssetResponseType = await fetcher('/api/v1/assets', {
       method: 'POST',
       body: formData,
-      headers: tenantHeader(tenantId),
     })
     console.log('Upload asset:', response)
     if (!response.result) {
@@ -214,7 +193,6 @@ export const uploadAssetService = async (
 export const uploadMultiAssetsService = async (
   files: File[],
   subFolder?: string,
-  tenantId?: string | null,
 ) => {
   try {
     const formData = new FormData()
@@ -230,7 +208,6 @@ export const uploadMultiAssetsService = async (
       {
         method: 'POST',
         body: formData,
-        headers: tenantHeader(tenantId),
       },
     )
     console.log('Upload multi assets:', response)
@@ -246,11 +223,7 @@ export const uploadMultiAssetsService = async (
 }
 
 // PUT - Asset güncelle (multipart/form-data)
-export const updateAssetService = async (
-  id: string | number,
-  file: File,
-  tenantId?: string | null,
-) => {
+export const updateAssetService = async (id: string | number, file: File) => {
   try {
     const formData = new FormData()
     formData.append('file', file)
@@ -258,7 +231,6 @@ export const updateAssetService = async (
     const response: AssetResponseType = await fetcher(`/api/v1/assets/${id}`, {
       method: 'PUT',
       body: formData,
-      headers: tenantHeader(tenantId),
     })
     console.log('Update asset:', response)
     if (!response.result) {
@@ -272,14 +244,10 @@ export const updateAssetService = async (
 }
 
 // DELETE - Asset sil
-export const deleteAssetService = async (
-  id: string | number,
-  tenantId?: string | null,
-) => {
+export const deleteAssetService = async (id: string | number) => {
   try {
     const response: BaseResponse<null> = await fetcher(`/api/v1/assets/${id}`, {
       method: 'DELETE',
-      headers: tenantHeader(tenantId),
     })
     console.log('Delete asset:', response)
     if (!response.result) {
