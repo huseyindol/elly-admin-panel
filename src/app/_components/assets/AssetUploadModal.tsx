@@ -6,6 +6,7 @@ import {
   uploadAssetService,
   uploadMultiAssetsService,
 } from '@/app/_services/assets.services'
+import { useContentTenantId } from '@/stores/content-tenant-store'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -21,6 +22,7 @@ export function AssetUploadModal({
   onSuccess,
 }: AssetUploadModalProps) {
   const { isDarkMode } = useAdminTheme()
+  const tenantId = useContentTenantId()
   const [loading, setLoading] = useState(false)
   const [uploadType, setUploadType] = useState<'single' | 'multi'>('single')
   const [singleFile, setSingleFile] = useState<File | null>(null)
@@ -49,14 +51,14 @@ export function AssetUploadModal({
         if (!singleFile) {
           throw new Error('Lütfen bir dosya seçin.')
         }
-        await uploadAssetService(singleFile, subFolder)
+        await uploadAssetService(singleFile, subFolder, tenantId)
         toast.success('Dosya başarıyla yüklendi.')
         setSingleFile(null)
       } else {
         if (multiFiles.length === 0) {
           throw new Error('Lütfen en az bir dosya seçin.')
         }
-        await uploadMultiAssetsService(multiFiles, subFolder)
+        await uploadMultiAssetsService(multiFiles, subFolder, tenantId)
         toast.success('Dosyalar başarıyla yüklendi.')
         setMultiFiles([])
       }

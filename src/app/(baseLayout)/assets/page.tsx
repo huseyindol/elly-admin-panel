@@ -6,6 +6,7 @@ import {
   AssetTable,
   AssetUploadModal,
 } from '@/app/_components/assets'
+import { ContentTenantSelector } from '@/app/_components/content/ContentTenantSelector'
 import { useAdminTheme } from '@/app/_hooks'
 import {
   AssetResponse,
@@ -16,6 +17,7 @@ import {
   searchAssetsByNamePagedService,
   searchAssetsBySubFolderAndNameService,
 } from '@/app/_services/assets.services'
+import { useContentTenantId } from '@/stores/content-tenant-store'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -23,6 +25,8 @@ import { toast } from 'sonner'
 export default function AssetsPage() {
   const { isDarkMode } = useAdminTheme()
   const queryClient = useQueryClient()
+  // Seçili içerik tenant'ı (null = basedb); query-key'lere ve servislere geçer
+  const tenantId = useContentTenantId()
 
   // State
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
@@ -40,8 +44,8 @@ export default function AssetsPage() {
 
   // Fetch sub-folders
   const subFoldersQuery = useQuery({
-    queryKey: ['assets', 'sub-folders'],
-    queryFn: getSubFoldersService,
+    queryKey: ['assets', 'sub-folders', tenantId],
+    queryFn: () => getSubFoldersService(tenantId),
   })
 
   const subFolders = subFoldersQuery.data?.data ?? []
@@ -59,7 +63,7 @@ export default function AssetsPage() {
   // Runs when searching by name (with or without subFolder filter)
   // Disabled when searching by ID
   const assetsQuery = useQuery({
-    queryKey: ['assets', 'paged', page, pageSize, submittedSearch],
+    queryKey: ['assets', 'paged', page, pageSize, submittedSearch, tenantId],
     queryFn: async () => {
       if (isSearchingByName && submittedSearch) {
         // If subFolder is selected, use the subFolder+name endpoint
@@ -69,6 +73,8 @@ export default function AssetsPage() {
             submittedSearch.value,
             page,
             pageSize,
+            'id,asc',
+            tenantId,
           )
         }
         // Otherwise use regular name search
@@ -76,25 +82,27 @@ export default function AssetsPage() {
           submittedSearch.value,
           page,
           pageSize,
+          'id,asc',
+          tenantId,
         )
       }
-      return getAssetsPagedService(page, pageSize)
+      return getAssetsPagedService(page, pageSize, 'id,asc', tenantId)
     },
     enabled: !isSearchingById, // Run when not searching by ID
   })
 
   // ID search query (only when searching by ID)
   const assetByIdQuery = useQuery({
-    queryKey: ['assets', 'byId', submittedSearch?.value],
+    queryKey: ['assets', 'byId', submittedSearch?.value, tenantId],
     queryFn: async () => {
-      return getAssetByIdService(submittedSearch!.value)
+      return getAssetByIdService(submittedSearch!.value, tenantId)
     },
     enabled: isSearchingById,
   })
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => deleteAssetService(id),
+    mutationFn: (id: number) => deleteAssetService(id, tenantId),
     onSuccess: () => {
       toast.success('Asset başarıyla silindi.')
       queryClient.invalidateQueries({ queryKey: ['assets'] })
@@ -190,6 +198,9 @@ export default function AssetsPage() {
           + Yeni Ekle
         </button>
       </div>
+
+      {/* İçerik Tenant seçici — yüklemeler/listeler seçili tenant'a gider */}
+      <ContentTenantSelector />
 
       {/* Search Section */}
       <div

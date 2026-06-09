@@ -65,14 +65,14 @@ export default function EditComponentPage() {
   // Fetch sub-folders for banner filtering
   const { data: subFoldersData } = useQuery({
     queryKey: ['banner-sub-folders'],
-    queryFn: getSubFoldersService,
+    queryFn: () => getSubFoldersService(),
     staleTime: 5 * 60 * 1000,
   })
 
   // Fetch ALL banners summary for initialization (to populate selected banners)
   const { data: allBannersData } = useQuery({
     queryKey: ['banners-summary-all'],
-    queryFn: getBannersSummaryService,
+    queryFn: () => getBannersSummaryService(),
   })
 
   // Fetch filtered banners summary based on selected sub-folder

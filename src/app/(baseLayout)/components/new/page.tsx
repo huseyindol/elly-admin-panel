@@ -82,7 +82,7 @@ export default function NewComponentPage() {
   // Fetch sub-folders for banner filtering
   const { data: subFoldersData } = useQuery({
     queryKey: ['banner-sub-folders'],
-    queryFn: getSubFoldersService,
+    queryFn: () => getSubFoldersService(),
     staleTime: 5 * 60 * 1000,
   })
 

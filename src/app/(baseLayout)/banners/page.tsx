@@ -8,12 +8,14 @@ import {
   SearchInput,
   StatusBadge,
 } from '@/app/_components'
+import { ContentTenantSelector } from '@/app/_components/content/ContentTenantSelector'
 import { useAdminTheme, useDebounce } from '@/app/_hooks'
 import {
   deleteBannerService,
   getBannersBySubFolderService,
   getSubFoldersService,
 } from '@/app/_services/banners.services'
+import { useContentTenantId } from '@/stores/content-tenant-store'
 import { getImageUrl } from '@/app/_utils/urlUtils'
 import { Banner } from '@/types/BaseResponse'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -26,6 +28,8 @@ export default function BannersListPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { isDarkMode } = useAdminTheme()
+  // Seçili içerik tenant'ı (null = basedb)
+  const tenantId = useContentTenantId()
   const [searchQuery, setSearchQuery] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Banner | null>(null)
 
@@ -34,23 +38,23 @@ export default function BannersListPage() {
 
   // Fetch sub-folders
   const { data: subFoldersData } = useQuery({
-    queryKey: ['banner-sub-folders'],
-    queryFn: () => getSubFoldersService(),
+    queryKey: ['banner-sub-folders', tenantId],
+    queryFn: () => getSubFoldersService(tenantId),
     staleTime: 5 * 60 * 1000, // 5 dakika
   })
 
   // Fetch banners based on selected sub-folder - 5 dakika cache
   // queryKey includes selectedSubFolder to refetch when it changes
   const { data, error, isError, isLoading } = useQuery({
-    queryKey: ['banners', selectedSubFolder],
-    queryFn: () => getBannersBySubFolderService(selectedSubFolder),
+    queryKey: ['banners', selectedSubFolder, tenantId],
+    queryFn: () => getBannersBySubFolderService(selectedSubFolder, tenantId),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   })
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteBannerService(id),
+    mutationFn: (id: string) => deleteBannerService(id, tenantId),
     onSuccess: () => {
       // Invalidate current view queries
       queryClient.invalidateQueries({ queryKey: ['banners'] })
@@ -220,6 +224,9 @@ export default function BannersListPage() {
             <span>Yeni Banner</span>
           </Link>
         </div>
+
+        {/* İçerik Tenant seçici — banner işlemleri seçili tenant'a gider */}
+        <ContentTenantSelector />
 
         {/* Search */}
         <div className="max-w-md">
