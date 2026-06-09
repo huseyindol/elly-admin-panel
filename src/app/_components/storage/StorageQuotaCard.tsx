@@ -22,7 +22,8 @@ export function StorageQuotaCard() {
   const { data: quota, isLoading, isError } = useStorageQuota(sessionTenantId)
   const { setLimit, recompute } = useStorageQuotaMutations(sessionTenantId)
   const roleLevel = useMyRoleLevel()
-  const canManage = roleLevel >= 3 // ADMIN / SUPER_ADMIN
+  // Limit/yeniden-hesap yalnız SUPER_ADMIN (=4); diğer roller salt-okunur görür
+  const canManage = roleLevel >= 4
   const limitInputRef = useRef<HTMLInputElement>(null)
 
   const pct = Math.min(Math.max(quota?.usedPercent ?? 0, 0), 100)
@@ -143,7 +144,21 @@ export function StorageQuotaCard() {
             </p>
           )}
 
-          {/* Yönetim — yalnız ADMIN/SUPER_ADMIN */}
+          {/* SUPER_ADMIN değilse: salt-okunur bilgi notu */}
+          {!canManage && (
+            <p
+              className={`mt-4 border-t pt-4 text-xs ${
+                isDarkMode
+                  ? 'border-slate-800 text-slate-500'
+                  : 'border-gray-100 text-gray-400'
+              }`}
+            >
+              Limit yalnızca Süper Admin tarafından değiştirilebilir — bu bölüm
+              bilgi amaçlıdır.
+            </p>
+          )}
+
+          {/* Yönetim — yalnız SUPER_ADMIN */}
           {canManage && (
             <div
               className={`mt-5 flex flex-wrap items-end gap-3 border-t pt-4 ${isDarkMode ? 'border-slate-800' : 'border-gray-100'}`}
