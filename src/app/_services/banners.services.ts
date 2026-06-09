@@ -95,7 +95,8 @@ export const createBannerService = async (
     })
     console.log('Creating banner:', response)
     if (!response.result) {
-      throw new Error('Error creating banner', { cause: response.message })
+      // 413 STORAGE_QUOTA_EXCEEDED dahil backend mesajını yüzeye çıkar
+      throw new Error(response.message ?? 'Banner oluşturulamadı')
     }
     return response
   } catch (error) {
@@ -148,7 +149,8 @@ export const updateBannerService = async (
     )
     console.log('Updating banner:', response)
     if (!response.result) {
-      throw new Error('Error updating banner', { cause: response.message })
+      // 413 STORAGE_QUOTA_EXCEEDED dahil backend mesajını yüzeye çıkar
+      throw new Error(response.message ?? 'Banner güncellenemedi')
     }
     return response
   } catch (error) {

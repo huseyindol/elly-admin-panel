@@ -1,4 +1,5 @@
 import { SecuritySettings } from '@/app/_components/security/SecuritySettings'
+import { StorageQuotaCard } from '@/app/_components/storage/StorageQuotaCard'
 
 export const metadata = {
   title: 'Ayarlar',
@@ -12,7 +13,7 @@ export default function SettingsPage() {
           Ayarlar
         </h1>
         <p className="text-sm text-gray-500 dark:text-slate-400">
-          Hesap ve güvenlik ayarlarınızı yönetin.
+          Hesap, güvenlik ve depolama ayarlarınızı yönetin.
         </p>
       </header>
 
@@ -21,6 +22,13 @@ export default function SettingsPage() {
           Hesap Güvenliği
         </h2>
         <SecuritySettings />
+      </div>
+
+      <div className="space-y-4">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-slate-600">
+          Depolama
+        </h2>
+        <StorageQuotaCard />
       </div>
     </div>
   )

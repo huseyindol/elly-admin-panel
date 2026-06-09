@@ -179,7 +179,8 @@ export const uploadAssetService = async (file: File, subFolder?: string) => {
     })
     console.log('Upload asset:', response)
     if (!response.result) {
-      throw new Error('Error upload asset', { cause: response.message })
+      // 413 STORAGE_QUOTA_EXCEEDED dahil backend mesajını yüzeye çıkar
+      throw new Error(response.message ?? 'Asset yüklenemedi')
     }
     return response
   } catch (error) {
@@ -211,7 +212,8 @@ export const uploadMultiAssetsService = async (
     )
     console.log('Upload multi assets:', response)
     if (!response.result) {
-      throw new Error('Error upload multi assets', { cause: response.message })
+      // 413 STORAGE_QUOTA_EXCEEDED dahil backend mesajını yüzeye çıkar
+      throw new Error(response.message ?? 'Asset yüklenemedi')
     }
     return response
   } catch (error) {
