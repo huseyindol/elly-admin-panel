@@ -15,6 +15,7 @@ import type { ChatMessageType } from '@/types/chat'
 interface Props {
   groupId: string
   tenantId?: string | null
+  tenantToken?: string | null
   canWrite: boolean
   banner?: string | null
   onWriteForbidden?: (message: string) => void
@@ -23,6 +24,7 @@ interface Props {
 export function ChatInput({
   groupId,
   tenantId,
+  tenantToken,
   canWrite,
   banner,
   onWriteForbidden,
@@ -75,6 +77,7 @@ export function ChatInput({
         groupId,
         { content: payloadContent, contentType },
         tenantId,
+        tenantToken,
       )
       addMessage(groupId, created)
     } catch (err) {

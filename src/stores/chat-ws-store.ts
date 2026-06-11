@@ -5,6 +5,7 @@ import { getGlobalCookies } from '@/context/CookieContext'
 import { CookieEnum } from '@/utils/constant/cookieConstant'
 import { banKey, getMyUserId } from '@/utils/chat-role'
 import { refreshAccessToken } from '@/utils/services/fetcher'
+import { getTenantTokenService } from '@/app/_services/tenant.services'
 import type {
   ChatBanEvent,
   ChatGroup,
@@ -22,8 +23,10 @@ interface ChatWsState {
   /** Her başarılı (re)connect'te artar — abonelikleri yeniden kurmak için tetik */
   connectedSeq: number
   activeGroupId: string | null
-  /** Aktif grubun tenantId'si — TC routing ve X-Tenant-Id header için */
+  /** Aktif grubun tenantId'si — TC endpoint routing için */
   activeGroupTenantId: string | null
+  /** TC REST çağrıları için tenant-switch JWT (kısa ömürlü, persist edilmez) */
+  activeTenantToken: string | null
   messages: Record<string, ChatMessage[]>
   presence: Record<number, 'ONLINE' | 'OFFLINE'>
   /** groupId → (userId → username). userId ile anahtarlı ki mesaj gelince
@@ -99,6 +102,7 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
   connectedSeq: 0,
   activeGroupId: null,
   activeGroupTenantId: null,
+  activeTenantToken: null,
   messages: {},
   presence: {},
   typingUsers: {},
@@ -344,6 +348,7 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
       connected: false,
       activeGroupId: null,
       activeGroupTenantId: null,
+      activeTenantToken: null,
       globalSubs: [],
       activeGroupSubs: [],
       allGroupSubs: [],
@@ -364,10 +369,11 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
   },
 
   subscribeToGroup: (groupId: string, tenantId?: string | null) => {
-    // Grup değişiminde ban listesini sıfırla — ChatWindow yeniden yükler.
+    // Grup değişiminde token + ban listesini sıfırla — ChatWindow yeniden yükler.
     set({
       activeGroupId: groupId,
       activeGroupTenantId: tenantId ?? null,
+      activeTenantToken: null,
       bannedKeys: new Set<string>(),
     })
 
@@ -375,12 +381,29 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
     if (client?.connected) {
       attachActiveGroupSubs(client, groupId, tenantId ?? null, set)
     }
+
+    // TC grubu için tenant-switch JWT al (async, fire-and-forget)
+    if (tenantId) {
+      getTenantTokenService(tenantId)
+        .then(token => {
+          // Kullanıcı başka gruba geçtiyse eski token'ı yazma
+          if (get().activeGroupId === groupId) {
+            set({ activeTenantToken: token })
+          }
+        })
+        .catch(() => {})
+    }
   },
 
   unsubscribeFromGroup: () => {
     const { activeGroupSubs } = get()
     activeGroupSubs.forEach(s => s.unsubscribe())
-    set({ activeGroupId: null, activeGroupTenantId: null, activeGroupSubs: [] })
+    set({
+      activeGroupId: null,
+      activeGroupTenantId: null,
+      activeTenantToken: null,
+      activeGroupSubs: [],
+    })
   },
 
   subscribeToAllGroups: (groups, _myRoleLevel) => {

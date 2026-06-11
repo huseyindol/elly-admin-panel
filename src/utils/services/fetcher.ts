@@ -81,17 +81,33 @@ const handleAuthFailure = (reason: string): never => {
 
 export const fetcher = async <T>(
   url: string,
-  options: RequestInit = {},
+  options: RequestInit & { overrideAuth?: string } = {},
 ): Promise<T> => {
-  if (typeof window === 'undefined') {
-    options = await prepareRequestSSROptions(options)
-  } else {
-    options = prepareRequestCSROptions(options)
+  const { overrideAuth, ...restOptions } = options as RequestInit & {
+    overrideAuth?: string
   }
+  let fetchOpts: RequestInit = restOptions
+
+  if (overrideAuth) {
+    // Tenant-switch JWT — otomatik cookie JWT enjeksiyonunu atla
+    fetchOpts.headers = {
+      ...fetchOpts.headers,
+      Authorization: `Bearer ${overrideAuth}`,
+    }
+  } else if (typeof window === 'undefined') {
+    fetchOpts = await prepareRequestSSROptions(fetchOpts)
+  } else {
+    fetchOpts = prepareRequestCSROptions(fetchOpts)
+  }
+
+  // Referansı options'a yeniden ata (aşağıdaki kod options üzerinden çalışıyor)
+  options = fetchOpts
+
   if (
-    url.includes('/auth/refresh') ||
-    url.includes('/auth/login') ||
-    url.includes('/auth/mfa/verify')
+    !overrideAuth &&
+    (url.includes('/auth/refresh') ||
+      url.includes('/auth/login') ||
+      url.includes('/auth/mfa/verify'))
   ) {
     // Bu endpoint'ler JWT gerektirmez (mfa/verify yalnızca mfaToken kullanır).
     delete (options.headers as Record<string, string>)?.Authorization

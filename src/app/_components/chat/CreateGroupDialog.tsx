@@ -3,6 +3,7 @@
 import { Modal } from '@/app/_components'
 import { useAdminTheme } from '@/app/_hooks'
 import { createGroupService } from '@/app/_services/chat.services'
+import { getTenantTokenService } from '@/app/_services/tenant.services'
 import type { ChatGroup } from '@/types/chat'
 import { useMyRoleLevel, visibilityLabel } from '@/utils/chat-role'
 import { getGlobalCookies } from '@/context/CookieContext'
@@ -57,14 +58,21 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
     if (!validate()) return
     setLoading(true)
     try {
-      const group = await createGroupService({
-        name: name.trim(),
-        description: description.trim() || undefined,
-        ...(scope === 'TENANT' && {
-          tenantId: sessionTenantId,
-          visitorAccess,
-        }),
-      })
+      let tenantToken: string | null = null
+      if (scope === 'TENANT' && sessionTenantId) {
+        tenantToken = await getTenantTokenService(sessionTenantId)
+      }
+      const group = await createGroupService(
+        {
+          name: name.trim(),
+          description: description.trim() || undefined,
+          ...(scope === 'TENANT' && {
+            tenantId: sessionTenantId,
+            visitorAccess,
+          }),
+        },
+        tenantToken,
+      )
       onCreated(group)
       handleClose()
     } catch {

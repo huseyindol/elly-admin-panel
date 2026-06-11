@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { getMyGroupsService } from '@/app/_services/chat.services'
+import { getTenantTokenService } from '@/app/_services/tenant.services'
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import { visibilityLabel, useMyRoleLevel } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
@@ -36,7 +37,7 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const myLevel = useMyRoleLevel()
 
   // Oturum tenant'ı — login'de set edilen `tenantId` cookie'si (HttpOnly değil,
-  // client-side okunabilir). TC gruplarını X-Tenant-Id ile çekmek için kullanılır.
+  // client-side okunabilir). TC token almak ve grupları çekmek için kullanılır.
   const [sessionTenantId] = useState<string | null>(
     () => getGlobalCookies()[CookieEnum.TENANT_ID] || null,
   )
@@ -72,11 +73,12 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
       .catch(() => {})
   }, [])
 
-  // TC grupları — yalnızca TC sekmesi seçiliyken X-Tenant-Id ile çekilir.
+  // TC grupları — yalnızca TC sekmesi seçiliyken tenant-switch JWT ile çekilir.
   // TC kısmını değiştirir, AC gruplarını korur.
   const loadTcGroups = useCallback(() => {
     if (!sessionTenantId) return
-    getMyGroupsService(sessionTenantId)
+    getTenantTokenService(sessionTenantId)
+      .then(token => getMyGroupsService(sessionTenantId, token))
       .then(tc =>
         setGroups(prev => [...prev.filter(g => g.tenantId === null), ...tc]),
       )

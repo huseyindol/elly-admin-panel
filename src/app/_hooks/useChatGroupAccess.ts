@@ -11,11 +11,13 @@ export const chatKeys = {
 export function useChatGroupAccess(
   groupId: string | null,
   tenantId?: string | null,
+  tenantToken?: string | null,
 ) {
   return useQuery({
     queryKey: chatKeys.access(groupId ?? ''),
-    queryFn: () => getGroupAccessService(groupId!, tenantId),
-    enabled: !!groupId,
+    queryFn: () => getGroupAccessService(groupId!, tenantId, tenantToken),
+    // TC grubu için token hazır olana kadar bekle
+    enabled: !!groupId && (tenantId ? !!tenantToken : true),
     staleTime: 30_000,
   })
 }
