@@ -9,6 +9,7 @@
 3. Agent'ın değişikliklerini review et, gerekirse sonraki promptu çalıştır.
 
 Prompt sırası (baştan sona):
+
 - **Prompt 0:** Keşif (proje stack'i tespit)
 - **Prompt 1:** Ortak altyapı (http client, types, permission hook)
 - **Prompt 2:** Email Templates sayfası (v4 feature)
@@ -65,7 +66,7 @@ Rapor altında 400 kelime.
 
 Prompt 0 sonrası stack'ı öğrendikten sonra bunu çalıştır. Altyapı olmadan feature sayfaları yazılamaz.
 
-```
+````
 elly-admin-panel projesine CMS API entegrasyonu için ortak altyapı ekle.
 
 ## Bağlam
@@ -75,11 +76,18 @@ Bu panel, elly CMS API'sini (Spring Boot) tüketiyor. CMS tüm yanıtlarını
 
 ```json
 { "result": true, "message": null, "data": { ... } }
-```
+````
 
 Hata durumunda:
+
 ```json
-{ "result": false, "status": 400, "error": "...", "errorCode": "VALIDATION_ERROR", "message": "..." }
+{
+  "result": false,
+  "status": 400,
+  "error": "...",
+  "errorCode": "VALIDATION_ERROR",
+  "message": "..."
+}
 ```
 
 Auth: JWT Bearer token. CMS `/api/v1/auth/login` ile alınır, HttpOnly cookie
@@ -95,6 +103,7 @@ folder convention'larını adapte et, ama dosya amaçları aşağıdakilerle ayn
 ### 1. `lib/api/http.ts` (veya mevcut http wrapper'ı genişlet)
 
 Özellikler:
+
 - Base URL: `process.env.NEXT_PUBLIC_ELLY_API_URL`
 - JWT token'ı cookie'den (server) veya auth store'dan (client) otomatik çeker
 - `RootEntityResponse<T>` wrapper'ını otomatik açar, `data` döner
@@ -110,73 +119,73 @@ CMS endpoint'lerinin döndüğü DTO tiplerini tanımla:
 
 ```typescript
 export interface EmailTemplate {
-  id?: number;
-  tenantId: string | null;
-  templateKey: string;
-  subject: string;
-  htmlBody: string;
-  description?: string | null;
-  active: boolean;
-  version: number;
-  optimisticLockVersion: number;
-  createdAt?: string;
-  updatedAt?: string;
+  id?: number
+  tenantId: string | null
+  templateKey: string
+  subject: string
+  htmlBody: string
+  description?: string | null
+  active: boolean
+  version: number
+  optimisticLockVersion: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface EmailLog {
-  id: number;
-  recipient: string;
-  subject: string;
-  templateName: string;
-  status: 'PENDING' | 'SENT' | 'FAILED';
-  retryCount: number;
-  createdAt: string;
-  sentAt: string | null;
+  id: number
+  recipient: string
+  subject: string
+  templateName: string
+  status: 'PENDING' | 'SENT' | 'FAILED'
+  retryCount: number
+  createdAt: string
+  sentAt: string | null
 }
 
 export interface RabbitOverview {
-  rabbitmqVersion: string | null;
-  erlangVersion: string | null;
-  clusterName: string | null;
-  totalMessages: number | null;
-  totalConsumers: number | null;
-  queueCount: number | null;
-  exchangeCount: number | null;
-  connectionCount: number | null;
-  channelCount: number | null;
+  rabbitmqVersion: string | null
+  erlangVersion: string | null
+  clusterName: string | null
+  totalMessages: number | null
+  totalConsumers: number | null
+  queueCount: number | null
+  exchangeCount: number | null
+  connectionCount: number | null
+  channelCount: number | null
 }
 
 export interface RabbitQueue {
-  name: string;
-  vhost: string;
-  messages: number | null;
-  messagesReady: number | null;
-  messagesUnacknowledged: number | null;
-  consumers: number | null;
-  state: string | null;
-  arguments: Record<string, unknown>;
-  policy: string | null;
-  durable: boolean | null;
-  autoDelete: boolean | null;
-  exclusive: boolean | null;
+  name: string
+  vhost: string
+  messages: number | null
+  messagesReady: number | null
+  messagesUnacknowledged: number | null
+  consumers: number | null
+  state: string | null
+  arguments: Record<string, unknown>
+  policy: string | null
+  durable: boolean | null
+  autoDelete: boolean | null
+  exclusive: boolean | null
 }
 
 export interface RabbitMessage {
-  payload: string;
-  payloadEncoding: 'string' | 'base64';
-  properties: Record<string, unknown>;
-  messageCount: number | null;
-  routingKey: string;
-  redelivered: boolean;
-  exchange: string;
+  payload: string
+  payloadEncoding: 'string' | 'base64'
+  properties: Record<string, unknown>
+  messageCount: number | null
+  routingKey: string
+  redelivered: boolean
+  exchange: string
 }
 
 export interface Page<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  number: number;       // current page
-  size: number;
+  content: T[]
+  totalElements: number
+  totalPages: number
+  number: number // current page
+  size: number
 }
 ```
 
@@ -213,6 +222,7 @@ NEXT_PUBLIC_ELLY_API_URL=https://api.huseyindol.com
 - TypeScript strict mode uyarı vermemeli
 - `console.log` bırakma
 - README veya basit bir `lib/api/README.md` yaz (kullanım örneği)
+
 ```
 
 ---
@@ -222,6 +232,7 @@ NEXT_PUBLIC_ELLY_API_URL=https://api.huseyindol.com
 **Ön koşul:** Prompt 1 tamamlandı (http client + types hazır). CMS v4 backend deploy edildi — endpoint'ler aktif.
 
 ```
+
 elly-admin-panel'e "Email Templates" admin sayfası ekle. Bu sayfa, CMS'te
 veritabanında saklanan Thymeleaf email template'lerini panel'den yönetmeyi sağlar.
 
@@ -229,14 +240,14 @@ veritabanında saklanan Thymeleaf email template'lerini panel'den yönetmeyi sa�
 
 CMS endpoint'leri:
 
-| Method | Path | Permission | Açıklama |
-|---|---|---|---|
-| GET  | `/api/v1/email-templates?page=0&size=20` | `email_templates:read` | Liste (paginated) |
-| GET  | `/api/v1/email-templates/{key}` | `email_templates:read` | Detay |
-| POST | `/api/v1/email-templates` | `email_templates:manage` | Oluştur |
-| PUT  | `/api/v1/email-templates/{key}` | `email_templates:manage` | Güncelle |
-| DELETE | `/api/v1/email-templates/{key}` | `email_templates:manage` | Sil (soft) |
-| POST | `/api/v1/email-templates/{key}/preview` | `email_templates:read` | Dummy data ile render |
+| Method | Path                                     | Permission               | Açıklama              |
+| ------ | ---------------------------------------- | ------------------------ | --------------------- |
+| GET    | `/api/v1/email-templates?page=0&size=20` | `email_templates:read`   | Liste (paginated)     |
+| GET    | `/api/v1/email-templates/{key}`          | `email_templates:read`   | Detay                 |
+| POST   | `/api/v1/email-templates`                | `email_templates:manage` | Oluştur               |
+| PUT    | `/api/v1/email-templates/{key}`          | `email_templates:manage` | Güncelle              |
+| DELETE | `/api/v1/email-templates/{key}`          | `email_templates:manage` | Sil (soft)            |
+| POST   | `/api/v1/email-templates/{key}/preview`  | `email_templates:read`   | Dummy data ile render |
 
 Request/Response tipleri: `EmailTemplate` (zaten `types/cms.ts`'de tanımlı).
 
@@ -248,11 +259,13 @@ Request/Response tipleri: `EmailTemplate` (zaten `types/cms.ts`'de tanımlı).
 | `password-reset` | `Şifre Sıfırlama Talebiniz` | `userName`, `resetUrl`, `resetCode`, `expiresIn` |
 
 Preview endpoint'i şu body bekler:
+
 ```json
 { "data": { "userName": "Ahmet", "link": "https://..." } }
 ```
 
 Response:
+
 ```json
 { "html": "<html>...", "subject": "Render edilmiş subject" }
 ```
@@ -287,6 +300,7 @@ lib/hooks/email-templates/
 ### Özellikler
 
 **Liste sayfası (`/admin/email-templates`)**
+
 - Server Component, `requirePermission('email_templates:read')`
 - Tablo: templateKey (mono font), subject, active (badge), updatedAt, actions
 - "Yeni Template" butonu (sağ üst) — `rabbit:manage` değil, `email_templates:manage`
@@ -295,6 +309,7 @@ lib/hooks/email-templates/
 - TanStack Query `staleTime: 30_000`
 
 **Oluşturma formu (`/new`)**
+
 - react-hook-form + zod schema
 - Alanlar: templateKey (regex `^[a-z0-9-]+$`), subject, description, active checkbox, htmlBody
 - htmlBody için Monaco editor (HTML mode, VS dark theme, 500px yükseklik)
@@ -303,6 +318,7 @@ lib/hooks/email-templates/
 - "Kaydet" → `POST /api/v1/email-templates` → başarılıysa edit sayfasına redirect
 
 **Edit sayfası (`/[key]`)**
+
 - URL'den `key` alır, `useEmailTemplate(key)` ile fetch
 - `TemplateForm` bileşenini `defaultValues` ile doldurur
 - `optimisticLockVersion` hidden field — PUT body'sinde gönderilir
@@ -310,12 +326,14 @@ lib/hooks/email-templates/
 - Delete butonu (sağ üst, destructive variant) — confirm dialog + success redirect
 
 **Preview Panel**
+
 - Sol: JSON textarea (dummy data, default: `{"userName": "Ahmet"}`)
 - Sağ: iframe `sandbox=""` `srcDoc={html}` (XSS koruması)
 - "Render et" butonu → `POST /preview` → iframe güncellenir
 - Response'taki `subject` de gösterilsin (iframe üstünde)
 
 **Delete Confirm Dialog**
+
 - shadcn Dialog (veya projenin modal bileşeni)
 - "Onaylamak için templateKey'i yaz: **welcome**"
 - Input değeri eşleşince "Sil" butonu aktif olur
@@ -323,12 +341,14 @@ lib/hooks/email-templates/
 ### TanStack Query Hook'ları
 
 Query key'leri:
+
 ```typescript
 export const emailTemplatesKeys = {
   all: ['email-templates'] as const,
-  list: (params?: Record<string, unknown>) => [...emailTemplatesKeys.all, 'list', params] as const,
+  list: (params?: Record<string, unknown>) =>
+    [...emailTemplatesKeys.all, 'list', params] as const,
   detail: (key: string) => [...emailTemplatesKeys.all, 'detail', key] as const,
-};
+}
 ```
 
 Mutations `onSuccess`'te `invalidateQueries({ queryKey: emailTemplatesKeys.all })` çağır.
@@ -349,6 +369,7 @@ Admin sidebar'a (mevcutsa) "Email Templates" linki ekle.
 Kısıt: Monaco kurulu değilse `npm install @monaco-editor/react` kur.
 Yoksa `react-hook-form` ve `zod` ile formu yaz, form kütüphanesi zaten kurulu
 olabilir — Prompt 0 raporundan teyit et.
+
 ```
 
 ---
@@ -356,6 +377,7 @@ olabilir — Prompt 0 raporundan teyit et.
 ## Prompt 3 — RabbitMQ Yönetim Sayfası
 
 ```
+
 elly-admin-panel'e "RabbitMQ Yönetimi" admin sayfası ekle. Bu sayfa, CMS'in
 proxy'lediği RabbitMQ management API endpoint'lerini kullanır — panel doğrudan
 :15672'ye bağlanmaz.
@@ -364,20 +386,25 @@ proxy'lediği RabbitMQ management API endpoint'lerini kullanır — panel doğru
 
 CMS endpoint'leri:
 
-| Method | Path | Permission | Açıklama |
-|---|---|---|---|
-| GET  | `/api/v1/admin/rabbit/overview` | `rabbit:read` | Broker özeti |
-| GET  | `/api/v1/admin/rabbit/queues` | `rabbit:read` | Tüm queue'lar |
-| GET  | `/api/v1/admin/rabbit/queues/{name}` | `rabbit:read` | Tek queue detay |
-| GET  | `/api/v1/admin/rabbit/queues/{name}/messages?count=10` | `rabbit:read` | Peek |
-| POST | `/api/v1/admin/rabbit/queues/{name}/purge` | `rabbit:manage` | Tümünü sil |
-| POST | `/api/v1/admin/rabbit/queues/{name}/republish` | `rabbit:manage` | Yeniden publish |
+| Method | Path                                                   | Permission      | Açıklama        |
+| ------ | ------------------------------------------------------ | --------------- | --------------- |
+| GET    | `/api/v1/admin/rabbit/overview`                        | `rabbit:read`   | Broker özeti    |
+| GET    | `/api/v1/admin/rabbit/queues`                          | `rabbit:read`   | Tüm queue'lar   |
+| GET    | `/api/v1/admin/rabbit/queues/{name}`                   | `rabbit:read`   | Tek queue detay |
+| GET    | `/api/v1/admin/rabbit/queues/{name}/messages?count=10` | `rabbit:read`   | Peek            |
+| POST   | `/api/v1/admin/rabbit/queues/{name}/purge`             | `rabbit:manage` | Tümünü sil      |
+| POST   | `/api/v1/admin/rabbit/queues/{name}/republish`         | `rabbit:manage` | Yeniden publish |
 
 Tipler `types/cms.ts`'de: `RabbitOverview`, `RabbitQueue`, `RabbitMessage`.
 
 Republish body:
+
 ```json
-{ "targetQueue": "email-queue", "payload": "...", "contentType": "application/json" }
+{
+  "targetQueue": "email-queue",
+  "payload": "...",
+  "contentType": "application/json"
+}
 ```
 
 Peek her zaman `ackmode=ack_requeue_true` ile yapılır (backend tarafında) —
@@ -410,6 +437,7 @@ lib/hooks/rabbit/
 ### Özellikler
 
 **Ana sayfa (`/admin/infrastructure/rabbitmq`)**
+
 - Server Component, `requirePermission('rabbit:read')`
 - `export const dynamic = 'force-dynamic'`
 - 3 bölüm:
@@ -419,12 +447,14 @@ lib/hooks/rabbit/
 - `HydrationBoundary` ile prefetch (overview + queues)
 
 **OverviewCard**
+
 - shadcn Card
 - 4 stat grid: Toplam Mesaj / Consumer / Queue / Exchange
 - Başlık: "RabbitMQ {version} · {clusterName}"
 - Auto-refresh 10 sn
 
 **QueueTable**
+
 - TanStack Table veya shadcn Table (hangisi mevcut)
 - Kolonlar: Queue (mono), Ready, Unacked, Consumer, State (badge), Actions
 - Satır click → QueueDetailSheet açılır
@@ -436,6 +466,7 @@ lib/hooks/rabbit/
 - State "running" → default badge, "idle" → secondary badge
 
 **QueueDetailSheet**
+
 - shadcn Sheet, `side="right"`, `className="w-[640px]"`
 - İçerik:
   - Queue adı (mono, büyük)
@@ -444,6 +475,7 @@ lib/hooks/rabbit/
   - MessageList bileşeni
 
 **MessageList**
+
 - "Son 10 mesajı göster" butonu (pattern: `enabled: false` → butona basınca `refetch()`)
 - Her mesaj `<details>` içinde:
   - Summary: index + routingKey + redelivered badge
@@ -451,12 +483,14 @@ lib/hooks/rabbit/
 - Max 10 mesaj, count parametresi buton'un yanında input olabilir
 
 **DestructiveConfirmDialog (reusable)**
+
 - Props: `expectedText, title, description, onConfirm`
 - Input'a `expectedText` yazılana kadar "Onayla" butonu disabled
 - "İptal" butonu her zaman aktif
 - Dialog kapandığında input sıfırlanır
 
 **RepublishDialog**
+
 - Input: targetQueue (default: "email-queue"), payload (textarea, preview'den kopyalanabilir)
 - Submit → `POST /republish` → toast
 
@@ -469,7 +503,7 @@ export const rabbitKeys = {
   queues: () => [...rabbitKeys.all, 'queues'] as const,
   queue: (name: string) => [...rabbitKeys.all, 'queue', name] as const,
   messages: (name: string) => [...rabbitKeys.all, 'messages', name] as const,
-};
+}
 ```
 
 Mutations invalidate `rabbitKeys.all`.
@@ -484,6 +518,7 @@ Mutations invalidate `rabbitKeys.all`.
 ### Navigasyon
 
 Admin sidebar'a "Infrastructure" sub-menu ekle (yoksa):
+
 - Infrastructure
   - RabbitMQ
   - (ileride: Redis, Postgres durumu)
@@ -496,6 +531,7 @@ Admin sidebar'a "Infrastructure" sub-menu ekle (yoksa):
 - Queue listesi geliyor → drawer açılıyor → peek mesaj getiriyor
 - Purge modal "queue adını yaz" UX'i çalışıyor
 - `npm run build` hatasız
+
 ```
 
 ---
@@ -503,6 +539,7 @@ Admin sidebar'a "Infrastructure" sub-menu ekle (yoksa):
 ## Prompt 4 — Email Logs Sayfası (v3 retry için)
 
 ```
+
 elly-admin-panel'e "Email Logs" admin sayfası ekle. Gönderilen/kuyrukta bekleyen/
 başarısız mail kayıtlarını listeler, FAILED olanları tek tıkla retry eder.
 
@@ -513,15 +550,16 @@ Auth: **JWT Bearer token** — `Authorization: Bearer <token>` header'ı yeterli
 
 CMS endpoint'leri:
 
-| Method | Path | Permission | Açıklama |
-|---|---|---|---|
-| GET  | `/api/v1/emails?status=&page=0&size=20` | `emails:read` | Paginated list, opsiyonel status |
-| POST | `/api/v1/emails/{id}/retry` | `emails:retry` | FAILED/PENDING → PENDING + re-publish |
-| GET  | `/api/v1/emails/templates` | `emails:read` | Classpath template listesi |
+| Method | Path                                    | Permission     | Açıklama                              |
+| ------ | --------------------------------------- | -------------- | ------------------------------------- |
+| GET    | `/api/v1/emails?status=&page=0&size=20` | `emails:read`  | Paginated list, opsiyonel status      |
+| POST   | `/api/v1/emails/{id}/retry`             | `emails:retry` | FAILED/PENDING → PENDING + re-publish |
+| GET    | `/api/v1/emails/templates`              | `emails:read`  | Classpath template listesi            |
 
 Tip `types/cms.ts`'de: `EmailLog`, `Page<T>`.
 
 Retry kuralları:
+
 - SENT retry edilemez → 400 VALIDATION_ERROR
 - FAILED veya PENDING retry edilebilir
 - retry başarılıysa status PENDING'e döner, retryCount=0, errorMessage=null
@@ -549,6 +587,7 @@ lib/hooks/emails/
 ### Özellikler
 
 **Liste sayfası (`/admin/email-logs`)**
+
 - Server Component, `requirePermission('emails:read')`
 - URL search params: `?status=FAILED&page=0`
 - Filter toggle group: Tümü / PENDING / SENT / FAILED
@@ -568,6 +607,7 @@ lib/hooks/emails/
   - `disabled={!canRetry || status === 'SENT'}`
 
 **EmailLogDetailSheet**
+
 - shadcn Sheet, right side
 - İçerik:
   - Recipient, Subject, Template
@@ -578,12 +618,14 @@ lib/hooks/emails/
   - "Retry" butonu (permission'a göre)
 
 **RetryButton**
+
 - Mutation: `POST /api/v1/emails/{id}/retry`
 - `onSuccess` → toast "Mail yeniden kuyruğa alındı" + invalidate list
 - `onError` (400) → toast "SENT mail retry edilemez"
 - Loading state: "Retry ediliyor..."
 
 **Pagination**
+
 - Alt: "Sayfa 1/5 · Toplam 87 mail" + prev/next butonlar
 - Veya shadcn Pagination bileşeni (mevcutsa)
 
@@ -594,7 +636,7 @@ export const emailLogsKeys = {
   all: ['email-logs'] as const,
   list: (params?: { status?: string; page?: number; size?: number }) =>
     [...emailLogsKeys.all, 'list', params] as const,
-};
+}
 ```
 
 ### Opsiyonel: Bulk Actions
@@ -609,6 +651,7 @@ Başlangıçta atla — ilerisinde çoklu seçim + "Retry Selected" eklenebilir.
 - SENT satırda retry butonu disabled
 - Permission kontrolü çalışıyor
 - Pagination URL'e yansıyor (refresh sonrası kaybolmasın)
+
 ```
 
 ---
@@ -618,6 +661,7 @@ Başlangıçta atla — ilerisinde çoklu seçim + "Retry Selected" eklenebilir.
 **Ön koşul:** Prompt 1 tamamlandı. Bu endpoint'ler **CMS'te canlı** — bugün deploy edildi, test edebilirsin.
 
 ```
+
 elly-admin-panel'e "Mail Accounts" admin sayfası ekle. Her tenant, kendi
 veritabanında birden fazla SMTP hesabı (ör. info@, sales@, support@) tutabilir.
 Bu sayfa onları CRUD eder + test/verify aksiyonları sağlar.
@@ -634,16 +678,16 @@ Pasif hesaplar form'da sender olarak seçilemez.
 
 ## CMS Endpoint'leri
 
-| Method | Path | Permission | Açıklama |
-|---|---|---|---|
-| GET    | `/api/v1/mail-accounts` | `mail:read` | Tüm hesaplar (array) |
-| GET    | `/api/v1/mail-accounts/active` | `mail:read` | Sadece `active=true` — Form dropdown'unda kullanılır |
-| GET    | `/api/v1/mail-accounts/{id}` | `mail:read` | Detay |
-| POST   | `/api/v1/mail-accounts` | `mail:create` | Yeni hesap (201 Created) |
-| PUT    | `/api/v1/mail-accounts/{id}` | `mail:update` | Güncelle (password boşsa korunur) |
-| DELETE | `/api/v1/mail-accounts/{id}` | `mail:delete` | Sil |
-| POST   | `/api/v1/mail-accounts/{id}/test` | `mail:create` | Body: `{testTo: string}` — gerçek mail gönderir |
-| POST   | `/api/v1/mail-accounts/{id}/verify` | `mail:read` | Mail göndermeden SMTP bağlantısını test eder |
+| Method | Path                                | Permission    | Açıklama                                             |
+| ------ | ----------------------------------- | ------------- | ---------------------------------------------------- |
+| GET    | `/api/v1/mail-accounts`             | `mail:read`   | Tüm hesaplar (array)                                 |
+| GET    | `/api/v1/mail-accounts/active`      | `mail:read`   | Sadece `active=true` — Form dropdown'unda kullanılır |
+| GET    | `/api/v1/mail-accounts/{id}`        | `mail:read`   | Detay                                                |
+| POST   | `/api/v1/mail-accounts`             | `mail:create` | Yeni hesap (201 Created)                             |
+| PUT    | `/api/v1/mail-accounts/{id}`        | `mail:update` | Güncelle (password boşsa korunur)                    |
+| DELETE | `/api/v1/mail-accounts/{id}`        | `mail:delete` | Sil                                                  |
+| POST   | `/api/v1/mail-accounts/{id}/test`   | `mail:create` | Body: `{testTo: string}` — gerçek mail gönderir      |
+| POST   | `/api/v1/mail-accounts/{id}/verify` | `mail:read`   | Mail göndermeden SMTP bağlantısını test eder         |
 
 ## Request/Response Tipleri
 
@@ -651,30 +695,30 @@ Pasif hesaplar form'da sender olarak seçilemez.
 
 ```typescript
 export interface MailAccount {
-  id: number;
-  name: string;               // Panel'de gösterilen ad (ör. "Satış Hesabı")
-  fromAddress: string;        // From header adresi (sales@firma.com)
-  smtpHost: string;           // smtp.gmail.com, smtp.office365.com vs.
-  smtpPort: number;           // 587 (STARTTLS), 465 (SSL), 25 (plaintext)
-  smtpUsername: string;       // genellikle email adresi
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
+  id: number
+  name: string // Panel'de gösterilen ad (ör. "Satış Hesabı")
+  fromAddress: string // From header adresi (sales@firma.com)
+  smtpHost: string // smtp.gmail.com, smtp.office365.com vs.
+  smtpPort: number // 587 (STARTTLS), 465 (SSL), 25 (plaintext)
+  smtpUsername: string // genellikle email adresi
+  active: boolean
+  createdAt: string
+  updatedAt: string
   // NOT: smtpPassword response'ta YOK — sadece create/update isteğinde body'de
 }
 
 export interface MailAccountRequest {
-  name: string;
-  fromAddress: string;
-  smtpHost: string;
-  smtpPort: number;
-  smtpUsername: string;
-  smtpPassword?: string;  // Update'te boş/null ise mevcut şifre korunur
-  active?: boolean;       // default: true
+  name: string
+  fromAddress: string
+  smtpHost: string
+  smtpPort: number
+  smtpUsername: string
+  smtpPassword?: string // Update'te boş/null ise mevcut şifre korunur
+  active?: boolean // default: true
 }
 
 export interface MailTestRequest {
-  testTo: string;  // Test mailinin gideceği hedef adres
+  testTo: string // Test mailinin gideceği hedef adres
 }
 ```
 
@@ -710,6 +754,7 @@ lib/hooks/mail-accounts/
 ### Özellikler
 
 **Liste sayfası (`/admin/mail-accounts`)**
+
 - Server Component, `requirePermission('mail:read')`
 - Tablo kolonları:
   - Ad (name, bold)
@@ -729,6 +774,7 @@ lib/hooks/mail-accounts/
 - Empty state: "Henüz mail hesabı yok. İlk hesabı eklemek için..."
 
 **Oluşturma formu (`/new`)**
+
 - react-hook-form + zod:
   ```typescript
   const schema = z.object({
@@ -739,7 +785,7 @@ lib/hooks/mail-accounts/
     smtpUsername: z.string().min(1).max(255),
     smtpPassword: z.string().min(1, 'Yeni hesap için şifre zorunludur'),
     active: z.boolean().default(true),
-  });
+  })
   ```
 - Alan hint'leri:
   - SMTP Port yanında: "587 (STARTTLS, önerilen), 465 (SSL/TLS), 25 (plaintext)"
@@ -749,6 +795,7 @@ lib/hooks/mail-accounts/
 - "Kaydet ve Test Et" → önce POST, sonra TestEmailDialog otomatik açılır
 
 **Edit sayfası (`/[id]`)**
+
 - URL'den `id` alır, `useMailAccount(id)` ile fetch
 - Form doldurur; **smtpPassword alanı boş gelir** — placeholder: "Değiştirmek için yeni şifre yaz, boş bırakırsan mevcut korunur"
 - Password zod schema update'te optional: `smtpPassword: z.string().optional()`
@@ -757,6 +804,7 @@ lib/hooks/mail-accounts/
 - Boş password → body'den smtpPassword field'ını **çıkar** (undefined olsa bile JSON'da yok olsun)
 
 **TestEmailDialog**
+
 - shadcn Dialog
 - Input: "Test maili gideceği adres" (email validation)
 - "Gönder" butonu → `POST /api/v1/mail-accounts/{id}/test` body `{testTo}`
@@ -765,12 +813,14 @@ lib/hooks/mail-accounts/
 - Error: toast error ile response mesajı (SMTP auth failure, port kapalı vs.)
 
 **VerifyConnectionButton**
+
 - Tek tıkla `POST /api/v1/mail-accounts/{id}/verify` (mail göndermez, sadece SMTP handshake)
 - Loading state: spinner + "Doğrulanıyor..."
 - Success: toast "SMTP bağlantısı başarılı"
 - Error: toast error — response mesajı detaylı gösterilsin (kullanıcı şifresini düzeltsin)
 
 **DeleteConfirmDialog**
+
 - "Onaylamak için hesap adını yaz: **Satış Hesabı**"
 - Input eşleşince "Sil" butonu aktif
 - Delete sonrası toast + liste sayfasına redirect
@@ -784,10 +834,11 @@ export const mailAccountsKeys = {
   list: () => [...mailAccountsKeys.all, 'list'] as const,
   active: () => [...mailAccountsKeys.all, 'active'] as const,
   detail: (id: number) => [...mailAccountsKeys.all, 'detail', id] as const,
-};
+}
 ```
 
 Invalidation kuralları:
+
 - Create/Update/Delete → `mailAccountsKeys.all` invalidate (hem list hem active tazelenir)
 - Test/Verify → invalidate **etme** (hesap verisi değişmiyor)
 
@@ -805,6 +856,7 @@ Invalidation kuralları:
 - Test button: gerçek mail gönderir (dikkat: test adrese gerçek mail gider)
 - Verify button: mail göndermez, hızlı döner (< 5sn)
 - `npm run build` hatasız
+
 ```
 
 ---
@@ -814,6 +866,7 @@ Invalidation kuralları:
 **Ön koşul:** Prompt 1 + **Prompt 5 tamamlanmalı** (form sender dropdown'u aktif mail hesaplarına bağlı). Bu endpoint'ler **CMS'te canlı**.
 
 ```
+
 elly-admin-panel'e "Forms" admin sayfası ekle. FormDefinition CRUD + submission
 görüntüleme. Mail+Form v4 ile bildirim **opsiyonel**: form submit edildiğinde
 mail gönderilebilir veya tamamen devre dışı bırakılabilir. Buna göre form tanım
@@ -842,6 +895,7 @@ Form oluşturulurken bildirim alanları:
    - Boş bırakılırsa backend default: `"Yeni form gonderimi: {form.title}"`.
 
 **Backend dogrulamasi (FormDefinitionService.validateNotificationConfig):**
+
 - `notificationEnabled` null gelirse default true atanır.
 - Disabled iken: hiç validation yapılmaz.
 - Enabled iken: sender atanmış ve aktif olmalı, recipient boş olmamalı,
@@ -853,25 +907,25 @@ AES-decrypt → Gmail SMTP. Disabled iken yalnızca FormSubmission kaydı.
 
 ## CMS Endpoint'leri — FormDefinition
 
-| Method | Path | Permission | Açıklama |
-|---|---|---|---|
-| POST   | `/api/v1/forms` | `forms:create` | Yeni form tanımı |
-| PUT    | `/api/v1/forms/{id}` | `forms:update` | Güncelle |
-| GET    | `/api/v1/forms/{id}` | `forms:read` | Detay |
-| GET    | `/api/v1/forms/list` | `forms:read` | Tüm formlar (array) |
-| GET    | `/api/v1/forms/list/active` | `forms:read` | Sadece `active=true` |
-| GET    | `/api/v1/forms/list/paged?page=0&size=10&sort=id,asc` | `forms:read` | Paginated |
-| DELETE | `/api/v1/forms/{id}` | `forms:delete` | Sil |
+| Method | Path                                                  | Permission     | Açıklama             |
+| ------ | ----------------------------------------------------- | -------------- | -------------------- |
+| POST   | `/api/v1/forms`                                       | `forms:create` | Yeni form tanımı     |
+| PUT    | `/api/v1/forms/{id}`                                  | `forms:update` | Güncelle             |
+| GET    | `/api/v1/forms/{id}`                                  | `forms:read`   | Detay                |
+| GET    | `/api/v1/forms/list`                                  | `forms:read`   | Tüm formlar (array)  |
+| GET    | `/api/v1/forms/list/active`                           | `forms:read`   | Sadece `active=true` |
+| GET    | `/api/v1/forms/list/paged?page=0&size=10&sort=id,asc` | `forms:read`   | Paginated            |
+| DELETE | `/api/v1/forms/{id}`                                  | `forms:delete` | Sil                  |
 
 ## CMS Endpoint'leri — Submissions
 
-| Method | Path | Permission | Açıklama |
-|---|---|---|---|
-| POST   | `/api/v1/forms/{formId}/submit` | `forms:create` | Test amaçlı panelden submit |
-| GET    | `/api/v1/forms/{formId}/submissions` | `forms:read` | Tüm gönderimler |
-| GET    | `/api/v1/forms/{formId}/submissions/paged?page&size&sort` | `forms:read` | Paginated |
-| GET    | `/api/v1/forms/submissions/{submissionId}` | `forms:read` | Gönderim detayı |
-| GET    | `/api/v1/forms/{formId}/submissions/count` | `forms:read` | Sayı |
+| Method | Path                                                      | Permission     | Açıklama                    |
+| ------ | --------------------------------------------------------- | -------------- | --------------------------- |
+| POST   | `/api/v1/forms/{formId}/submit`                           | `forms:create` | Test amaçlı panelden submit |
+| GET    | `/api/v1/forms/{formId}/submissions`                      | `forms:read`   | Tüm gönderimler             |
+| GET    | `/api/v1/forms/{formId}/submissions/paged?page&size&sort` | `forms:read`   | Paginated                   |
+| GET    | `/api/v1/forms/submissions/{submissionId}`                | `forms:read`   | Gönderim detayı             |
+| GET    | `/api/v1/forms/{formId}/submissions/count`                | `forms:read`   | Sayı                        |
 
 ## Request/Response Tipleri
 
@@ -880,91 +934,91 @@ AES-decrypt → Gmail SMTP. Disabled iken yalnızca FormSubmission kaydı.
 ```typescript
 // ===== FormSchema yapıları =====
 
-export type ConditionOperator = 'EQUALS' | 'NOT_EQUALS' | 'GT' | 'LT';
+export type ConditionOperator = 'EQUALS' | 'NOT_EQUALS' | 'GT' | 'LT'
 
 export interface FormValidationRule {
-  min?: number | null;
-  max?: number | null;
-  pattern?: string | null;  // regex
+  min?: number | null
+  max?: number | null
+  pattern?: string | null // regex
 }
 
 export interface FormConditionRule {
-  field: string;             // başka bir field.id
-  operator: ConditionOperator;
-  value: unknown;
+  field: string // başka bir field.id
+  operator: ConditionOperator
+  value: unknown
 }
 
 export interface FormFieldOption {
-  label: string;
-  value: unknown;
+  label: string
+  value: unknown
 }
 
 export interface FormFieldDefinition {
-  id: string;                // unique field ID
-  stepId?: string | null;    // multi-step form için step'e bağlanır
-  type: string;              // 'text' | 'email' | 'number' | 'select' | 'radio' | 'checkbox' | 'textarea' | ...
-  label: string;
-  required?: boolean;
-  validation?: FormValidationRule | null;
-  condition?: FormConditionRule | null;  // conditional visibility
-  options?: FormFieldOption[];           // select/radio/checkbox için
+  id: string // unique field ID
+  stepId?: string | null // multi-step form için step'e bağlanır
+  type: string // 'text' | 'email' | 'number' | 'select' | 'radio' | 'checkbox' | 'textarea' | ...
+  label: string
+  required?: boolean
+  validation?: FormValidationRule | null
+  condition?: FormConditionRule | null // conditional visibility
+  options?: FormFieldOption[] // select/radio/checkbox için
 }
 
 export interface FormStepDefinition {
-  id: string;
-  title: string;
-  description?: string;
+  id: string
+  title: string
+  description?: string
 }
 
 export interface FormSchema {
-  config?: Record<string, unknown>;  // layout, styling, vs.
-  fields: FormFieldDefinition[];
-  steps?: FormStepDefinition[];      // wizard form'lar için
+  config?: Record<string, unknown> // layout, styling, vs.
+  fields: FormFieldDefinition[]
+  steps?: FormStepDefinition[] // wizard form'lar için
 }
 
 // ===== FormDefinition =====
 
 export interface FormDefinition {
-  id: number;
-  title: string;
-  version: number | null;
-  schema: FormSchema;
-  active: boolean;
+  id: number
+  title: string
+  version: number | null
+  schema: FormSchema
+  active: boolean
 
   // Mail+Form v4 alanları — bildirim opsiyonel
-  senderMailAccountId: number | null;       // notificationEnabled=false iken null olabilir
-  senderMailAccountName: string | null;     // readonly — UI display
-  senderFromAddress: string | null;          // readonly — UI display
-  recipientEmail: string | null;             // virgülle ayrılmış email listesi de olabilir
-  notificationSubject: string | null;
-  notificationEnabled: boolean;
+  senderMailAccountId: number | null // notificationEnabled=false iken null olabilir
+  senderMailAccountName: string | null // readonly — UI display
+  senderFromAddress: string | null // readonly — UI display
+  recipientEmail: string | null // virgülle ayrılmış email listesi de olabilir
+  notificationSubject: string | null
+  notificationEnabled: boolean
 
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string
+  updatedAt: string
 }
 
 export interface FormDefinitionRequest {
-  title: string;
-  version?: number;
-  schema: FormSchema;
-  active?: boolean;
+  title: string
+  version?: number
+  schema: FormSchema
+  active?: boolean
   // Mail+Form v4: senderMailAccountId ve recipientEmail conditional required —
   // notificationEnabled=true (default) iken zorunlu, false iken opsiyonel.
-  senderMailAccountId?: number | null;
-  recipientEmail?: string | null;            // tek adres veya "a@x.com, b@y.com"
-  notificationSubject?: string;
-  notificationEnabled?: boolean;             // default true
+  senderMailAccountId?: number | null
+  recipientEmail?: string | null // tek adres veya "a@x.com, b@y.com"
+  notificationSubject?: string
+  notificationEnabled?: boolean // default true
 }
 
 // ===== FormSubmission =====
 
 export interface FormSubmission {
-  id: number;
-  formDefinitionId: number;
-  formTitle: string;
-  payload: Record<string, unknown>;  // kullanıcı cevapları
-  submittedAt: string;
-  createdAt: string;
+  id: number
+  formDefinitionId: number
+  formTitle: string
+  payload: Record<string, unknown> // kullanıcı cevapları
+  submittedAt: string
+  createdAt: string
 }
 ```
 
@@ -1005,6 +1059,7 @@ lib/hooks/forms/
 ### Özellikler
 
 **Liste sayfası (`/admin/forms`)**
+
 - Server Component, `requirePermission('forms:read')`
 - URL search params: `?page=0&size=10&sort=id,asc`
 - Tablo kolonları:
@@ -1023,65 +1078,75 @@ lib/hooks/forms/
 - Empty state: "Henüz form yok"
 
 **Oluşturma formu (`/new`)**
+
 - react-hook-form + zod (v4 — conditional required):
 
   ```typescript
   // Tek/çoklu email: "a@b.com" veya "a@b.com, c@d.com"
   const RECIPIENT_REGEX =
-    /^\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(\s*,\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})*\s*$/;
+    /^\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(\s*,\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})*\s*$/
 
-  const schema = z.object({
-    title: z.string().min(1).max(255),
-    version: z.number().int().optional(),
-    schema: z.object({
-      config: z.record(z.unknown()).optional(),
-      fields: z.array(z.object({
-        id: z.string().min(1),
-        type: z.string().min(1),
-        label: z.string().min(1),
-        required: z.boolean().optional(),
-        // ...
-      })).min(1, 'En az 1 alan olmalı'),
-      steps: z.array(z.object({ id: z.string(), title: z.string() })).optional(),
-    }),
-    active: z.boolean().default(true),
-    // Conditional required — superRefine içinde notificationEnabled'a göre kontrol
-    senderMailAccountId: z.number().int().positive().nullable().optional(),
-    recipientEmail: z.string().max(1000).nullable().optional(),
-    notificationSubject: z.string().max(255).optional(),
-    notificationEnabled: z.boolean().default(true),
-  }).superRefine((data, ctx) => {
-    // notificationEnabled undefined ise default true kabul et
-    const enabled = data.notificationEnabled !== false;
-    if (!enabled) return; // Bildirim kapalı — sender/recipient opsiyonel.
+  const schema = z
+    .object({
+      title: z.string().min(1).max(255),
+      version: z.number().int().optional(),
+      schema: z.object({
+        config: z.record(z.unknown()).optional(),
+        fields: z
+          .array(
+            z.object({
+              id: z.string().min(1),
+              type: z.string().min(1),
+              label: z.string().min(1),
+              required: z.boolean().optional(),
+              // ...
+            }),
+          )
+          .min(1, 'En az 1 alan olmalı'),
+        steps: z
+          .array(z.object({ id: z.string(), title: z.string() }))
+          .optional(),
+      }),
+      active: z.boolean().default(true),
+      // Conditional required — superRefine içinde notificationEnabled'a göre kontrol
+      senderMailAccountId: z.number().int().positive().nullable().optional(),
+      recipientEmail: z.string().max(1000).nullable().optional(),
+      notificationSubject: z.string().max(255).optional(),
+      notificationEnabled: z.boolean().default(true),
+    })
+    .superRefine((data, ctx) => {
+      // notificationEnabled undefined ise default true kabul et
+      const enabled = data.notificationEnabled !== false
+      if (!enabled) return // Bildirim kapalı — sender/recipient opsiyonel.
 
-    if (!data.senderMailAccountId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['senderMailAccountId'],
-        message: 'Bildirim açıkken bir gönderici seç',
-      });
-    }
-    const recipient = data.recipientEmail?.trim() ?? '';
-    if (!recipient) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['recipientEmail'],
-        message: 'Bildirim açıkken alıcı zorunludur',
-      });
-    } else if (!RECIPIENT_REGEX.test(recipient)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['recipientEmail'],
-        message: 'Geçersiz e-posta formatı. Birden fazla için virgülle ayır.',
-      });
-    }
-  });
+      if (!data.senderMailAccountId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['senderMailAccountId'],
+          message: 'Bildirim açıkken bir gönderici seç',
+        })
+      }
+      const recipient = data.recipientEmail?.trim() ?? ''
+      if (!recipient) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['recipientEmail'],
+          message: 'Bildirim açıkken alıcı zorunludur',
+        })
+      } else if (!RECIPIENT_REGEX.test(recipient)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['recipientEmail'],
+          message: 'Geçersiz e-posta formatı. Birden fazla için virgülle ayır.',
+        })
+      }
+    })
   ```
 
 **FormDefinitionForm layout** — iki sütun:
 
 Sol sütun (form tanımı):
+
 - Başlık
 - Versiyon (opsiyonel)
 - Aktif toggle
@@ -1121,6 +1186,7 @@ Sağ sütun — **NotificationSection** (kart içinde, "Bildirim Ayarları" baş
   - Helper text: "Boş bırakırsan default kullanılır: Yeni form gönderimi: [form başlığı]"
 
 **SchemaEditor**
+
 - Monaco JSON mode, dynamic import (`ssr: false`)
 - "Format" butonu (Shift+Alt+F trigger)
 - Validate butonu → zod ile schema parse, hataları alta listele
@@ -1166,6 +1232,7 @@ Sağ sütun — **NotificationSection** (kart içinde, "Bildirim Ayarları" baş
 - Tab 3: **Test** → `TestSubmitDialog` tetikleyicisi
 
 **SubmissionsTab**
+
 - Server Component, paged list `/api/v1/forms/{formId}/submissions/paged`
 - Üstte sayaç: `useQuery('submissions-count', formId)` → "Toplam 87 gönderim"
 - Tablo:
@@ -1173,6 +1240,7 @@ Sağ sütun — **NotificationSection** (kart içinde, "Bildirim Ayarları" baş
 - Satır tıklanınca `SubmissionDetailSheet` açılır
 
 **SubmissionDetailSheet**
+
 - shadcn Sheet, right side (büyük — md:max-w-2xl)
 - İçerik:
   - Başlık: `{formTitle} - Gönderim #{id}`
@@ -1183,6 +1251,7 @@ Sağ sütun — **NotificationSection** (kart içinde, "Bildirim Ayarları" baş
   - Alt: raw JSON göster/gizle toggle
 
 **TestSubmitDialog**
+
 - Admin panelinden test amaçlı form submit — gerçek bildirim maili tetikler
 - Form schema'dan dinamik alan üret:
   - type === 'text' → Input
@@ -1198,6 +1267,7 @@ Sağ sütun — **NotificationSection** (kart içinde, "Bildirim Ayarları" baş
 - Uyarı: "Bu gerçek bir mail tetikler — `recipientEmail` adresine mail gider."
 
 **DeleteConfirmDialog**
+
 - "Form silindiğinde mevcut gönderimler de silinir (cascade)"
 - "Onaylamak için form başlığını yaz: **{title}**"
 
@@ -1211,14 +1281,15 @@ export const formsKeys = {
     [...formsKeys.lists(), 'paged', params] as const,
   active: () => [...formsKeys.all, 'active'] as const,
   detail: (id: number) => [...formsKeys.all, 'detail', id] as const,
-  submissions: (formId: number) => [...formsKeys.all, 'submissions', formId] as const,
+  submissions: (formId: number) =>
+    [...formsKeys.all, 'submissions', formId] as const,
   submissionsPaged: (formId: number, params: unknown) =>
     [...formsKeys.submissions(formId), 'paged', params] as const,
   submissionDetail: (submissionId: number) =>
     [...formsKeys.all, 'submission', submissionId] as const,
   submissionsCount: (formId: number) =>
     [...formsKeys.submissions(formId), 'count'] as const,
-};
+}
 ```
 
 ### Önemli UX kuralları
@@ -1263,6 +1334,7 @@ export const formsKeys = {
 - Submissions tab → sayaç ve tablo eş zamanlı gelir
 - Permission 403 → /403 redirect
 - `npm run build` hatasız
+
 ```
 
 ---
@@ -1272,101 +1344,104 @@ export const formsKeys = {
 **Ön koşul:** Prompt 1 tamam. Backend chat-tenant-aware migration uygulanmış olmalı.
 
 ```
+
 elly-admin-panel'e "Chat" admin sayfası ekle. CMS'in iki chat domain'i var:
 
-  • Admin Chat (AC) — basedb'de duran admin-only chat group'ları (mevcut).
-  • Tenant Chat (TC) — her tenant'ın kendi DB'sinde duran website chat'leri.
-    Bir TC group'una hem admin'ler hem (visitor_access=true ise) o tenant'ın
-    kayıtlı user'ları yazabilir.
+• Admin Chat (AC) — basedb'de duran admin-only chat group'ları (mevcut).
+• Tenant Chat (TC) — her tenant'ın kendi DB'sinde duran website chat'leri.
+Bir TC group'una hem admin'ler hem (visitor_access=true ise) o tenant'ın
+kayıtlı user'ları yazabilir.
 
 Tek bir chat module'ünden ikisini de yönet. Frontend'in işi:
-  1) AC ve TC group'larını ayrı listelemek (rozetlerle)
-  2) TC group'una giderken tenant-switch token kullanmak (bkz. TC erişimi notu)
-  3) WebSocket subscribe'ında tenant-aware topic'i kullanmak
-  4) Mesaj render'ında sender_type'a göre admin/visitor rozetini göstermek
+
+1. AC ve TC group'larını ayrı listelemek (rozetlerle)
+2. TC group'una giderken tenant-switch token kullanmak (bkz. TC erişimi notu)
+3. WebSocket subscribe'ında tenant-aware topic'i kullanmak
+4. Mesaj render'ında sender_type'a göre admin/visitor rozetini göstermek
 
 ## Bağlam — Data modeli
 
 CMS Response body alanları:
 
-  ChatGroup:
-    id              uuid
-    name            string
-    description     string | null
-    type            'GROUP' | 'DM'
-    createdBy       number (basedb users.id)
-    visibilityLevel 1..4
-    tenantId        string | null      ← NULL = AC; "tenant1" gibi = TC
-    visitorAccess   boolean             ← TRUE ise website ziyaretçileri görebilir
-    createdAt, updatedAt
+ChatGroup:
+id uuid
+name string
+description string | null
+type 'GROUP' | 'DM'
+createdBy number (basedb users.id)
+visibilityLevel 1..4
+tenantId string | null ← NULL = AC; "tenant1" gibi = TC
+visitorAccess boolean ← TRUE ise website ziyaretçileri görebilir
+createdAt, updatedAt
 
-  ChatMessage:
-    id              uuid
-    groupId         uuid
-    senderType      'ADMIN' | 'VISITOR'  ← polymorphic discriminator
-    senderId        number | null        ← admin ise basedb users.id, visitor ise null
-    visitorId       number | null        ← visitor ise tenant DB visitor_identities.id
-    senderUsername  string               ← backend pre-resolved display name
-    content         string (sanitized)
-    contentType     'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
-    fileUrl         string | null
-    parentId        uuid | null
-    deleted         boolean
-    editedAt        Date | null
-    createdAt       Date
+ChatMessage:
+id uuid
+groupId uuid
+senderType 'ADMIN' | 'VISITOR' ← polymorphic discriminator
+senderId number | null ← admin ise basedb users.id, visitor ise null
+visitorId number | null ← visitor ise tenant DB visitor_identities.id
+senderUsername string ← backend pre-resolved display name
+content string (sanitized)
+contentType 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
+fileUrl string | null
+parentId uuid | null
+deleted boolean
+editedAt Date | null
+createdAt Date
 
 ## Bağlam — CMS Endpoint'leri
 
 REST (auth: admin JWT):
-  GET    /api/v1/chat/groups                          → SEÇİLİ KAPSAMIN görünür group'ları (AC: admin JWT; TC: tenant-switch token)
-  POST   /api/v1/chat/groups                          → yeni group (body: name, description,
-                                                         memberIds[], tenantId?, visitorAccess?)
-  GET    /api/v1/chat/groups/{groupId}                → group detay
-  DELETE /api/v1/chat/groups/{groupId}                → group sil (owner/SUPER_ADMIN)
-  POST   /api/v1/chat/dm/{targetUserId}               → DM aç/getir
-  POST   /api/v1/chat/groups/{groupId}/members/{userId}   → üye ekle
-  DELETE /api/v1/chat/groups/{groupId}/members/{userId}   → üye çıkar
-  GET    /api/v1/chat/groups/{groupId}/members        → üye listesi
-  GET    /api/v1/chat/groups/{groupId}/access         → mevcut kullanıcının okuma/yazma durumu (NEW)
-  GET    /api/v1/chat/groups/{groupId}/messages?before=&limit=50  → history (cursor pagination)
-  POST   /api/v1/chat/groups/{groupId}/messages       → mesaj gönder (REST — NEW)
-                                                         body: { content, contentType?, fileUrl?, parentId? }
-  PUT    /api/v1/chat/messages/{messageId}            → düzenle (kendi mesajın)
-  DELETE /api/v1/chat/messages/{messageId}            → sil (soft delete)
-  POST   /api/v1/chat/files (multipart)               → dosya yükle
+GET /api/v1/chat/groups → SEÇİLİ KAPSAMIN görünür group'ları (AC: admin JWT; TC: tenant-switch token)
+POST /api/v1/chat/groups → yeni group (body: name, description,
+memberIds[], tenantId?, visitorAccess?)
+GET /api/v1/chat/groups/{groupId} → group detay
+DELETE /api/v1/chat/groups/{groupId} → group sil (owner/SUPER_ADMIN)
+POST /api/v1/chat/dm/{targetUserId} → DM aç/getir
+POST /api/v1/chat/groups/{groupId}/members/{userId} → üye ekle
+DELETE /api/v1/chat/groups/{groupId}/members/{userId} → üye çıkar
+GET /api/v1/chat/groups/{groupId}/members → üye listesi
+GET /api/v1/chat/groups/{groupId}/access → mevcut kullanıcının okuma/yazma durumu (NEW)
+GET /api/v1/chat/groups/{groupId}/messages?before=&limit=50 → history (cursor pagination)
+POST /api/v1/chat/groups/{groupId}/messages → mesaj gönder (REST — NEW)
+body: { content, contentType?, fileUrl?, parentId? }
+PUT /api/v1/chat/messages/{messageId} → düzenle (kendi mesajın)
+DELETE /api/v1/chat/messages/{messageId} → sil (soft delete)
+POST /api/v1/chat/files (multipart) → dosya yükle
 
 **TC erişimi — panel tenant-switch token kullanır:**
-  Panel, TC grubu seçildiğinde `POST /api/v1/tenants/token` ile tenantId içeren JWT alır.
-  Bu JWT'yi Authorization header'ında göndererek `/api/v1/tenant-chat/**` endpoint'lerine
-  erişir. `X-Tenant-Id` header göndermek GEREKMEZ.
+Panel, TC grubu seçildiğinde `POST /api/v1/tenants/token` ile tenantId içeren JWT alır.
+Bu JWT'yi Authorization header'ında göndererek `/api/v1/tenant-chat/**` endpoint'lerine
+erişir. `X-Tenant-Id` header göndermek GEREKMEZ.
 
-  AC istekleri: `/api/v1/chat/**` — admin JWT, header yok → basedb (değişmedi).
-  TC istekleri: `/api/v1/tenant-chat/**` — tenant-switch JWT → JWT'den tenantId okunur.
+AC istekleri: `/api/v1/chat/**` — admin JWT, header yok → basedb (değişmedi).
+TC istekleri: `/api/v1/tenant-chat/**` — tenant-switch JWT → JWT'den tenantId okunur.
 
-  ⚠️ Tek çağrı TÜM tenant'ları birden DÖNDÜRMEZ (her tenant ayrı DB — cross-tenant aggregate YOK).
+⚠️ Tek çağrı TÜM tenant'ları birden DÖNDÜRMEZ (her tenant ayrı DB — cross-tenant aggregate YOK).
 
-  → Panel'de bir **KAPSAM SEÇİCİ** olmalı: `AC | tenant1 | tenant2 | …`. Seçilen
-    kapsam TC ise tenant-switch token alınır; liste / history / send / üye işlemleri
-    hepsi o token ile gider. AC'de normal admin JWT kullanılır.
+→ Panel'de bir **KAPSAM SEÇİCİ** olmalı: `AC | tenant1 | tenant2 | …`. Seçilen
+kapsam TC ise tenant-switch token alınır; liste / history / send / üye işlemleri
+hepsi o token ile gider. AC'de normal admin JWT kullanılır.
 
 **Erişim kuralları (backend — panel buna göre davranmalı):**
-  - **Okuma** (liste, history, grup detay): üye VEYA `roleLevel >= visibilityLevel`
-  - **Yazma** (mesaj gönder): üye VEYA `roleLevel > visibilityLevel` (strict üst rol)
-  - Örnek: ADMIN (3) grup oluşturur → visibilityLevel=3 → SUPER_ADMIN (4) üye olmadan
-    görebilir **ve yazabilir** (4 > 3). ADMIN davet edilmeden SUPER_ADMIN grubuna yazamaz
-    (3 > 4 false) — davet gerekir.
-  - Gruptan çıkarılan kullanıcı: görmeye devam edebilir (visibility) ama **yazamaz**
-    (artık üye değil ve rolü visibility'dan üst değilse).
-  - `GET /groups/{id}/access` → `{ member, canRead, canWrite, denialMessage, denialCode }`
+
+- **Okuma** (liste, history, grup detay): üye VEYA `roleLevel >= visibilityLevel`
+- **Yazma** (mesaj gönder): üye VEYA `roleLevel > visibilityLevel` (strict üst rol)
+- Örnek: ADMIN (3) grup oluşturur → visibilityLevel=3 → SUPER_ADMIN (4) üye olmadan
+  görebilir **ve yazabilir** (4 > 3). ADMIN davet edilmeden SUPER_ADMIN grubuna yazamaz
+  (3 > 4 false) — davet gerekir.
+- Gruptan çıkarılan kullanıcı: görmeye devam edebilir (visibility) ama **yazamaz**
+  (artık üye değil ve rolü visibility'dan üst değilse).
+- `GET /groups/{id}/access` → `{ member, canRead, canWrite, denialMessage, denialCode }`
 
 ## Bağlam — WebSocket
 
-  Endpoint: ${API}/ws (SockJS + STOMP)
-  Auth: STOMP CONNECT'te "Authorization: Bearer <JWT>" header şart.
+Endpoint: ${API}/ws (SockJS + STOMP)
+Auth: STOMP CONNECT'te "Authorization: Bearer <JWT>" header şart.
 
-  Subscribe topic'leri:
-    AC group → /topic/group/{groupId}
-    TC group → /topic/tenant/{tenantId}/group/{groupId}
+Subscribe topic'leri:
+AC group → /topic/group/{groupId}
+TC group → /topic/tenant/{tenantId}/group/{groupId}
 
     Typing:    + /typing  (aynı path'in altında)
     Read:      + /read    (aynı path'in altında)
@@ -1385,13 +1460,13 @@ REST (auth: admin JWT):
     Kişisel hata kuyruğu (mesaj gönderme reddedilirse):
       /user/queue/chat-errors               ← payload: DtoChatWsError
 
-  Publish destinations (alternatif — REST POST yerine de kullanılabilir):
-    AC: /app/chat/{groupId}/send
-    TC: /app/tenant-chat/{tenantId}/{groupId}/send
-    AC typing: /app/chat/{groupId}/typing
-    TC typing: /app/tenant-chat/{tenantId}/{groupId}/typing
-    AC read:   /app/chat/{groupId}/read
-    TC read:   /app/tenant-chat/{tenantId}/{groupId}/read
+Publish destinations (alternatif — REST POST yerine de kullanılabilir):
+AC: /app/chat/{groupId}/send
+TC: /app/tenant-chat/{tenantId}/{groupId}/send
+AC typing: /app/chat/{groupId}/typing
+TC typing: /app/tenant-chat/{tenantId}/{groupId}/typing
+AC read: /app/chat/{groupId}/read
+TC read: /app/tenant-chat/{tenantId}/{groupId}/read
 
 **Mesaj gönderme tercihi:** REST POST kullan (sadelik için). WebSocket sadece
 subscribe için. Mesaj gönderdikten sonra backend zaten WebSocket topic'ine
@@ -1404,78 +1479,78 @@ mesajı id ile reconcile et.
 ### TypeScript tipleri (types/cms.ts veya benzeri)
 
 ```typescript
-export type ChatGroupType = 'GROUP' | 'DM';
-export type ChatMessageSenderType = 'ADMIN' | 'VISITOR' | 'GUEST'; // GUEST: anonim website ziyaretçisi — bkz. Prompt 9
-export type ChatMessageType = 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM';
+export type ChatGroupType = 'GROUP' | 'DM'
+export type ChatMessageSenderType = 'ADMIN' | 'VISITOR' | 'GUEST' // GUEST: anonim website ziyaretçisi — bkz. Prompt 9
+export type ChatMessageType = 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
 
 export interface ChatGroup {
-  id: string;
-  name: string | null;
-  description: string | null;
-  type: ChatGroupType;
-  createdBy: number;
-  visibilityLevel: number;
-  tenantId: string | null;
-  visitorAccess: boolean;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  name: string | null
+  description: string | null
+  type: ChatGroupType
+  createdBy: number
+  visibilityLevel: number
+  tenantId: string | null
+  visitorAccess: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export interface ChatMessage {
-  id: string;
-  groupId: string;
-  senderType: ChatMessageSenderType;
-  senderId: number | null;
-  visitorId: number | null;
-  senderUsername: string;
-  content: string;
-  contentType: ChatMessageType;
-  fileUrl: string | null;
-  parentId: string | null;
-  deleted: boolean;
-  editedAt: string | null;
-  createdAt: string;
+  id: string
+  groupId: string
+  senderType: ChatMessageSenderType
+  senderId: number | null
+  visitorId: number | null
+  senderUsername: string
+  content: string
+  contentType: ChatMessageType
+  fileUrl: string | null
+  parentId: string | null
+  deleted: boolean
+  editedAt: string | null
+  createdAt: string
 }
 
 export interface ChatGroupCreatePayload {
-  name: string;
-  description?: string;
-  memberIds?: number[];
-  tenantId?: string | null;     // dolu ise TC, null ise AC
-  visitorAccess?: boolean;       // sadece tenantId ile birlikte
+  name: string
+  description?: string
+  memberIds?: number[]
+  tenantId?: string | null // dolu ise TC, null ise AC
+  visitorAccess?: boolean // sadece tenantId ile birlikte
 }
 
 export interface SendMessagePayload {
-  content: string;
-  contentType?: ChatMessageType;
-  fileUrl?: string;
-  parentId?: string;
+  content: string
+  contentType?: ChatMessageType
+  fileUrl?: string
+  parentId?: string
 }
 
 /** WebSocket /topic/user/{userId}/groups/joined|removed payload */
 export interface ChatMembershipEvent {
-  action: 'JOINED' | 'REMOVED';
-  groupId: string;
-  userId: number;
-  group?: ChatGroup;           // JOINED'da dolu
-  message: string;             // Banner metni — doğrudan göster
+  action: 'JOINED' | 'REMOVED'
+  groupId: string
+  userId: number
+  group?: ChatGroup // JOINED'da dolu
+  message: string // Banner metni — doğrudan göster
 }
 
 /** GET /groups/{id}/access yanıtı */
 export interface ChatGroupAccess {
-  groupId: string;
-  member: boolean;
-  canRead: boolean;
-  canWrite: boolean;
-  denialMessage: string | null;
-  denialCode: string | null;   // CHAT_WRITE_FORBIDDEN vb.
+  groupId: string
+  member: boolean
+  canRead: boolean
+  canWrite: boolean
+  denialMessage: string | null
+  denialCode: string | null // CHAT_WRITE_FORBIDDEN vb.
 }
 
 /** WebSocket /user/queue/chat-errors payload */
 export interface ChatWsError {
-  errorCode: string;
-  message: string;
-  groupId: string | null;
+  errorCode: string
+  message: string
+  groupId: string | null
 }
 ```
 
@@ -1510,6 +1585,7 @@ lib/hooks/chat/
 ### Üyelik durumu ve composer kilidi (ZORUNLU)
 
 **Chat detay açıldığında:**
+
 ```typescript
 // useChatGroupAccess.ts
 export function useChatGroupAccess(groupId: string, tenantId?: string | null) {
@@ -1517,11 +1593,12 @@ export function useChatGroupAccess(groupId: string, tenantId?: string | null) {
     queryKey: chatKeys.access(groupId),
     queryFn: () => chatClient.getGroupAccess(groupId, tenantId),
     enabled: !!groupId,
-  });
+  })
 }
 ```
 
 **ChatComposer davranışı:**
+
 ```typescript
 const { data: access } = useChatGroupAccess(group.id, group.tenantId);
 const canWrite = access?.canWrite ?? false;
@@ -1546,11 +1623,11 @@ return (
 
 ```typescript
 type ChatSocketCallbacks = {
-  onMessage: (msg: ChatMessage) => void;
-  onMembershipJoined?: (event: ChatMembershipEvent) => void;
-  onMembershipRemoved?: (event: ChatMembershipEvent) => void;
-  onChatError?: (err: ChatWsError) => void;
-};
+  onMessage: (msg: ChatMessage) => void
+  onMembershipJoined?: (event: ChatMembershipEvent) => void
+  onMembershipRemoved?: (event: ChatMembershipEvent) => void
+  onChatError?: (err: ChatWsError) => void
+}
 
 export function useChatSocket(
   group: ChatGroup | null,
@@ -1558,66 +1635,69 @@ export function useChatSocket(
   callbacks: ChatSocketCallbacks,
 ) {
   useEffect(() => {
-    if (!group) return;
+    if (!group) return
     const client = new Client({
       webSocketFactory: () => new SockJS(`${API_URL}/ws`),
       connectHeaders: { Authorization: `Bearer ${getJwt()}` },
       onConnect: () => {
         const base = group.tenantId
           ? `/topic/tenant/${group.tenantId}/group/${group.id}`
-          : `/topic/group/${group.id}`;
+          : `/topic/group/${group.id}`
 
-        client.subscribe(base, (f) => callbacks.onMessage(JSON.parse(f.body)));
-        client.subscribe(`${base}/typing`, /* ... */);
-        client.subscribe(`${base}/read`, /* ... */);
+        client.subscribe(base, f => callbacks.onMessage(JSON.parse(f.body)))
+        client.subscribe(`${base}/typing` /* ... */)
+        client.subscribe(`${base}/read` /* ... */)
 
         // Kişisel üyelik event'leri — tek client tüm oturum boyunca
         // Tercih: /user/queue/* (userId hesaplamaya gerek yok)
-        client.subscribe('/user/queue/groups/joined', (f) => {
-          const group: ChatGroup = JSON.parse(f.body);
+        client.subscribe('/user/queue/groups/joined', f => {
+          const group: ChatGroup = JSON.parse(f.body)
           callbacks.onMembershipJoined?.({
             action: 'JOINED',
             groupId: group.id,
             userId: currentUserId,
             group,
             message: 'Gruba dahil edildiniz.',
-          });
-        });
-        client.subscribe('/user/queue/membership', (f) => {
-          callbacks.onMembership?.(JSON.parse(f.body) as ChatMembershipEvent);
-        });
+          })
+        })
+        client.subscribe('/user/queue/membership', f => {
+          callbacks.onMembership?.(JSON.parse(f.body) as ChatMembershipEvent)
+        })
         // Legacy topic (geriye dönük)
-        client.subscribe(`/topic/user/${currentUserId}/groups/joined`, (f) => {
-          const group: ChatGroup = JSON.parse(f.body); // plain DtoChatGroup
+        client.subscribe(`/topic/user/${currentUserId}/groups/joined`, f => {
+          const group: ChatGroup = JSON.parse(f.body) // plain DtoChatGroup
           callbacks.onMembershipJoined?.({
             action: 'JOINED',
             groupId: group.id,
             userId: currentUserId,
             group,
             message: 'Gruba dahil edildiniz.',
-          });
-        });
-        client.subscribe(`/topic/user/${currentUserId}/membership`, (f) => {
-          const ev: ChatMembershipEvent = JSON.parse(f.body);
-          if (ev.action === 'JOINED') callbacks.onMembershipJoined?.(ev);
-          if (ev.action === 'REMOVED') callbacks.onMembershipRemoved?.(ev);
-        });
-        client.subscribe(`/topic/user/${currentUserId}/groups/removed`, (f) => {
-          const ev: ChatMembershipEvent = JSON.parse(f.body);
-          callbacks.onMembershipRemoved?.(ev);
-        });
-        client.subscribe('/user/queue/chat-errors', (f) => {
-          callbacks.onChatError?.(JSON.parse(f.body));
-        });
+          })
+        })
+        client.subscribe(`/topic/user/${currentUserId}/membership`, f => {
+          const ev: ChatMembershipEvent = JSON.parse(f.body)
+          if (ev.action === 'JOINED') callbacks.onMembershipJoined?.(ev)
+          if (ev.action === 'REMOVED') callbacks.onMembershipRemoved?.(ev)
+        })
+        client.subscribe(`/topic/user/${currentUserId}/groups/removed`, f => {
+          const ev: ChatMembershipEvent = JSON.parse(f.body)
+          callbacks.onMembershipRemoved?.(ev)
+        })
+        client.subscribe('/user/queue/chat-errors', f => {
+          callbacks.onChatError?.(JSON.parse(f.body))
+        })
       },
-    });
-    client.activate();
-    return () => { client.deactivate(); };
-  }, [group?.id, group?.tenantId, currentUserId]);
+    })
+    client.activate()
+    return () => {
+      client.deactivate()
+    }
+  }, [group?.id, group?.tenantId, currentUserId])
 }
 ```
 
 **REMOVED handler (aktif chat ekranında):**
+
 ```typescript
 onMembershipRemoved: (ev) => {
   if (ev.groupId !== activeGroupId) {
@@ -1633,6 +1713,7 @@ onMembershipRemoved: (ev) => {
 ```
 
 **JOINED handler:**
+
 ```typescript
 onMembershipJoined: (ev) => {
   setMembershipBanner(ev.message); // "Gruba dahil edildiniz."
@@ -1646,6 +1727,7 @@ onMembershipJoined: (ev) => {
 ### Özellikler
 
 **Liste sayfası (`/admin/chat`)**
+
 - Server Component, `requirePermission('chat:read')`
 - Sol panel sekmeli: **Admin Chat** | **Tenant Chat**
   - Admin Chat sekmesi → group.tenantId === null olanlar
@@ -1656,6 +1738,7 @@ onMembershipJoined: (ev) => {
 - Default seçili group → ilk AC group; URL'de groupId varsa o yüklenir
 
 **Group listesi item bileşeni**
+
 - Sol: avatar (DM ise üyeden, GROUP ise initial)
 - Orta: name + son mesaj snippet
 - Sağ: timestamp + unread badge
@@ -1665,23 +1748,32 @@ onMembershipJoined: (ev) => {
   - group.tenantId !== null && group.visitorAccess → 🟢 + 🌟 "{tenantId} · Ziyaretçi"
 
 **CreateGroupDialog**
+
 - react-hook-form + zod:
   ```typescript
-  const schema = z.object({
-    name: z.string().min(1).max(100),
-    description: z.string().max(500).optional(),
-    memberIds: z.array(z.number()).optional(),
-    scope: z.enum(['ADMIN', 'TENANT']).default('ADMIN'),
-    tenantId: z.string().nullable().optional(),
-    visitorAccess: z.boolean().default(false),
-  }).superRefine((data, ctx) => {
-    if (data.scope === 'TENANT' && !data.tenantId) {
-      ctx.addIssue({ path: ['tenantId'], message: 'Tenant Chat için tenant seç' });
-    }
-    if (data.scope === 'ADMIN' && data.visitorAccess) {
-      ctx.addIssue({ path: ['visitorAccess'], message: 'Sadece TC için ziyaretçi erişimi açılabilir' });
-    }
-  });
+  const schema = z
+    .object({
+      name: z.string().min(1).max(100),
+      description: z.string().max(500).optional(),
+      memberIds: z.array(z.number()).optional(),
+      scope: z.enum(['ADMIN', 'TENANT']).default('ADMIN'),
+      tenantId: z.string().nullable().optional(),
+      visitorAccess: z.boolean().default(false),
+    })
+    .superRefine((data, ctx) => {
+      if (data.scope === 'TENANT' && !data.tenantId) {
+        ctx.addIssue({
+          path: ['tenantId'],
+          message: 'Tenant Chat için tenant seç',
+        })
+      }
+      if (data.scope === 'ADMIN' && data.visitorAccess) {
+        ctx.addIssue({
+          path: ['visitorAccess'],
+          message: 'Sadece TC için ziyaretçi erişimi açılabilir',
+        })
+      }
+    })
   ```
 - "Kapsam" RadioGroup: **Admin Chat (AC)** | **Tenant Chat (TC)**
 - TENANT seçildiyse:
@@ -1694,6 +1786,7 @@ onMembershipJoined: (ev) => {
   - Success → yeni group'a navigate et
 
 **Chat detay (`/[groupId]`)**
+
 - Server Component data: GET /api/v1/chat/groups/{groupId} (TC ise tenant-switch token ile)
 - ChatWindow: history infinite scroll
   - useChatHistory hook: `useInfiniteQuery`
@@ -1706,6 +1799,7 @@ onMembershipJoined: (ev) => {
   - Optimistic insert (UUID v4 ile geçici id), backend response gelince swap
 
 **MessageBubble — polymorphic sender render**
+
 ```typescript
 const isAdmin = msg.senderType === 'ADMIN';
 const isVisitor = msg.senderType === 'VISITOR';
@@ -1746,7 +1840,7 @@ return (
    (aktif grup değilse); aktif gruptaysa banner "Gruptan çıkarıldınız." + composer disabled.
    Sayfa yenilemeden anında yansımalı.
 4. **Tekrar davet:** `/topic/user/{userId}/groups/joined` → banner "Gruba dahil edildiniz."
-   + sidebar'a ekle + composer tekrar aktif (`access.canWrite=true`).
+   - sidebar'a ekle + composer tekrar aktif (`access.canWrite=true`).
 5. **Group silindiğinde** `/topic/groups/deleted` push → sidebar'dan kaldır,
    kullanıcı şu an o group'daysa landing page'e redirect.
 6. **Yeni group yaratıldığında** `/topic/groups/new` push → sidebar'a ekle
@@ -1759,21 +1853,25 @@ return (
 ```typescript
 export const chatKeys = {
   all: ['chat'] as const,
-  groups: (filter?: { tenantId?: string | null }) => [...chatKeys.all, 'groups', filter] as const,
+  groups: (filter?: { tenantId?: string | null }) =>
+    [...chatKeys.all, 'groups', filter] as const,
   group: (id: string) => [...chatKeys.all, 'group', id] as const,
   access: (groupId: string) => [...chatKeys.all, 'access', groupId] as const,
   members: (groupId: string) => [...chatKeys.all, 'members', groupId] as const,
-  messages: (groupId: string) => [...chatKeys.all, 'messages', groupId] as const,
-};
+  messages: (groupId: string) =>
+    [...chatKeys.all, 'messages', groupId] as const,
+}
 ```
 
 Mutations (`onSuccess` → invalidate):
+
 - createGroup → `chatKeys.groups()`
 - deleteGroup → `chatKeys.groups()` + `chatKeys.group(id)`
 - addMember/removeMember → `chatKeys.members(groupId)` + `chatKeys.access(groupId)`
 - sendMessage → optimistic update + topic'ten gelen mesajla reconcile
 
 `lib/api/chat.ts` ek method:
+
 ```typescript
 getGroupAccess: (groupId: string, tenantId?: string | null) =>
   request<ChatGroupAccess>(`/api/v1/chat/groups/${groupId}/access`, { tenantId }),
@@ -1792,7 +1890,8 @@ getGroupAccess: (groupId: string, tenantId?: string | null) =>
 - AC group'a mesaj yaz → /topic/group/{id} push geldi
 - WebSocket disconnect → otomatik reconnect (stompjs default)
 - `npm run build` hatasız, strict TS uyumlu
-```
+
+````
 
 ---
 
@@ -1839,10 +1938,12 @@ hazır gelen `senderUsername` alanındadır (backend zaten doldurur).
    ```typescript
    // ÖNCE: export type ChatMessageSenderType = 'ADMIN' | 'VISITOR';
    export type ChatMessageSenderType = 'ADMIN' | 'VISITOR' | 'GUEST';
-   ```
-   `ChatMessage` interface'i değişmez — `senderId`/`visitorId` zaten `number | null`.
+````
+
+`ChatMessage` interface'i değişmez — `senderId`/`visitorId` zaten `number | null`.
 
 2. **MessageBubble — GUEST dalı ekle** (Prompt 7'deki polymorphic render'a):
+
    ```typescript
    const isAdmin   = msg.senderType === 'ADMIN';
    const isVisitor = msg.senderType === 'VISITOR';
@@ -1865,6 +1966,7 @@ hazır gelen `senderUsername` alanındadır (backend zaten doldurur).
      </div>
    );
    ```
+
    - GUEST için **avatar/profil linki üretme** (userId yok). Avatar gerekiyorsa
      `senderUsername`'in baş harfinden initial-avatar üret.
    - Rozet metnini VISITOR'dan ayrı tut ("Misafir" vs "Ziyaretçi") ki moderatör
@@ -1887,11 +1989,13 @@ hazır gelen `senderUsername` alanındadır (backend zaten doldurur).
    sanıp polling/uyarı ekleme.
 
 ### Kısıtlar
+
 - Yeni endpoint, yeni hook, yeni sayfa YOK. Sadece tip + render delta.
 - `guest-token` endpoint'i panelden ASLA çağrılmaz (o website widget'ın işi).
 - Mevcut ADMIN/VISITOR davranışı bozulmamalı (regresyon yok).
 
 ### Doğrulama
+
 - [ ] `senderType: 'GUEST'` gelen bir mesaj çökmeden render oluyor (senderId/visitorId null iken)
 - [ ] GUEST mesajında "Misafir" rozeti, VISITOR'da "Ziyaretçi", ADMIN'de "Admin" görünüyor
 - [ ] `senderUsername` içinde `<b>` / `<script>` olsa bile ham HTML çalışmıyor (düz metin)
@@ -1914,14 +2018,14 @@ hazır gelen `senderUsername` alanındadır (backend zaten doldurur).
 
 **Mevcut (hazır) endpoint'ler:**
 
-| Method | Path | Auth | Body | Yanıt (data) |
-|---|---|---|---|---|
-| GET | `/api/v1/auth/mfa/status` | JWT | — | `{ mfaEnabled: boolean }` |
-| GET | `/api/v1/auth/mfa/setup` | JWT | — | `{ secret, qrUri, issuer }` |
-| POST | `/api/v1/auth/mfa/setup/verify` | JWT | `{ code }` (6 hane) | `"2FA başarıyla etkinleştirildi."` |
-| POST | `/api/v1/auth/mfa/verify` | **yok** (mfaToken yeterli) | `{ mfaToken, code }` | tam `DtoAuthResponse` |
-| POST | `/api/v1/auth/mfa/disable` | JWT | `{ password }` | `"2FA başarıyla devre dışı bırakıldı."` |
-| POST | `/api/v1/auth/login` | yok | `{ username, password }` | `DtoAuthResponse` — 2FA açıksa `mfaRequired:true` + `mfaToken`, `token:null` |
+| Method | Path                            | Auth                       | Body                     | Yanıt (data)                                                                 |
+| ------ | ------------------------------- | -------------------------- | ------------------------ | ---------------------------------------------------------------------------- |
+| GET    | `/api/v1/auth/mfa/status`       | JWT                        | —                        | `{ mfaEnabled: boolean }`                                                    |
+| GET    | `/api/v1/auth/mfa/setup`        | JWT                        | —                        | `{ secret, qrUri, issuer }`                                                  |
+| POST   | `/api/v1/auth/mfa/setup/verify` | JWT                        | `{ code }` (6 hane)      | `"2FA başarıyla etkinleştirildi."`                                           |
+| POST   | `/api/v1/auth/mfa/verify`       | **yok** (mfaToken yeterli) | `{ mfaToken, code }`     | tam `DtoAuthResponse`                                                        |
+| POST   | `/api/v1/auth/mfa/disable`      | JWT                        | `{ password }`           | `"2FA başarıyla devre dışı bırakıldı."`                                      |
+| POST   | `/api/v1/auth/login`            | yok                        | `{ username, password }` | `DtoAuthResponse` — 2FA açıksa `mfaRequired:true` + `mfaToken`, `token:null` |
 
 Tüm yanıtlar `RootEntityResponse` wrapper'lı: `{ result, message, data }`.
 
@@ -1937,12 +2041,14 @@ Tüm yanıtlar `RootEntityResponse` wrapper'lı: `{ result, message, data }`.
 
 ```typescript
 export interface MfaSetupResponse {
-  secret: string;   // Base32 — manuel giriş için göster
-  qrUri: string;    // otpauth://totp/... — QR olarak render et
-  issuer: string;
+  secret: string // Base32 — manuel giriş için göster
+  qrUri: string // otpauth://totp/... — QR olarak render et
+  issuer: string
 }
 
-export interface MfaStatus { mfaEnabled: boolean; }   // GET /api/v1/auth/mfa/status
+export interface MfaStatus {
+  mfaEnabled: boolean
+} // GET /api/v1/auth/mfa/status
 ```
 
 `DtoAuthResponse` tipine 2FA alanları eklendi → Prompt 1'deki `AuthResponse`'a ekle:
@@ -1951,18 +2057,20 @@ export interface MfaStatus { mfaEnabled: boolean; }   // GET /api/v1/auth/mfa/st
 ### lib/api/mfa.ts
 
 ```typescript
-import { http } from '@/lib/api/http';   // Prompt 1'deki wrapper (RootEntityResponse unwrap)
-import type { AuthResponse } from '@/types/cms';
+import { http } from '@/lib/api/http' // Prompt 1'deki wrapper (RootEntityResponse unwrap)
+import type { AuthResponse } from '@/types/cms'
 
 export const mfaApi = {
-  status:      () => http.get<MfaStatus>('/api/v1/auth/mfa/status'),           // 2FA açık mı?
-  setup:       () => http.get<MfaSetupResponse>('/api/v1/auth/mfa/setup'),
-  verifySetup: (code: string) => http.post<string>('/api/v1/auth/mfa/setup/verify', { code }),
-  disable:     (password: string) => http.post<string>('/api/v1/auth/mfa/disable', { password }),
+  status: () => http.get<MfaStatus>('/api/v1/auth/mfa/status'), // 2FA açık mı?
+  setup: () => http.get<MfaSetupResponse>('/api/v1/auth/mfa/setup'),
+  verifySetup: (code: string) =>
+    http.post<string>('/api/v1/auth/mfa/setup/verify', { code }),
+  disable: (password: string) =>
+    http.post<string>('/api/v1/auth/mfa/disable', { password }),
   // login 2. adım — JWT YOK, sadece mfaToken
   verifyLogin: (mfaToken: string, code: string) =>
     http.post<AuthResponse>('/api/v1/auth/mfa/verify', { mfaToken, code }),
-};
+}
 ```
 
 ### A) Hesap Güvenliği — 2FA aç/kapat
@@ -1970,13 +2078,18 @@ export const mfaApi = {
 Konum: Ayarlar → Güvenlik (örn. `app/(panel)/settings/security/page.tsx`).
 
 Durum (`mfa/status`):
+
 ```typescript
 export function useMfaStatus() {
-  return useQuery({ queryKey: ['mfa', 'status'], queryFn: () => mfaApi.status() });
+  return useQuery({
+    queryKey: ['mfa', 'status'],
+    queryFn: () => mfaApi.status(),
+  })
 }
 ```
 
 **Enable akışı** (MfaSetupDialog):
+
 1. `GET /mfa/setup` → `{ secret, qrUri }`
 2. QR'ı `qrUri`'den render et + `secret`'ı kopyalanabilir göster (manuel giriş)
 3. 6 haneli Authenticator kodu → `POST /mfa/setup/verify { code }`
@@ -2032,33 +2145,35 @@ Mevcut login handler'ını (Prompt 1 auth) genişlet:
 
 ```typescript
 // login submit içinde
-const res = await authApi.login({ username, password });   // POST /api/v1/auth/login
+const res = await authApi.login({ username, password }) // POST /api/v1/auth/login
 if (res.mfaRequired && res.mfaToken) {
-  setMfaToken(res.mfaToken);   // SADECE component state (5 dk geçerli) — persist ETME
-  setStep('mfa');              // 6 haneli kod ekranına geç
-  return;
+  setMfaToken(res.mfaToken) // SADECE component state (5 dk geçerli) — persist ETME
+  setStep('mfa') // 6 haneli kod ekranına geç
+  return
 }
 // normal akış: cookie'ler backend tarafından set edildi → dashboard'a yönlendir
 ```
 
 MFA kod ekranı:
+
 ```typescript
 const onVerify = async () => {
-  if (!/^\d{6}$/.test(code)) return setError('6 haneli kod girin');
+  if (!/^\d{6}$/.test(code)) return setError('6 haneli kod girin')
   try {
-    await mfaApi.verifyLogin(mfaToken, code);   // POST /mfa/verify — backend cookie'leri set eder
+    await mfaApi.verifyLogin(mfaToken, code) // POST /mfa/verify — backend cookie'leri set eder
     // Oturum cookie'leri (access/refresh) login ile aynı şekilde kuruldu → yönlendir
-    router.push('/dashboard');
+    router.push('/dashboard')
   } catch (e: any) {
-    setError(e.message || 'Kod geçersiz veya süresi doldu');
+    setError(e.message || 'Kod geçersiz veya süresi doldu')
   }
-};
+}
 ```
 
 `mfaToken` 5 dk geçerli; süresi dolarsa kullanıcı baştan login olur. `mfaToken`'ı
 localStorage/cookie'ye YAZMA — kısa ömürlü, sadece bu adım için bellekte tut.
 
 ### Doğrulama
+
 - Güvenlik sayfası `mfa/status` ile mevcut 2FA durumunu gösterir; enable/disable aksiyonları çalışır.
 - Enable: QR çıkar, Authenticator'a ekle, 6 haneli kod → "etkinleştirildi". Yanlış kodu reddeder.
 - 2FA açık kullanıcı login → `mfaRequired:true` → kod ekranı → `mfa/verify` → giriş tamam.
@@ -2068,11 +2183,13 @@ localStorage/cookie'ye YAZMA — kısa ömürlü, sadece bu adım için bellekte
 - `npm run build` hatasız.
 
 ### Kütüphaneler
+
 ```bash
 npm i qrcode.react      # QR render (veya mevcut bir QR bileşeni)
 ```
 
 ### Notlar
+
 - Kod alanı yalnızca 6 rakam (`inputMode="numeric"`, otomatik trim).
 - `secret`'ı loglama/analytics'e gönderme; sadece ekranda göster, persist etme.
 - `/api/v1/auth/mfa/*` endpoint'leri `loginSource=admin|tenant` farketmez; JWT'li
@@ -2140,9 +2257,9 @@ npm i qrcode.react      # QR render (veya mevcut bir QR bileşeni)
    Panel agent'ı 404 ile karşılaşırsa path'i kontrol et (`/api/v1/...` prefix'i şart) — backend eksikliği değil, path yazım hatası ihtimali yüksek.
 
 5. **Stack uyuşmazlığı:** Projen shadcn/ui değil MUI kullanıyorsa, Prompt
-   sonuna şunu ekle: *"Yukarıdaki örnek kodlar shadcn/ui varsayımıyla yazıldı.
+   sonuna şunu ekle: _"Yukarıdaki örnek kodlar shadcn/ui varsayımıyla yazıldı.
    Projemiz MUI kullanıyor, aynı feature'ı MUI bileşenleri (Dialog, Drawer,
-   Table, DataGrid) ile implement et."*
+   Table, DataGrid) ile implement et."_
 
 6. **Agent'ın çıktısını review et:** AI'lar bazen endpoint path'ini uyduruyor
    — `/api/emails` vs `/api/v1/emails` gibi. Bu dokümandaki path'lerin
