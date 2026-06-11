@@ -45,6 +45,7 @@ public/docs/
 public/openapi-generated.json
 next.openapi.json
 next.openapi.temp.json
+docs/
 
 # Lock files (already formatted)
 package-lock.json
