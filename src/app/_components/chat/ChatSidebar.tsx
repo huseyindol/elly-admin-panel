@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { getMyGroupsService } from '@/app/_services/chat.services'
-import { getTenantTokenService } from '@/app/_services/tenant.services'
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import { visibilityLabel, useMyRoleLevel } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
@@ -73,12 +72,12 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
       .catch(() => {})
   }, [])
 
-  // TC grupları — yalnızca TC sekmesi seçiliyken tenant-switch JWT ile çekilir.
+  // TC grupları — yalnızca TC sekmesi seçiliyken çekilir. Hedef tenant URL
+  // path'inde taşınır (/api/v1/chat/tenant/{tid}/groups); kimlik admin JWT'sinde.
   // TC kısmını değiştirir, AC gruplarını korur.
   const loadTcGroups = useCallback(() => {
     if (!sessionTenantId) return
-    getTenantTokenService(sessionTenantId)
-      .then(token => getMyGroupsService(sessionTenantId, token))
+    getMyGroupsService(sessionTenantId)
       .then(tc =>
         setGroups(prev => [...prev.filter(g => g.tenantId === null), ...tc]),
       )

@@ -32,17 +32,16 @@ export function ChatMemberList({ groupId }: Props) {
   const [inviting, setInviting] = useState(false)
   const myLevel = useMyRoleLevel()
   const tenantId = useChatWsStore(s => s.activeGroupTenantId)
-  const tenantToken = useChatWsStore(s => s.activeTenantToken)
   const queryClient = useQueryClient()
 
   useEffect(() => {
-    getMembersService(groupId, tenantId, tenantToken)
+    getMembersService(groupId, tenantId)
       .then(setMembers)
       .catch(() => {})
-  }, [groupId, tenantId, tenantToken])
+  }, [groupId, tenantId])
 
   const handleRemove = async (userId: number) => {
-    await removeMemberService(groupId, userId, tenantId, tenantToken)
+    await removeMemberService(groupId, userId, tenantId)
     setMembers(prev => prev.filter(m => m.userId !== userId))
     void queryClient.invalidateQueries({ queryKey: chatKeys.access(groupId) })
   }
@@ -52,12 +51,7 @@ export function ChatMemberList({ groupId }: Props) {
     if (!userId) return
     setInviting(true)
     try {
-      const member = await addMemberService(
-        groupId,
-        userId,
-        tenantId,
-        tenantToken,
-      )
+      const member = await addMemberService(groupId, userId, tenantId)
       setMembers(prev => [...prev, member])
       setInviteUserId('')
       void queryClient.invalidateQueries({ queryKey: chatKeys.access(groupId) })

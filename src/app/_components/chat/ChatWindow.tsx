@@ -61,7 +61,6 @@ export function ChatWindow({ groupId }: Props) {
   const { messages, prependHistory, sendRead, markMessageDeleted } =
     useChatWsStore()
   const activeGroupTenantId = useChatWsStore(s => s.activeGroupTenantId)
-  const activeTenantToken = useChatWsStore(s => s.activeTenantToken)
   const bannedKeys = useChatWsStore(s => s.bannedKeys)
   const setBannedKeys = useChatWsStore(s => s.setBannedKeys)
   const groupMessages = messages[groupId] ?? []
@@ -83,7 +82,7 @@ export function ChatWindow({ groupId }: Props) {
   useEffect(() => {
     if (!activeGroupTenantId) return
     let cancelled = false
-    listBansService(groupId, activeGroupTenantId, activeTenantToken)
+    listBansService(groupId, activeGroupTenantId)
       .then(bans => {
         if (cancelled) return
         const keys = new Set<string>()
@@ -97,7 +96,7 @@ export function ChatWindow({ groupId }: Props) {
     return () => {
       cancelled = true
     }
-  }, [groupId, activeGroupTenantId, activeTenantToken, setBannedKeys])
+  }, [groupId, activeGroupTenantId, setBannedKeys])
 
   // Mesajdan ban hedefi: GUEST → sessionId, VISITOR → visitorId. ADMIN → null.
   const banTarget = (
@@ -115,12 +114,7 @@ export function ChatWindow({ groupId }: Props) {
     if (!target) return
     setBanBusyId(msg.id)
     try {
-      await banUserService(
-        groupId,
-        target,
-        activeGroupTenantId,
-        activeTenantToken,
-      )
+      await banUserService(groupId, target, activeGroupTenantId)
       const k = banKey(msg.sessionId, msg.visitorId)
       // optimistic — WS BANNED olayı da gelip aynı key'i ekleyecek (idempotent)
       if (k) setBannedKeys(new Set(bannedKeys).add(k))
@@ -138,12 +132,7 @@ export function ChatWindow({ groupId }: Props) {
     if (!target) return
     setBanBusyId(msg.id)
     try {
-      await unbanUserService(
-        groupId,
-        target,
-        activeGroupTenantId,
-        activeTenantToken,
-      )
+      await unbanUserService(groupId, target, activeGroupTenantId)
       const k = banKey(msg.sessionId, msg.visitorId)
       if (k) {
         const next = new Set(bannedKeys)
@@ -162,13 +151,7 @@ export function ChatWindow({ groupId }: Props) {
   useEffect(() => {
     let cancelled = false
 
-    getHistoryService(
-      groupId,
-      undefined,
-      50,
-      activeGroupTenantId,
-      activeTenantToken,
-    )
+    getHistoryService(groupId, undefined, 50, activeGroupTenantId)
       .then(msgs => {
         if (cancelled) return
         prependHistory(groupId, msgs)
@@ -180,13 +163,7 @@ export function ChatWindow({ groupId }: Props) {
     return () => {
       cancelled = true
     }
-  }, [
-    groupId,
-    prependHistory,
-    sendRead,
-    activeGroupTenantId,
-    activeTenantToken,
-  ])
+  }, [groupId, prependHistory, sendRead, activeGroupTenantId])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -201,7 +178,6 @@ export function ChatWindow({ groupId }: Props) {
         oldestId,
         50,
         activeGroupTenantId,
-        activeTenantToken,
       )
       if (older.length < 50) setHasMore(false)
       prependHistory(groupId, older)
@@ -215,17 +191,12 @@ export function ChatWindow({ groupId }: Props) {
     hasMore,
     prependHistory,
     activeGroupTenantId,
-    activeTenantToken,
   ])
 
   const handleDelete = async (messageId: string) => {
     setDeletingId(messageId)
     try {
-      await deleteMessageService(
-        messageId,
-        activeGroupTenantId,
-        activeTenantToken,
-      )
+      await deleteMessageService(messageId, activeGroupTenantId)
       markMessageDeleted(groupId, messageId)
     } catch {
       // backend 403 → sessizce geç

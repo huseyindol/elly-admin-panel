@@ -15,7 +15,6 @@ import type { ChatMessageType } from '@/types/chat'
 interface Props {
   groupId: string
   tenantId?: string | null
-  tenantToken?: string | null
   canWrite: boolean
   banner?: string | null
   onWriteForbidden?: (message: string) => void
@@ -24,7 +23,6 @@ interface Props {
 export function ChatInput({
   groupId,
   tenantId,
-  tenantToken,
   canWrite,
   banner,
   onWriteForbidden,
@@ -77,7 +75,6 @@ export function ChatInput({
         groupId,
         { content: payloadContent, contentType },
         tenantId,
-        tenantToken,
       )
       addMessage(groupId, created)
     } catch (err) {
@@ -118,7 +115,7 @@ export function ChatInput({
     if (!file || !canWrite) return
     setUploading(true)
     try {
-      const fileUrl = await uploadChatFileService(file)
+      const fileUrl = await uploadChatFileService(file, tenantId)
       await sendPayload(fileUrl, 'FILE')
     } catch (err) {
       if (!(err instanceof ApiError)) {

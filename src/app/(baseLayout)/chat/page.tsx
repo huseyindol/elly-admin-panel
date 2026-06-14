@@ -26,7 +26,6 @@ export default function ChatPage() {
   const { isDarkMode } = useAdminTheme()
   const activeGroupId = useChatWsStore(s => s.activeGroupId)
   const activeGroupTenantId = useChatWsStore(s => s.activeGroupTenantId)
-  const activeTenantToken = useChatWsStore(s => s.activeTenantToken)
   const connected = useChatWsStore(s => s.connected)
   const unsubscribeFromGroup = useChatWsStore(s => s.unsubscribeFromGroup)
   const membershipJoinedSignal = useChatWsStore(s => s.membershipJoinedSignal)
@@ -52,7 +51,6 @@ export default function ChatPage() {
   const { data: access, refetch: refetchAccess } = useChatGroupAccess(
     activeGroupId,
     activeGroupTenantId,
-    activeTenantToken,
   )
   const canWrite = access?.canWrite ?? false
   const accessBanner = access?.denialMessage ?? null
@@ -64,10 +62,10 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (!activeGroupId) return
-    getGroupService(activeGroupId, activeGroupTenantId, activeTenantToken)
+    getGroupService(activeGroupId, activeGroupTenantId)
       .then(setActiveGroup)
       .catch(() => {})
-  }, [activeGroupId, activeGroupTenantId, activeTenantToken])
+  }, [activeGroupId, activeGroupTenantId])
 
   useEffect(() => {
     if (membershipJoinedSeq === 0 || !membershipJoinedSignal) return
@@ -134,11 +132,7 @@ export default function ChatPage() {
     if (!activeGroupId) return
     setDeletingGroup(true)
     try {
-      await deleteGroupService(
-        activeGroupId,
-        activeGroupTenantId,
-        activeTenantToken,
-      )
+      await deleteGroupService(activeGroupId, activeGroupTenantId)
       unsubscribeFromGroup()
       setShowMembers(false)
       setShowDeleteGroup(false)
@@ -264,7 +258,6 @@ export default function ChatPage() {
                   <ChatInput
                     groupId={activeGroupId}
                     tenantId={activeGroupTenantId}
-                    tenantToken={activeTenantToken}
                     canWrite={canWrite}
                     banner={composerBanner}
                     onWriteForbidden={message => {

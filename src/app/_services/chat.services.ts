@@ -11,24 +11,23 @@ import type {
 import type { BaseResponse } from '@/types/BaseResponse'
 
 /**
- * AC → /api/v1/chat, TC → /api/v1/tenant-chat
- * TC çağrıları tenantToken ile Authorization header'ını override eder;
- * X-Tenant-Id header'ı artık kullanılmaz.
+ * AC → /api/v1/chat, TC → /api/v1/chat/tenant/{tenantId}
+ *
+ * Kimlik her zaman admin'in kendi JWT'sinde (cookie üzerinden fetcher ekler);
+ * hedef tenant URL path'inde taşınır. WS destination'ları
+ * (/app/tenant-chat/{tid}/..) ve public REST (/api/v1/public/{tid}/..) ile aynı
+ * tek-kural: kimlik JWT'de, hedef tenant URL'de. X-Tenant-Id header'ı veya
+ * tenant-switch token KULLANILMAZ.
  */
 const chatBase = (tenantId?: string | null) =>
-  tenantId ? '/api/v1/tenant-chat' : '/api/v1/chat'
-
-/** TC çağrılarında admin JWT yerine tenant-switch JWT kullanılır. */
-const tcAuth = (tenantToken?: string | null): { overrideAuth?: string } =>
-  tenantToken ? { overrideAuth: tenantToken } : {}
+  tenantId ? `/api/v1/chat/tenant/${tenantId}` : '/api/v1/chat'
 
 export const getMyGroupsService = async (
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<ChatGroup[]> => {
   const res: BaseResponse<ChatGroup[]> = await fetcher(
     `${chatBase(tenantId)}/groups`,
-    { method: 'GET', ...tcAuth(tenantToken) },
+    { method: 'GET' },
   )
   if (!res.result) throw new Error(res.message ?? 'Gruplar yüklenemedi')
   return res.data
@@ -37,11 +36,10 @@ export const getMyGroupsService = async (
 export const getGroupService = async (
   groupId: string,
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<ChatGroup> => {
   const res: BaseResponse<ChatGroup> = await fetcher(
     `${chatBase(tenantId)}/groups/${groupId}`,
-    { method: 'GET', ...tcAuth(tenantToken) },
+    { method: 'GET' },
   )
   if (!res.result) throw new Error(res.message ?? 'Grup yüklenemedi')
   return res.data
@@ -50,11 +48,10 @@ export const getGroupService = async (
 export const getGroupAccessService = async (
   groupId: string,
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<ChatGroupAccess> => {
   const res: BaseResponse<ChatGroupAccess> = await fetcher(
     `${chatBase(tenantId)}/groups/${groupId}/access`,
-    { method: 'GET', ...tcAuth(tenantToken) },
+    { method: 'GET' },
   )
   return unwrapOrThrow(res, 'Erişim bilgisi alınamadı')
 }
@@ -62,27 +59,23 @@ export const getGroupAccessService = async (
 export const getMembersService = async (
   groupId: string,
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<ChatMember[]> => {
   const res: BaseResponse<ChatMember[]> = await fetcher(
     `${chatBase(tenantId)}/groups/${groupId}/members`,
-    { method: 'GET', ...tcAuth(tenantToken) },
+    { method: 'GET' },
   )
   if (!res.result) throw new Error(res.message ?? 'Üyeler yüklenemedi')
   return res.data
 }
 
-export const createGroupService = async (
-  data: {
-    name: string
-    description?: string
-    visibilityLevel?: number
-    memberIds?: number[]
-    tenantId?: string | null
-    visitorAccess?: boolean
-  },
-  tenantToken?: string | null,
-): Promise<ChatGroup> => {
+export const createGroupService = async (data: {
+  name: string
+  description?: string
+  visibilityLevel?: number
+  memberIds?: number[]
+  tenantId?: string | null
+  visitorAccess?: boolean
+}): Promise<ChatGroup> => {
   const { tenantId, ...body } = data
   const res: BaseResponse<ChatGroup> = await fetcher(
     `${chatBase(tenantId)}/groups`,
@@ -90,7 +83,6 @@ export const createGroupService = async (
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...body, tenantId }),
-      ...tcAuth(tenantToken),
     },
   )
   if (!res.result) throw new Error(res.message ?? 'Grup oluşturulamadı')
@@ -113,13 +105,12 @@ export const getHistoryService = async (
   before?: string,
   limit = 50,
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<ChatMessage[]> => {
   const params = new URLSearchParams({ limit: String(limit) })
   if (before) params.set('before', before)
   const res: BaseResponse<ChatMessage[]> = await fetcher(
     `${chatBase(tenantId)}/groups/${groupId}/messages?${params}`,
-    { method: 'GET', ...tcAuth(tenantToken) },
+    { method: 'GET' },
   )
   if (!res.result) throw new Error(res.message ?? 'Mesajlar yüklenemedi')
   return res.data
@@ -129,7 +120,6 @@ export const sendMessageService = async (
   groupId: string,
   payload: SendMessagePayload,
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<ChatMessage> => {
   const res: BaseResponse<ChatMessage> = await fetcher(
     `${chatBase(tenantId)}/groups/${groupId}/messages`,
@@ -137,7 +127,6 @@ export const sendMessageService = async (
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-      ...tcAuth(tenantToken),
     },
   )
   return unwrapOrThrow(res, 'Mesaj gönderilemedi')
@@ -147,7 +136,6 @@ export const editMessageService = async (
   messageId: string,
   content: string,
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<ChatMessage> => {
   const res: BaseResponse<ChatMessage> = await fetcher(
     `${chatBase(tenantId)}/messages/${messageId}`,
@@ -155,7 +143,6 @@ export const editMessageService = async (
       method: 'PUT',
       headers: { 'Content-Type': 'text/plain' },
       body: content,
-      ...tcAuth(tenantToken),
     },
   )
   if (!res.result) throw new Error(res.message ?? 'Mesaj düzenlenemedi')
@@ -165,11 +152,9 @@ export const editMessageService = async (
 export const deleteMessageService = async (
   messageId: string,
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<void> => {
   await fetcher<null>(`${chatBase(tenantId)}/messages/${messageId}`, {
     method: 'DELETE',
-    ...tcAuth(tenantToken),
   })
 }
 
@@ -177,11 +162,10 @@ export const addMemberService = async (
   groupId: string,
   userId: number,
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<ChatMember> => {
   const res: BaseResponse<ChatMember> = await fetcher(
     `${chatBase(tenantId)}/groups/${groupId}/members/${userId}`,
-    { method: 'POST', ...tcAuth(tenantToken) },
+    { method: 'POST' },
   )
   if (!res.result) throw new Error(res.message ?? 'Üye eklenemedi')
   return res.data
@@ -191,43 +175,45 @@ export const removeMemberService = async (
   groupId: string,
   userId: number,
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<void> => {
   await fetcher<null>(
     `${chatBase(tenantId)}/groups/${groupId}/members/${userId}`,
-    { method: 'DELETE', ...tcAuth(tenantToken) },
+    { method: 'DELETE' },
   )
 }
 
 export const deleteGroupService = async (
   groupId: string,
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<void> => {
   await fetcher<null>(`${chatBase(tenantId)}/groups/${groupId}`, {
     method: 'DELETE',
-    ...tcAuth(tenantToken),
   })
 }
 
-export const uploadChatFileService = async (file: File): Promise<string> => {
+export const uploadChatFileService = async (
+  file: File,
+  tenantId?: string | null,
+): Promise<string> => {
   const formData = new FormData()
   formData.append('file', file)
-  const res: BaseResponse<string> = await fetcher('/api/v1/chat/files', {
-    method: 'POST',
-    body: formData,
-  })
+  const res: BaseResponse<string> = await fetcher(
+    `${chatBase(tenantId)}/files`,
+    {
+      method: 'POST',
+      body: formData,
+    },
+  )
   if (!res.result) throw new Error(res.message ?? 'Dosya yüklenemedi')
   return res.data
 }
 
-// ===== TC (tenant chat) ban — yalnız TC gruplarında, tenant-switch JWT ile =====
+// ===== TC (tenant chat) ban — yalnız TC gruplarında =====
 
 export const banUserService = async (
   groupId: string,
   body: { sessionId?: string; visitorId?: number; reason?: string },
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<DtoChatBan> => {
   const res: BaseResponse<DtoChatBan> = await fetcher(
     `${chatBase(tenantId)}/groups/${groupId}/bans`,
@@ -235,7 +221,6 @@ export const banUserService = async (
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      ...tcAuth(tenantToken),
     },
   )
   if (!res.result) throw new Error(res.message ?? 'Kullanıcı banlanamadı')
@@ -246,7 +231,6 @@ export const unbanUserService = async (
   groupId: string,
   target: { sessionId?: string; visitorId?: number },
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<void> => {
   const params = new URLSearchParams()
   if (target.sessionId) params.set('sessionId', target.sessionId)
@@ -254,18 +238,17 @@ export const unbanUserService = async (
     params.set('visitorId', String(target.visitorId))
   await fetcher<null>(
     `${chatBase(tenantId)}/groups/${groupId}/bans?${params.toString()}`,
-    { method: 'DELETE', ...tcAuth(tenantToken) },
+    { method: 'DELETE' },
   )
 }
 
 export const listBansService = async (
   groupId: string,
   tenantId?: string | null,
-  tenantToken?: string | null,
 ): Promise<DtoChatBan[]> => {
   const res: BaseResponse<DtoChatBan[]> = await fetcher(
     `${chatBase(tenantId)}/groups/${groupId}/bans`,
-    { method: 'GET', ...tcAuth(tenantToken) },
+    { method: 'GET' },
   )
   if (!res.result) throw new Error(res.message ?? 'Ban listesi alınamadı')
   return res.data
