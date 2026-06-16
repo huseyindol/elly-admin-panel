@@ -17,10 +17,25 @@ Kayıt formatı:
 
 ## [Unreleased]
 
+### Changed
+
+- **URL-Tenant modeli** — Admin'in TC chat ve depolama kotası çağrıları artık
+  hedef tenant'ı **URL path'inde** taşır (`/api/v1/chat/tenant/{tid}`,
+  `/api/v1/storage/tenant/{tid}/quota`); kimlik admin'in kendi JWT'sinde.
+  Detay: [`URL_TENANT_MODELI.md`](./URL_TENANT_MODELI.md).
+  - `chat.services` / `storage.services` → `chatBase(tid)` / `quotaBase(tid)`.
+  - `uploadChatFileService` artık `tenantId` alır.
+
+### Removed
+
+- **`X-Tenant-Id` header + tenant-switch token** — `tcAuth`/`tenantToken`
+  parametreleri, `fetcher.overrideAuth`, `chat-ws-store.activeTenantToken`,
+  `getTenantTokenService`, `utils/tenantHeader.ts`, `_services/tenant.services.ts`.
+
 ### Added
 
 - **Chat Ban (TC)** — Tenant Chat sohbetinde GUEST/VISITOR banla/ban kaldır:
-  - `chat.services.ts` — `banUserService` / `unbanUserService` / `listBansService` (X-Tenant-Id)
+  - `chat.services.ts` — `banUserService` / `unbanUserService` / `listBansService` (URL-tenant: `/api/v1/chat/tenant/{tid}`)
   - `types/chat.ts` — `ChatMessage.sessionId`, `DtoChatBan`, `ChatBanEvent`; `utils/chat-role.ts` — `banKey`
   - `chat-ws-store` — `bannedKeys` + `/topic/tenant/{tid}/group/{gid}/bans` aboneliği (canlı BANNED/UNBANNED)
   - `ChatWindow` — banlı rozeti (chat:read) + "⋯" moderasyon menüsü Banla/Ban kaldır (yalnız chat:manage, AC'de yok)
