@@ -1,7 +1,7 @@
 'use client'
 
 import { Modal } from '@/app/_components'
-import { useAdminTheme } from '@/app/_hooks'
+import { useAdminTheme, useUserProfile } from '@/app/_hooks'
 import { createGroupService } from '@/app/_services/chat.services'
 import type { ChatGroup } from '@/types/chat'
 import { useMyRoleLevel, visibilityLabel } from '@/utils/chat-role'
@@ -13,11 +13,18 @@ interface Props {
   isOpen: boolean
   onClose: () => void
   onCreated: (group: ChatGroup) => void
+  /** Sidebar'da seçili TC tenant'ı — dialog açılınca varsayılan hedef. */
+  defaultTenantId?: string | null
 }
 
 type Scope = 'ADMIN' | 'TENANT'
 
-export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
+export function CreateGroupDialog({
+  isOpen,
+  onClose,
+  onCreated,
+  defaultTenantId,
+}: Props) {
   const { isDarkMode } = useAdminTheme()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -26,8 +33,21 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const myLevel = useMyRoleLevel()
-  // TC tenant'ı oturum cookie'sinden gelir; kullanıcı değiştiremez.
+
+  // Hedef tenant artık seçilebilir (URL-tenant modeli: admin herhangi bir tenant
+  // için grup oluşturabilir). Liste: yönetilen tenant'lar + oturum tenant'ı.
   const sessionTenantId = getGlobalCookies()[CookieEnum.TENANT_ID] || ''
+  const { data: profile } = useUserProfile()
+  const tenantList = [
+    ...new Set(
+      [...(profile?.data?.managedTenants ?? []), sessionTenantId].filter(
+        Boolean,
+      ),
+    ),
+  ].sort()
+  // Hedef tenant: kullanıcı seçmediyse sidebar'daki seçili tenant (yoksa oturum).
+  const [tenantOverride, setTenantOverride] = useState<string | null>(null)
+  const tenantId = tenantOverride ?? defaultTenantId ?? sessionTenantId ?? ''
 
   const inputClass = `w-full rounded-xl border px-3 py-2 text-sm outline-none transition-colors focus:ring-2 focus:ring-violet-500/30 ${
     isDarkMode
@@ -38,8 +58,8 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
   const validate = (): boolean => {
     const errs: Record<string, string> = {}
     if (!name.trim()) errs.name = 'Grup adı zorunlu'
-    if (scope === 'TENANT' && !sessionTenantId)
-      errs.tenantId = 'Oturumunuzda tenant bilgisi yok; TC grubu oluşturulamaz'
+    if (scope === 'TENANT' && !tenantId)
+      errs.tenantId = 'TC grubu için bir tenant seçin'
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -49,6 +69,7 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
     setDescription('')
     setScope('ADMIN')
     setVisitorAccess(false)
+    setTenantOverride(null)
     setErrors({})
     onClose()
   }
@@ -61,7 +82,7 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
         name: name.trim(),
         description: description.trim() || undefined,
         ...(scope === 'TENANT' && {
-          tenantId: sessionTenantId,
+          tenantId,
           visitorAccess,
         }),
       })
@@ -214,19 +235,34 @@ export function CreateGroupDialog({ isOpen, onClose, onCreated }: Props) {
               >
                 Tenant <span className="text-rose-400">*</span>
               </label>
-              <input
+              <select
                 id="tc-tenant"
-                type="text"
-                value={sessionTenantId}
-                readOnly
-                placeholder="(oturumda tenant bilgisi yok)"
-                className={`${inputClass} cursor-not-allowed opacity-80`}
-              />
+                value={tenantId}
+                onChange={e => {
+                  setTenantOverride(e.target.value)
+                  if (errors.tenantId) setErrors(p => ({ ...p, tenantId: '' }))
+                }}
+                className={inputClass}
+              >
+                <option value="" disabled>
+                  Tenant seçin
+                </option>
+                {tenantList.map(tid => (
+                  <option key={tid} value={tid}>
+                    {tid}
+                  </option>
+                ))}
+              </select>
               <p
                 className={`mt-1 text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
               >
-                Oturumunuzdaki tenant otomatik kullanılır.
+                Grup, seçilen tenant&apos;ın DB&apos;sine kaydedilir.
               </p>
+              {tenantList.length === 0 && (
+                <p className="mt-1 text-xs text-amber-500">
+                  Yönetebileceğiniz bir tenant yok.
+                </p>
+              )}
               {errors.tenantId && (
                 <p className="mt-1 text-xs text-rose-400">{errors.tenantId}</p>
               )}

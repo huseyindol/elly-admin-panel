@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { getMyGroupsService } from '@/app/_services/chat.services'
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import { visibilityLabel, useMyRoleLevel } from '@/utils/chat-role'
-import { useAdminTheme } from '@/app/_hooks'
+import { useAdminTheme, useUserProfile } from '@/app/_hooks'
 import { getGlobalCookies } from '@/context/CookieContext'
 import { CookieEnum } from '@/utils/constant/cookieConstant'
 import type { ChatGroup } from '@/types/chat'
@@ -32,14 +32,28 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const [showCreate, setShowCreate] = useState(false)
   const [showDm, setShowDm] = useState(false)
   const [activeTab, setActiveTab] = useState<ChatTab>('AC')
-  const [tenantFilter, setTenantFilter] = useState<string>('')
   const myLevel = useMyRoleLevel()
 
-  // Oturum tenant'ı — login'de set edilen `tenantId` cookie'si (HttpOnly değil,
-  // client-side okunabilir). TC token almak ve grupları çekmek için kullanılır.
+  // Oturum tenant'ı — login'de set edilen `tenantId` cookie'si (client-side
+  // okunabilir). Seçili TC tenant'ı için varsayılan ve listeye dahil edilir.
   const [sessionTenantId] = useState<string | null>(
     () => getGlobalCookies()[CookieEnum.TENANT_ID] || null,
   )
+  // Seçili TC tenant'ı — hem listelemeyi hem oluşturmayı sürer (admin URL-tenant
+  // modeliyle herhangi bir tenant'ı hedefleyebilir). Varsayılan: oturum tenant'ı.
+  const [selectedTcTenant, setSelectedTcTenant] = useState<string | null>(
+    () => getGlobalCookies()[CookieEnum.TENANT_ID] || null,
+  )
+
+  // Yönetilen tenant'lar (profil) + oturum tenant'ı → TC tenant seçici kaynağı.
+  const { data: profile } = useUserProfile()
+  const tenantList = [
+    ...new Set(
+      [...(profile?.data?.managedTenants ?? []), sessionTenantId].filter(
+        Boolean,
+      ) as string[],
+    ),
+  ].sort()
 
   const activeGroupId = useChatWsStore(s => s.activeGroupId)
   const connected = useChatWsStore(s => s.connected)
@@ -72,17 +86,17 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
       .catch(() => {})
   }, [])
 
-  // TC grupları — yalnızca TC sekmesi seçiliyken çekilir. Hedef tenant URL
-  // path'inde taşınır (/api/v1/chat/tenant/{tid}/groups); kimlik admin JWT'sinde.
-  // TC kısmını değiştirir, AC gruplarını korur.
+  // TC grupları — yalnızca TC sekmesi seçiliyken, SEÇİLİ tenant için çekilir.
+  // Hedef tenant URL path'inde (/api/v1/chat/tenant/{tid}/groups); kimlik admin
+  // JWT'sinde. selectedTcTenant değişince bu callback değişir → effect reload eder.
   const loadTcGroups = useCallback(() => {
-    if (!sessionTenantId) return
-    getMyGroupsService(sessionTenantId)
+    if (!selectedTcTenant) return
+    getMyGroupsService(selectedTcTenant)
       .then(tc =>
         setGroups(prev => [...prev.filter(g => g.tenantId === null), ...tc]),
       )
       .catch(() => {})
-  }, [sessionTenantId])
+  }, [selectedTcTenant])
 
   // WS sinyalleri için yeniden çekme — AC her zaman, TC yalnızca o sekme açıksa.
   const refetchGroups = useCallback(() => {
@@ -176,18 +190,8 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const acGroups = groups.filter(g => g.tenantId === null)
   const tcGroups = groups.filter(g => g.tenantId !== null)
 
-  // TC'deki benzersiz tenant listesi — filtre dropdown için
-  const tenantOptions = [
-    ...new Set(tcGroups.map(g => g.tenantId as string)),
-  ].sort()
-
-  // Seçili tab'a ve tenant filtresine göre görüntülenecek gruplar
-  const visibleGroups =
-    activeTab === 'AC'
-      ? acGroups
-      : tenantFilter
-        ? tcGroups.filter(g => g.tenantId === tenantFilter)
-        : tcGroups
+  // TC grupları zaten seçili tenant için yüklenir → ek client-side filtre gerekmez.
+  const visibleGroups = activeTab === 'AC' ? acGroups : tcGroups
 
   const tabClass = (tab: ChatTab) =>
     `flex-1 py-1.5 text-xs font-medium transition-colors rounded-lg ${
@@ -275,10 +279,7 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
           <button
             type="button"
             className={tabClass('TC')}
-            onClick={() => {
-              setActiveTab('TC')
-              setTenantFilter('')
-            }}
+            onClick={() => setActiveTab('TC')}
           >
             Tenant Chat
             {tcGroups.length > 0 && (
@@ -296,22 +297,24 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
         </div>
       </div>
 
-      {/* Tenant Filter — sadece TC tab'ında göster */}
-      {activeTab === 'TC' && tenantOptions.length > 1 && (
+      {/* TC Tenant seçici — hangi tenant'ın grupları gösterilsin/oluşturulsun */}
+      {activeTab === 'TC' && tenantList.length > 0 && (
         <div
           className={`border-b px-3 pb-2 ${isDarkMode ? 'border-slate-800/50' : 'border-gray-100'}`}
         >
           <select
-            value={tenantFilter}
-            onChange={e => setTenantFilter(e.target.value)}
+            value={selectedTcTenant ?? ''}
+            onChange={e => setSelectedTcTenant(e.target.value || null)}
             className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none transition-colors ${
               isDarkMode
                 ? 'border border-slate-700 bg-slate-800 text-slate-300 focus:border-violet-500'
                 : 'border border-gray-200 bg-white text-gray-700 focus:border-violet-400'
             }`}
           >
-            <option value="">Tüm Tenant&apos;lar</option>
-            {tenantOptions.map(tid => (
+            <option value="" disabled>
+              Tenant seçin
+            </option>
+            {tenantList.map(tid => (
               <option key={tid} value={tid}>
                 {tid}
               </option>
@@ -423,7 +426,15 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
       <CreateGroupDialog
         isOpen={showCreate}
         onClose={() => setShowCreate(false)}
-        onCreated={g => upsertGroupInList(g)}
+        defaultTenantId={selectedTcTenant}
+        onCreated={g => {
+          upsertGroupInList(g)
+          // TC grubu oluşturulduysa o tenant'a geç → liste o tenant'ı yükler, görünür olur
+          if (g.tenantId) {
+            setActiveTab('TC')
+            setSelectedTcTenant(g.tenantId)
+          }
+        }}
       />
 
       <DmDialog
