@@ -2,19 +2,20 @@ import { BaseResponse } from '@/types/BaseResponse'
 import type {
   AdminRoleListResponse,
   AdminUserListResponse,
+  AdminUserResponse,
   AssignRolesRequest,
-  CreateTenantUserRequest,
-  TenantUserListResponse,
-  TenantUserResponse,
   UpdateProfileRequest,
-  UpdateTenantUserRequest,
   UserProfileResponse,
 } from '@/types/user-management'
 import { fetcher } from '@/utils/services/fetcher'
 
-// GET - Tüm kullanıcıları listele (users:manage — SUPER_ADMIN)
-export const getUsersService = async () => {
-  const response: AdminUserListResponse = await fetcher('/api/v1/users', {
+/** Audience: 'panel' → SUPER_ADMIN/ADMIN/EDITOR/VIEWER; 'tenant' → TENANT; undefined → hepsi. */
+export type UsersAudience = 'panel' | 'tenant'
+
+// GET - Tüm kullanıcıları listele (users:manage — SUPER_ADMIN + ADMIN)
+export const getUsersService = async (audience?: UsersAudience) => {
+  const qs = audience ? `?audience=${audience}` : ''
+  const response: AdminUserListResponse = await fetcher(`/api/v1/users${qs}`, {
     method: 'GET',
   })
   if (!response.result) {
@@ -41,6 +42,18 @@ export const deleteUserService = async (id: number) => {
   })
   if (!response.result) {
     throw new Error(response.message ?? 'Kullanıcı silinemedi')
+  }
+  return response
+}
+
+// PATCH - Kullanıcı aktif/pasif (users:manage). Kendi hesabını pasifleştiremez (backend guard).
+export const setUserStatusService = async (id: number, isActive: boolean) => {
+  const response: AdminUserResponse = await fetcher(
+    `/api/v1/users/${id}/status?isActive=${isActive}`,
+    { method: 'PATCH' },
+  )
+  if (!response.result) {
+    throw new Error(response.message ?? 'Durum güncellenemedi')
   }
   return response
 }
@@ -76,88 +89,6 @@ export const updateUserProfileService = async (data: UpdateProfileRequest) => {
   })
   if (!response.result) {
     throw new Error(response.message ?? 'Profil güncellenemedi')
-  }
-  return response
-}
-
-// GET - Tenant kullanıcılarını listele
-export const getTenantUsersService = async (tenantId: string) => {
-  const response: TenantUserListResponse = await fetcher(
-    `/api/v1/admin/tenants/${tenantId}/users`,
-    { method: 'GET' },
-  )
-  if (!response.result) {
-    throw new Error(response.message ?? 'Tenant kullanıcıları yüklenemedi')
-  }
-  return response
-}
-
-// POST - Yeni tenant kullanıcısı oluştur
-export const createTenantUserService = async (
-  tenantId: string,
-  data: CreateTenantUserRequest,
-) => {
-  const response: TenantUserResponse = await fetcher(
-    `/api/v1/admin/tenants/${tenantId}/users`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    },
-  )
-  if (!response.result) {
-    throw new Error(response.message ?? 'Kullanıcı oluşturulamadı')
-  }
-  return response
-}
-
-// PUT - Tenant kullanıcısını güncelle
-export const updateTenantUserService = async (
-  tenantId: string,
-  userId: number,
-  data: UpdateTenantUserRequest,
-) => {
-  const response: TenantUserResponse = await fetcher(
-    `/api/v1/admin/tenants/${tenantId}/users/${userId}`,
-    {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    },
-  )
-  if (!response.result) {
-    throw new Error(response.message ?? 'Kullanıcı güncellenemedi')
-  }
-  return response
-}
-
-// DELETE - Tenant kullanıcısını sil
-export const deleteTenantUserService = async (
-  tenantId: string,
-  userId: number,
-) => {
-  const response: BaseResponse<null> = await fetcher(
-    `/api/v1/admin/tenants/${tenantId}/users/${userId}`,
-    { method: 'DELETE' },
-  )
-  if (!response.result) {
-    throw new Error(response.message ?? 'Kullanıcı silinemedi')
-  }
-  return response
-}
-
-// PATCH - Tenant kullanıcısını aktif / pasif yap
-export const updateTenantUserStatusService = async (
-  tenantId: string,
-  userId: number,
-  isActive: boolean,
-) => {
-  const response: TenantUserResponse = await fetcher(
-    `/api/v1/admin/tenants/${tenantId}/users/${userId}/status?isActive=${isActive}`,
-    { method: 'PATCH' },
-  )
-  if (!response.result) {
-    throw new Error(response.message ?? 'Durum güncellenemedi')
   }
   return response
 }

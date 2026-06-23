@@ -11,21 +11,16 @@ import {
 import { useAdminTheme, useDebounce } from '@/app/_hooks'
 import {
   useAssignRoles,
-  useCreateTenantUser,
-  useDeleteTenantUser,
   useDeleteUser,
   useRoles,
-  useTenantUsers,
-  useUpdateTenantUser,
-  useUpdateTenantUserStatus,
+  useSetUserStatus,
   useUserProfile,
   useUsers,
 } from '@/app/_hooks/useUsers'
 import { usePermission } from '@/hooks/usePermission'
-import type { AdminRole, AdminUser, TenantUser } from '@/types/user-management'
+import type { AdminRole, AdminUser } from '@/types/user-management'
 import { redirect } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
 type Tab = 'admin' | 'tenant'
@@ -50,7 +45,8 @@ export default function UsersPage() {
           Kullanıcı Yönetimi
         </h1>
         <p className={isDarkMode ? 'text-slate-400' : 'text-gray-500'}>
-          Admin ve tenant kullanıcılarını yönetin
+          Panel kullanıcıları (SUPER_ADMIN/ADMIN/EDITOR/VIEWER) ve tenant
+          kullanıcıları (TENANT) ayrı sekmelerde
         </p>
       </div>
 
@@ -71,7 +67,7 @@ export default function UsersPage() {
                   : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            {tab === 'admin' ? 'Admin Kullanıcıları' : 'Tenant Kullanıcıları'}
+            {tab === 'admin' ? 'Panel Kullanıcıları' : 'Tenant Kullanıcıları'}
           </button>
         ))}
       </div>
@@ -81,7 +77,10 @@ export default function UsersPage() {
   )
 }
 
-/* ───────────────────── Admin Users Tab ───────────────────── */
+/* ───────────────────── Panel Users Tab ─────────────────────
+ * Backend: GET /api/v1/users?audience=panel — SUPER_ADMIN / ADMIN / EDITOR / VIEWER.
+ * TENANT rolündeki kullanıcılar bu sekmede ASLA görünmez.
+ */
 function AdminUsersTab() {
   const { isDarkMode } = useAdminTheme()
   const [searchQuery, setSearchQuery] = useState('')
@@ -89,7 +88,7 @@ function AdminUsersTab() {
   const [selectedRoleIds, setSelectedRoleIds] = useState<AdminRole[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
 
-  const { data: usersData, isLoading, isError, error } = useUsers()
+  const { data: usersData, isLoading, isError, error } = useUsers('panel')
   const { data: rolesData } = useRoles()
   const { data: profileData } = useUserProfile()
   const assignRoles = useAssignRoles()
@@ -98,7 +97,8 @@ function AdminUsersTab() {
 
   const debouncedSearch = useDebounce(searchQuery, 300)
   const users = usersData?.data ?? []
-  const allRoles = rolesData?.data ?? []
+  // Rol atama dropdown'unda yalnız panel rolleri çıksın — TENANT atanmasın.
+  const allRoles = (rolesData?.data ?? []).filter(r => r.name !== 'TENANT')
 
   const filteredUsers = users.filter(
     u =>
@@ -241,11 +241,10 @@ function AdminUsersTab() {
           columns={columns}
           isLoading={isLoading}
           keyExtractor={u => String(u.id)}
-          emptyMessage="Kullanıcı bulunamadı"
+          emptyMessage="Panel kullanıcısı bulunamadı"
           actions={{
             onEdit: u => handleOpenRoleModal(u),
             onDelete: u => {
-              // Self-delete UI guard — backend de aynı kontrolü yapar; UX için burada da hemen uyar.
               if (currentUserId === u.id) {
                 toast.error('Kendi hesabınızı silemezsiniz')
                 return
@@ -286,7 +285,8 @@ function AdminUsersTab() {
             className={`rounded-lg p-3 text-xs ${isDarkMode ? 'bg-amber-500/10 text-amber-300' : 'bg-amber-50 text-amber-700'}`}
           >
             ⚠️ Kaydedildiğinde kullanıcının <strong>tüm rolleri</strong>{' '}
-            yukarıdaki seçimle değiştirilir.
+            yukarıdaki seçimle değiştirilir. TENANT rolü panel rol atama
+            ekranında atanamaz.
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button
@@ -333,101 +333,40 @@ function AdminUsersTab() {
   )
 }
 
-/* ───────────────────── Tenant Users Tab ───────────────────── */
-
-interface TenantUserFormData {
-  username: string
-  email: string
-  password: string
-  firstName: string
-  lastName: string
-}
-
-interface TenantUserEditData {
-  firstName: string
-  lastName: string
-  email: string
-  isActive: boolean
-}
-
+/* ───────────────────── Tenant Users Tab ─────────────────────
+ * Backend: GET /api/v1/users?audience=tenant — yalnız TENANT rolündekiler.
+ * Tenant kullanıcısı public /auth/register ile oluşur — panel'den oluşturulmaz.
+ * Panel admin'i sadece: listele, aktif/pasif toggle, sil yapabilir.
+ */
 function TenantUsersTab() {
   const { isDarkMode } = useAdminTheme()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
+
+  const { data: usersData, isLoading, isError, error } = useUsers('tenant')
   const { data: profileData } = useUserProfile()
-  const managedTenants = profileData?.data?.managedTenants ?? []
+  const deleteUser = useDeleteUser()
+  const setUserStatus = useSetUserStatus()
+  const currentUserId = profileData?.data?.id
 
-  const activeTenantId = managedTenants[0] ?? null
-
-  const [createOpen, setCreateOpen] = useState(false)
-  const [editUser, setEditUser] = useState<TenantUser | null>(null)
-  const [deleteUser, setDeleteUser] = useState<TenantUser | null>(null)
-
-  const {
-    data: tenantUsersData,
-    isLoading,
-    isError,
-  } = useTenantUsers(activeTenantId)
-  const createMutation = useCreateTenantUser(activeTenantId)
-  const updateMutation = useUpdateTenantUser(activeTenantId)
-  const deleteMutation = useDeleteTenantUser(activeTenantId)
-  const statusMutation = useUpdateTenantUserStatus(activeTenantId)
-
-  const createForm = useForm<TenantUserFormData>({
-    defaultValues: {
-      username: '',
-      email: '',
-      password: '',
-      firstName: '',
-      lastName: '',
-    },
-  })
-  const editForm = useForm<TenantUserEditData>({
-    defaultValues: { firstName: '', lastName: '', email: '', isActive: true },
-  })
-
-  const tenantUsers = tenantUsersData?.data ?? []
-
-  const handleCreateSubmit = (data: TenantUserFormData) => {
-    createMutation.mutate(data, {
-      onSuccess: () => {
-        setCreateOpen(false)
-        createForm.reset()
-      },
-    })
-  }
-
-  const handleEditOpen = (user: TenantUser) => {
-    setEditUser(user)
-    editForm.reset({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      isActive: user.isActive,
-    })
-  }
-
-  const handleEditSubmit = (data: TenantUserEditData) => {
-    if (!editUser) return
-    updateMutation.mutate(
-      { userId: editUser.id, data },
-      { onSuccess: () => setEditUser(null) },
-    )
-  }
+  const debouncedSearch = useDebounce(searchQuery, 300)
+  const users = usersData?.data ?? []
+  const filteredUsers = users.filter(
+    u =>
+      u.username.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      u.email.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      u.firstName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      u.lastName?.toLowerCase().includes(debouncedSearch.toLowerCase()),
+  )
 
   const handleDelete = () => {
-    if (!deleteUser) return
-    deleteMutation.mutate(deleteUser.id, {
-      onSuccess: () => setDeleteUser(null),
+    if (!deleteTarget) return
+    deleteUser.mutate(deleteTarget.id, {
+      onSuccess: () => setDeleteTarget(null),
     })
   }
 
-  const inputClass = `w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors ${
-    isDarkMode
-      ? 'border border-slate-700/50 bg-slate-800/50 text-white placeholder-slate-500 focus:border-violet-500'
-      : 'border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:border-violet-500'
-  }`
-  const labelClass = `block text-sm font-medium mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`
-
-  const columns: Column<TenantUser>[] = [
+  const columns: Column<AdminUser>[] = [
     {
       key: 'username',
       header: 'Kullanıcı',
@@ -461,10 +400,15 @@ function TenantUsersTab() {
       render: u => (
         <button
           type="button"
-          onClick={() =>
-            statusMutation.mutate({ userId: u.id, isActive: !u.isActive })
-          }
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-opacity hover:opacity-70 ${
+          disabled={setUserStatus.isPending || currentUserId === u.id}
+          onClick={() => {
+            if (currentUserId === u.id) {
+              toast.error('Kendi hesabınızı pasifleştiremezsiniz')
+              return
+            }
+            setUserStatus.mutate({ userId: u.id, isActive: !u.isActive })
+          }}
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50 ${
             u.isActive
               ? 'bg-emerald-500/20 text-emerald-400'
               : 'bg-rose-500/20 text-rose-400'
@@ -488,226 +432,51 @@ function TenantUsersTab() {
   ]
 
   return (
-    <div className="space-y-4">
-      {/* Kullanıcı listesi */}
-      {activeTenantId && (
-        <>
-          <div className="flex items-center justify-between">
-            <p
-              className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}
-            >
-              <strong className={isDarkMode ? 'text-white' : 'text-gray-900'}>
-                {activeTenantId}
-              </strong>{' '}
-              tenant kullanıcıları
-            </p>
-            <button
-              type="button"
-              onClick={() => setCreateOpen(true)}
-              className="rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow"
-            >
-              + Yeni Kullanıcı
-            </button>
-          </div>
+    <>
+      <div className="max-w-md">
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Tenant kullanıcısı ara..."
+        />
+      </div>
 
-          {isError ? (
-            <div
-              className={`rounded-xl p-4 ${isDarkMode ? 'bg-rose-500/20 text-rose-300' : 'bg-rose-100 text-rose-700'}`}
-            >
-              Kullanıcılar yüklenirken hata oluştu.
-            </div>
-          ) : (
-            <DataTable
-              data={tenantUsers}
-              columns={columns}
-              isLoading={isLoading}
-              keyExtractor={u => String(u.id)}
-              emptyMessage="Bu tenant'ta kullanıcı bulunamadı"
-              actions={{
-                onEdit: u => handleEditOpen(u),
-                onDelete: u => setDeleteUser(u),
-              }}
-            />
-          )}
-        </>
+      {isError ? (
+        <div
+          className={`rounded-xl p-4 ${isDarkMode ? 'bg-rose-500/20 text-rose-300' : 'bg-rose-100 text-rose-700'}`}
+        >
+          Hata:{' '}
+          {error?.message || 'Tenant kullanıcıları yüklenirken bir hata oluştu'}
+        </div>
+      ) : (
+        <DataTable
+          data={filteredUsers}
+          columns={columns}
+          isLoading={isLoading}
+          keyExtractor={u => String(u.id)}
+          emptyMessage="Tenant kullanıcısı bulunamadı"
+          actions={{
+            onDelete: u => {
+              if (currentUserId === u.id) {
+                toast.error('Kendi hesabınızı silemezsiniz')
+                return
+              }
+              setDeleteTarget(u)
+            },
+          }}
+        />
       )}
 
-      {/* Create Modal */}
-      <Modal
-        isOpen={createOpen}
-        onClose={() => {
-          setCreateOpen(false)
-          createForm.reset()
-        }}
-        title="Yeni Tenant Kullanıcısı"
-        size="md"
-      >
-        <form
-          onSubmit={createForm.handleSubmit(handleCreateSubmit)}
-          className="space-y-4"
-        >
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Ad *</label>
-              <input
-                {...createForm.register('firstName', { required: true })}
-                className={inputClass}
-                placeholder="Ad"
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Soyad *</label>
-              <input
-                {...createForm.register('lastName', { required: true })}
-                className={inputClass}
-                placeholder="Soyad"
-              />
-            </div>
-          </div>
-          <div>
-            <label className={labelClass}>Kullanıcı Adı *</label>
-            <input
-              {...createForm.register('username', { required: true })}
-              className={inputClass}
-              placeholder="kullanici_adi"
-            />
-          </div>
-          <div>
-            <label className={labelClass}>E-posta *</label>
-            <input
-              type="email"
-              {...createForm.register('email', { required: true })}
-              className={inputClass}
-              placeholder="ornek@email.com"
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Şifre *</label>
-            <input
-              type="password"
-              {...createForm.register('password', {
-                required: true,
-                minLength: 6,
-              })}
-              className={inputClass}
-              placeholder="Min. 6 karakter"
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                setCreateOpen(false)
-                createForm.reset()
-              }}
-              className={`rounded-xl px-4 py-2.5 text-sm font-medium ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-gray-500 hover:bg-gray-100'}`}
-            >
-              İptal
-            </button>
-            <button
-              type="submit"
-              disabled={createMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {createMutation.isPending ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Oluşturuluyor...
-                </>
-              ) : (
-                'Oluştur'
-              )}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Edit Modal */}
-      <Modal
-        isOpen={!!editUser}
-        onClose={() => setEditUser(null)}
-        title={`Düzenle — @${editUser?.username ?? ''}`}
-        size="md"
-      >
-        <form
-          onSubmit={editForm.handleSubmit(handleEditSubmit)}
-          className="space-y-4"
-        >
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Ad</label>
-              <input
-                {...editForm.register('firstName')}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Soyad</label>
-              <input
-                {...editForm.register('lastName')}
-                className={inputClass}
-              />
-            </div>
-          </div>
-          <div>
-            <label className={labelClass}>E-posta</label>
-            <input
-              type="email"
-              {...editForm.register('email')}
-              className={inputClass}
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <input
-              id="edit-isActive"
-              type="checkbox"
-              {...editForm.register('isActive')}
-              className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-violet-500"
-            />
-            <label
-              htmlFor="edit-isActive"
-              className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}
-            >
-              Aktif
-            </label>
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setEditUser(null)}
-              className={`rounded-xl px-4 py-2.5 text-sm font-medium ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-gray-500 hover:bg-gray-100'}`}
-            >
-              İptal
-            </button>
-            <button
-              type="submit"
-              disabled={updateMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {updateMutation.isPending ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Kaydediliyor...
-                </>
-              ) : (
-                'Kaydet'
-              )}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Delete Confirm */}
       <DestructiveConfirmDialog
-        isOpen={!!deleteUser}
-        onClose={() => setDeleteUser(null)}
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Kullanıcıyı Sil"
-        description={`@${deleteUser?.username ?? ''} kullanıcısı kalıcı olarak silinecek. Bu işlem geri alınamaz.`}
-        expectedText={deleteUser?.username ?? ''}
+        title="Tenant Kullanıcısını Sil"
+        description={`@${deleteTarget?.username ?? ''} kullanıcısı kalıcı olarak silinecek. Aktif oturumları sonlanır. Bu işlem geri alınamaz.`}
+        expectedText={deleteTarget?.username ?? ''}
         confirmText="Evet, Sil"
-        isLoading={deleteMutation.isPending}
+        isLoading={deleteUser.isPending}
       />
-    </div>
+    </>
   )
 }

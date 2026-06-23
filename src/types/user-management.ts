@@ -1,6 +1,6 @@
 import { BaseResponse } from './BaseResponse'
 
-/** GET /api/v1/users response'undan gelen kullanıcı */
+/** GET /api/v1/users response'undan gelen kullanıcı. Hem panel hem tenant audience aynı şekle döner. */
 export interface AdminUser {
   id: number
   username: string
@@ -9,7 +9,6 @@ export interface AdminUser {
   lastName: string
   provider: string
   isActive: boolean
-  managedTenants: string[]
   roles: string[]
   createdAt: string
 }
@@ -44,7 +43,6 @@ export interface UserProfile {
   lastName: string
   provider: string
   isActive: boolean
-  managedTenants: string[]
   roles: string[]
   createdAt: string
 }
@@ -56,40 +54,8 @@ export interface UpdateProfileRequest {
   email: string
 }
 
-/** Tenant kullanıcısı (GET /api/v1/admin/tenants/{tenantId}/users) */
-export interface TenantUser {
-  id: number
-  username: string
-  email: string
-  firstName: string
-  lastName: string
-  isActive: boolean
-  provider: string
-  roles: string[]
-  createdAt: string
-}
-
-/** POST /api/v1/admin/tenants/{tenantId}/users request body */
-export interface CreateTenantUserRequest {
-  username: string
-  email: string
-  password: string
-  firstName: string
-  lastName: string
-}
-
-/** PUT /api/v1/admin/tenants/{tenantId}/users/{id} request body */
-export interface UpdateTenantUserRequest {
-  firstName?: string
-  lastName?: string
-  email?: string
-  isActive?: boolean
-}
-
 // Response type aliases
 export type AdminUserListResponse = BaseResponse<AdminUser[]>
 export type AdminUserResponse = BaseResponse<AdminUser>
 export type AdminRoleListResponse = BaseResponse<AdminRole[]>
 export type UserProfileResponse = BaseResponse<UserProfile>
-export type TenantUserListResponse = BaseResponse<TenantUser[]>
-export type TenantUserResponse = BaseResponse<TenantUser>

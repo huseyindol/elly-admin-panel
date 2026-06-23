@@ -383,11 +383,6 @@ export default function ProfilePage() {
               })}
               isDarkMode={isDarkMode}
             />
-            <InfoRow
-              label="Tenant'lar"
-              value={profile.managedTenants?.join(', ') || '—'}
-              isDarkMode={isDarkMode}
-            />
           </dl>
         </div>
       </div>
