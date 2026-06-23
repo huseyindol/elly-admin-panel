@@ -13,6 +13,7 @@ import {
   useAssignRoles,
   useCreateTenantUser,
   useDeleteTenantUser,
+  useDeleteUser,
   useRoles,
   useTenantUsers,
   useUpdateTenantUser,
@@ -25,6 +26,7 @@ import type { AdminRole, AdminUser, TenantUser } from '@/types/user-management'
 import { redirect } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 type Tab = 'admin' | 'tenant'
 
@@ -85,10 +87,14 @@ function AdminUsersTab() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
   const [selectedRoleIds, setSelectedRoleIds] = useState<AdminRole[]>([])
+  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
 
   const { data: usersData, isLoading, isError, error } = useUsers()
   const { data: rolesData } = useRoles()
+  const { data: profileData } = useUserProfile()
   const assignRoles = useAssignRoles()
+  const deleteUser = useDeleteUser()
+  const currentUserId = profileData?.data?.id
 
   const debouncedSearch = useDebounce(searchQuery, 300)
   const users = usersData?.data ?? []
@@ -121,6 +127,13 @@ function AdminUsersTab() {
         },
       },
     )
+  }
+
+  const handleDeleteUser = () => {
+    if (!deleteTarget) return
+    deleteUser.mutate(deleteTarget.id, {
+      onSuccess: () => setDeleteTarget(null),
+    })
   }
 
   const columns: Column<AdminUser>[] = [
@@ -229,7 +242,17 @@ function AdminUsersTab() {
           isLoading={isLoading}
           keyExtractor={u => String(u.id)}
           emptyMessage="Kullanıcı bulunamadı"
-          actions={{ onEdit: u => handleOpenRoleModal(u) }}
+          actions={{
+            onEdit: u => handleOpenRoleModal(u),
+            onDelete: u => {
+              // Self-delete UI guard — backend de aynı kontrolü yapar; UX için burada da hemen uyar.
+              if (currentUserId === u.id) {
+                toast.error('Kendi hesabınızı silemezsiniz')
+                return
+              }
+              setDeleteTarget(u)
+            },
+          }}
         />
       )}
 
@@ -294,6 +317,18 @@ function AdminUsersTab() {
           </div>
         </div>
       </Modal>
+
+      {/* Delete Confirm */}
+      <DestructiveConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteUser}
+        title="Kullanıcıyı Sil"
+        description={`@${deleteTarget?.username ?? ''} kullanıcısı kalıcı olarak silinecek. Aktif oturumları sonlanır. Bu işlem geri alınamaz.`}
+        expectedText={deleteTarget?.username ?? ''}
+        confirmText="Evet, Sil"
+        isLoading={deleteUser.isPending}
+      />
     </>
   )
 }

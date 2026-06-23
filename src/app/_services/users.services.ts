@@ -34,6 +34,17 @@ export const getUserByIdService = async (id: number) => {
   return response
 }
 
+// DELETE - Kullanıcıyı sil (users:manage — SUPER_ADMIN / ADMIN). Kendi hesabını silemez (backend guard).
+export const deleteUserService = async (id: number) => {
+  const response: BaseResponse<null> = await fetcher(`/api/v1/users/${id}`, {
+    method: 'DELETE',
+  })
+  if (!response.result) {
+    throw new Error(response.message ?? 'Kullanıcı silinemedi')
+  }
+  return response
+}
+
 // GET - Kendi profil bilgileri (auth only)
 export const getUserProfileService = async () => {
   const response: UserProfileResponse = await fetcher('/api/v1/users/me', {

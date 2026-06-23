@@ -4,6 +4,7 @@ import {
   assignRolesService,
   createTenantUserService,
   deleteTenantUserService,
+  deleteUserService,
   getRolesService,
   getTenantUsersService,
   getUserProfileService,
@@ -156,6 +157,21 @@ export function useUpdateTenantUserStatus(tenantId: string | null) {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Durum güncellenemedi')
+    },
+  })
+}
+
+/** Kullanıcı sil — DELETE /api/v1/users/{id} (users:manage). Backend self-delete + refresh-token cleanup yapar. */
+export function useDeleteUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: number) => deleteUserService(userId),
+    onSuccess: () => {
+      toast.success('Kullanıcı silindi')
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Kullanıcı silinemedi')
     },
   })
 }
