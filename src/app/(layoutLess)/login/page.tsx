@@ -101,23 +101,27 @@ const AdminLoginPage = () => {
    * oturumu kurar.
    */
   const applyLoginSuccess = (data: LoginResponse, tenantId: string) => {
-    // accessToken / expiredDate cookie'lerinin ömrü backend'in döndüğü
-    // expiredDate'e bağlı; refreshToken / userCode / tenantId sabit 6 ay
+    // Cookie max-age'leri backend'in döndüğü epoch'lardan hesaplanır:
+    //   accessToken / expiredDate     → data.expiredDate
+    //   refreshToken / userCode       → data.refreshExpiredDate
+    // (refreshExpiredDate yoksa cookieConstant default'una düşer.)
+    // tenantId — kullanıcı tercihi; refresh expire olsa bile hatırlansın → default sabit.
     const accessTtl = deriveMaxAgeFromExpiredDate(data.expiredDate)
+    const refreshTtl = deriveMaxAgeFromExpiredDate(data.refreshExpiredDate)
 
     updateGlobalCookie(CookieEnum.ACCESS_TOKEN, data.token, accessTtl)
-    updateGlobalCookie(CookieEnum.REFRESH_TOKEN, data.refreshToken)
+    updateGlobalCookie(CookieEnum.REFRESH_TOKEN, data.refreshToken, refreshTtl)
     updateGlobalCookie(
       CookieEnum.EXPIRED_DATE,
       String(data.expiredDate),
       accessTtl,
     )
-    updateGlobalCookie(CookieEnum.USER_CODE, data.userCode)
+    updateGlobalCookie(CookieEnum.USER_CODE, data.userCode, refreshTtl)
     if (tenantId) {
       updateGlobalCookie(CookieEnum.TENANT_ID, tenantId)
     }
     updateCookie(CookieEnum.ACCESS_TOKEN, data.token, accessTtl)
-    updateCookie(CookieEnum.REFRESH_TOKEN, data.refreshToken)
+    updateCookie(CookieEnum.REFRESH_TOKEN, data.refreshToken, refreshTtl)
     updateCookie(CookieEnum.EXPIRED_DATE, String(data.expiredDate), accessTtl)
     if (tenantId) {
       updateCookie(CookieEnum.TENANT_ID, tenantId)

@@ -9,6 +9,7 @@ export interface LoginResponse {
   email: string
   userCode: string
   expiredDate: number
+  refreshExpiredDate?: number
   roles: string[]
   permissions: string[]
   /** 2FA açıksa login yanıtında true gelir; token null'dır, mfaToken doludur */
@@ -28,6 +29,7 @@ export interface RefreshTokenResponse {
   email: string
   userCode: string
   expiredDate: number
+  refreshExpiredDate?: number
   roles: string[]
   permissions: string[]
 }

@@ -2,7 +2,6 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { refreshService } from '@/services/auth/refreshService'
 import {
-  COOKIE_MAX_AGE,
   CookieEnum,
   deriveMaxAgeFromExpiredDate,
 } from '@/utils/constant/cookieConstant'
@@ -42,7 +41,11 @@ export async function POST() {
   }
 
   const { data } = refreshResponse
+  // Cookie max-age'leri backend epoch'larından (tek kaynak):
+  //   accessToken / expiredDate → expiredDate
+  //   refreshToken / userCode   → refreshExpiredDate
   const accessTtl = deriveMaxAgeFromExpiredDate(data.expiredDate)
+  const refreshTtl = deriveMaxAgeFromExpiredDate(data.refreshExpiredDate)
 
   const response = NextResponse.json(refreshResponse)
 
@@ -57,7 +60,7 @@ export async function POST() {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    maxAge: COOKIE_MAX_AGE[CookieEnum.REFRESH_TOKEN],
+    maxAge: refreshTtl,
   })
   // expiredDate + userCode — Secure ama HttpOnly değil (context sync için okunabilir)
   response.cookies.set(CookieEnum.EXPIRED_DATE, String(data.expiredDate), {
@@ -70,7 +73,7 @@ export async function POST() {
     httpOnly: false,
     secure: true,
     sameSite: 'strict',
-    maxAge: COOKIE_MAX_AGE[CookieEnum.USER_CODE],
+    maxAge: refreshTtl,
   })
 
   return response

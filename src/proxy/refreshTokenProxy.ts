@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { refreshService } from '../services/auth/refreshService'
 import {
-  COOKIE_MAX_AGE,
   CookieEnum,
   deriveMaxAgeFromExpiredDate,
 } from '../utils/constant/cookieConstant'
@@ -23,10 +22,15 @@ export const refreshTokenProxy = async (
     return false
   }
 
-  // accessToken / expiredDate → backend'in döndüğü expiredDate'ten türetilen süre
-  // refreshToken / userCode → COOKIE_MAX_AGE sabitlerinden (6 ay)
+  // Cookie max-age'leri backend'in döndüğü epoch'lardan hesaplanır (tek kaynak: backend).
+  //   accessToken / expiredDate → expiredDate
+  //   refreshToken / userCode   → refreshExpiredDate
+  // Backend yoksa (eski response) deriveMaxAgeFromExpiredDate fallback verir.
   const accessTtl = deriveMaxAgeFromExpiredDate(
     refreshResponse.data.expiredDate,
+  )
+  const refreshTtl = deriveMaxAgeFromExpiredDate(
+    refreshResponse.data.refreshExpiredDate,
   )
 
   response.cookies.set(CookieEnum.ACCESS_TOKEN, refreshResponse.data.token, {
@@ -42,7 +46,7 @@ export const refreshTokenProxy = async (
       httpOnly: true,
       secure: true,
       sameSite: 'strict',
-      maxAge: COOKIE_MAX_AGE[CookieEnum.REFRESH_TOKEN],
+      maxAge: refreshTtl,
     },
   )
   response.cookies.set(
@@ -59,7 +63,7 @@ export const refreshTokenProxy = async (
     httpOnly: false,
     secure: true,
     sameSite: 'strict',
-    maxAge: COOKIE_MAX_AGE[CookieEnum.USER_CODE],
+    maxAge: refreshTtl,
   })
   return true
 }
