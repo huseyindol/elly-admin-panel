@@ -24,19 +24,15 @@ interface Props {
   onGroupSelect?: () => void
 }
 
-type ChatTab = 'AC' | 'TC'
-
 export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
   const { isDarkMode } = useAdminTheme()
   const [groups, setGroups] = useState<ChatGroup[]>([])
   const [showCreate, setShowCreate] = useState(false)
   const [showDm, setShowDm] = useState(false)
-  const [activeTab, setActiveTab] = useState<ChatTab>('AC')
-  const [tenantFilter, setTenantFilter] = useState<string>('')
   const myLevel = useMyRoleLevel()
 
-  // Oturum tenant'ı — login'de set edilen `tenantId` cookie'si (HttpOnly değil,
-  // client-side okunabilir). TC token almak ve grupları çekmek için kullanılır.
+  // Oturum tenant'ı — login'de set edilen `tenantId` cookie'si (HttpOnly değil).
+  // AC=TC tek modelinde her grup bu tenant'ta yaşar; tek API çağrısı yeterli.
   const [sessionTenantId] = useState<string | null>(
     () => getGlobalCookies()[CookieEnum.TENANT_ID] || null,
   )
@@ -62,43 +58,18 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
     )
   }, [])
 
-  // AC grupları — header'sız (backend basedb bağlamı). Sayfa açılışında tek istek.
-  // AC kısmını değiştirir, yüklüyse TC gruplarını korur.
-  const loadAcGroups = useCallback(() => {
-    getMyGroupsService()
-      .then(ac =>
-        setGroups(prev => [...prev.filter(g => g.tenantId !== null), ...ac]),
-      )
-      .catch(() => {})
-  }, [])
-
-  // TC grupları — yalnızca TC sekmesi seçiliyken çekilir. Hedef tenant URL
-  // path'inde taşınır (/api/v1/chat/tenant/{tid}/groups); kimlik admin JWT'sinde.
-  // TC kısmını değiştirir, AC gruplarını korur.
-  const loadTcGroups = useCallback(() => {
+  // Tek grup yükleyici — AC=TC, daima tenant URL'inden (/api/v1/chat/tenant/{tid}/groups).
+  // sessionTenantId yoksa (cookie eksik / login bozuk) sessizce çıkarız.
+  const refetchGroups = useCallback(() => {
     if (!sessionTenantId) return
     getMyGroupsService(sessionTenantId)
-      .then(tc =>
-        setGroups(prev => [...prev.filter(g => g.tenantId === null), ...tc]),
-      )
+      .then(setGroups)
       .catch(() => {})
   }, [sessionTenantId])
 
-  // WS sinyalleri için yeniden çekme — AC her zaman, TC yalnızca o sekme açıksa.
-  const refetchGroups = useCallback(() => {
-    loadAcGroups()
-    if (activeTab === 'TC') loadTcGroups()
-  }, [loadAcGroups, loadTcGroups, activeTab])
-
-  // Mount + refreshToken: yalnızca AC (tek istek).
   useEffect(() => {
-    loadAcGroups()
-  }, [loadAcGroups, refreshToken])
-
-  // TC sekmesi seçildiğinde TC gruplarını çek.
-  useEffect(() => {
-    if (activeTab === 'TC') loadTcGroups()
-  }, [activeTab, loadTcGroups, refreshToken])
+    refetchGroups()
+  }, [refetchGroups, refreshToken])
 
   // Tek abonelik kaynağı — bağlantı kurulu ve grup listesi doluyken tüm
   // gruplara mesaj sub'ı at. Fetch'ten ayrı olduğu için fetch'i tetiklemez.
@@ -172,33 +143,8 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
     onGroupSelect?.()
   }
 
-  // AC: tenantId === null; TC: tenantId !== null
-  const acGroups = groups.filter(g => g.tenantId === null)
-  const tcGroups = groups.filter(g => g.tenantId !== null)
-
-  // TC'deki benzersiz tenant listesi — filtre dropdown için
-  const tenantOptions = [
-    ...new Set(tcGroups.map(g => g.tenantId as string)),
-  ].sort()
-
-  // Seçili tab'a ve tenant filtresine göre görüntülenecek gruplar
-  const visibleGroups =
-    activeTab === 'AC'
-      ? acGroups
-      : tenantFilter
-        ? tcGroups.filter(g => g.tenantId === tenantFilter)
-        : tcGroups
-
-  const tabClass = (tab: ChatTab) =>
-    `flex-1 py-1.5 text-xs font-medium transition-colors rounded-lg ${
-      activeTab === tab
-        ? isDarkMode
-          ? 'bg-slate-700 text-white'
-          : 'bg-white text-gray-900 shadow-sm'
-        : isDarkMode
-          ? 'text-slate-400 hover:text-white'
-          : 'text-gray-500 hover:text-gray-700'
-    }`
+  // AC=TC tek model: tüm gruplar aynı tenant'ta — filtre/tab yok, doğrudan göster.
+  const visibleGroups = groups
 
   return (
     <div className="flex h-full flex-col">
@@ -245,81 +191,6 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
         </div>
       </div>
 
-      {/* AC / TC Tabs */}
-      <div
-        className={`px-3 py-2 ${isDarkMode ? 'bg-slate-900/50' : 'bg-gray-50/80'}`}
-      >
-        <div
-          className={`flex gap-1 rounded-xl p-1 ${
-            isDarkMode ? 'bg-slate-800/60' : 'bg-gray-100'
-          }`}
-        >
-          <button
-            type="button"
-            className={tabClass('AC')}
-            onClick={() => setActiveTab('AC')}
-          >
-            Admin Chat
-            {acGroups.length > 0 && (
-              <span
-                className={`ml-1 rounded-full px-1 text-[10px] ${
-                  isDarkMode
-                    ? 'bg-slate-600 text-slate-300'
-                    : 'bg-white text-gray-500'
-                }`}
-              >
-                {acGroups.length}
-              </span>
-            )}
-          </button>
-          <button
-            type="button"
-            className={tabClass('TC')}
-            onClick={() => {
-              setActiveTab('TC')
-              setTenantFilter('')
-            }}
-          >
-            Tenant Chat
-            {tcGroups.length > 0 && (
-              <span
-                className={`ml-1 rounded-full px-1 text-[10px] ${
-                  isDarkMode
-                    ? 'bg-slate-600 text-slate-300'
-                    : 'bg-white text-gray-500'
-                }`}
-              >
-                {tcGroups.length}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Tenant Filter — sadece TC tab'ında göster */}
-      {activeTab === 'TC' && tenantOptions.length > 1 && (
-        <div
-          className={`border-b px-3 pb-2 ${isDarkMode ? 'border-slate-800/50' : 'border-gray-100'}`}
-        >
-          <select
-            value={tenantFilter}
-            onChange={e => setTenantFilter(e.target.value)}
-            className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none transition-colors ${
-              isDarkMode
-                ? 'border border-slate-700 bg-slate-800 text-slate-300 focus:border-violet-500'
-                : 'border border-gray-200 bg-white text-gray-700 focus:border-violet-400'
-            }`}
-          >
-            <option value="">Tüm Tenant&apos;lar</option>
-            {tenantOptions.map(tid => (
-              <option key={tid} value={tid}>
-                {tid}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
       {/* Group List */}
       <div className="flex-1 overflow-y-auto">
         {visibleGroups.length === 0 && (
@@ -328,9 +199,7 @@ export function ChatSidebar({ refreshToken, onGroupSelect }: Props) {
               isDarkMode ? 'text-slate-500' : 'text-gray-400'
             }`}
           >
-            {activeTab === 'AC'
-              ? 'Henüz admin konuşması yok'
-              : 'Henüz tenant konuşması yok'}
+            Henüz konuşma yok
           </p>
         )}
 
