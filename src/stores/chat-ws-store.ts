@@ -400,43 +400,48 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
         arr.findIndex(candidate => candidate.id === group.id) === index,
     )
 
-    const subs: StompSubscription[] = uniqueGroups.map(group => {
-      // TC grup: tenant-aware topic; AC grup: standart topic
-      const topic = group.tenantId
-        ? `/topic/tenant/${group.tenantId}/group/${group.id}`
-        : `/topic/group/${group.id}`
-
-      return client.subscribe(topic, msg => {
-        try {
-          const data: ChatMessage = JSON.parse(msg.body)
-          set(s => {
-            const existing = s.messages[group.id] ?? []
-            if (existing.some(m => m.id === data.id)) return s
-
-            // Mesaj geldi → gönderenin "yazıyor"unu hemen temizle (userId ile)
-            const typingMap = new Map(s.typingUsers[group.id] ?? [])
-            if (data.senderId != null) typingMap.delete(data.senderId)
-
-            return {
-              messages: {
-                ...s.messages,
-                [group.id]: [...existing, data],
-              },
-              typingUsers: { ...s.typingUsers, [group.id]: typingMap },
-              unreadCounts:
-                s.activeGroupId === group.id
-                  ? s.unreadCounts
-                  : {
-                      ...s.unreadCounts,
-                      [group.id]: (s.unreadCounts[group.id] ?? 0) + 1,
-                    },
-            }
-          })
-        } catch {
-          // ignore parse errors
+    const subs: StompSubscription[] = uniqueGroups
+      .map(group => {
+        // AC=TC: her grup tenant'ta yaşar. tenantId yoksa veri tutarsız → uyar ve atla.
+        if (!group.tenantId) {
+          console.warn(
+            `[chat-ws] group ${group.id} has no tenantId, skipping subscription`,
+          )
+          return null
         }
+        const topic = `/topic/tenant/${group.tenantId}/group/${group.id}`
+        return client.subscribe(topic, msg => {
+          try {
+            const data: ChatMessage = JSON.parse(msg.body)
+            set(s => {
+              const existing = s.messages[group.id] ?? []
+              if (existing.some(m => m.id === data.id)) return s
+
+              // Mesaj geldi → gönderenin "yazıyor"unu hemen temizle (userId ile)
+              const typingMap = new Map(s.typingUsers[group.id] ?? [])
+              if (data.senderId != null) typingMap.delete(data.senderId)
+
+              return {
+                messages: {
+                  ...s.messages,
+                  [group.id]: [...existing, data],
+                },
+                typingUsers: { ...s.typingUsers, [group.id]: typingMap },
+                unreadCounts:
+                  s.activeGroupId === group.id
+                    ? s.unreadCounts
+                    : {
+                        ...s.unreadCounts,
+                        [group.id]: (s.unreadCounts[group.id] ?? 0) + 1,
+                      },
+              }
+            })
+          } catch {
+            // ignore parse errors
+          }
+        })
       })
-    })
+      .filter((s): s is StompSubscription => s !== null)
 
     set({ allGroupSubs: subs })
   },
@@ -453,23 +458,23 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
   sendTyping: (groupId: string) => {
     const { client, activeGroupTenantId } = get()
     if (!client?.connected) return
-
-    const destination = activeGroupTenantId
-      ? `/app/tenant-chat/${activeGroupTenantId}/${groupId}/typing`
-      : `/app/chat/${groupId}/typing`
-
-    client.publish({ destination, body: '' })
+    // AC=TC: tenant olmadan typing yayını yok (eski AC /app/chat/* yolu kullanım dışı).
+    if (!activeGroupTenantId) return
+    client.publish({
+      destination: `/app/tenant-chat/${activeGroupTenantId}/${groupId}/typing`,
+      body: '',
+    })
   },
 
   sendRead: (groupId: string) => {
     const { client, activeGroupTenantId } = get()
     if (!client?.connected) return
-
-    const destination = activeGroupTenantId
-      ? `/app/tenant-chat/${activeGroupTenantId}/${groupId}/read`
-      : `/app/chat/${groupId}/read`
-
-    client.publish({ destination, body: '' })
+    // AC=TC: tenant olmadan read-receipt yok (eski AC /app/chat/* yolu kullanım dışı).
+    if (!activeGroupTenantId) return
+    client.publish({
+      destination: `/app/tenant-chat/${activeGroupTenantId}/${groupId}/read`,
+      body: '',
+    })
   },
 
   prependHistory: (groupId, messages) => {
@@ -633,10 +638,14 @@ function attachActiveGroupSubs(
 ) {
   const subs: StompSubscription[] = []
 
-  // TC grup: tenant-aware topic; AC grup: standart topic
-  const baseTopic = tenantId
-    ? `/topic/tenant/${tenantId}/group/${groupId}`
-    : `/topic/group/${groupId}`
+  // AC=TC: aktif grubun tenant'ı zorunlu — yoksa hiç subscribe etmeyiz (eski AC yolu kalktı).
+  if (!tenantId) {
+    console.warn(
+      `[chat-ws] active group ${groupId} has no tenantId, skipping subscriptions`,
+    )
+    return subs
+  }
+  const baseTopic = `/topic/tenant/${tenantId}/group/${groupId}`
 
   // Aktif grubun mesajları — allGroupSubs zamanlamasından bağımsız garanti.
   // Aynı mesaj allGroupSubs'tan da gelebilir; id ile dedup edilir (çift yok).
