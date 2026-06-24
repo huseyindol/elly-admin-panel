@@ -155,9 +155,8 @@ const AdminLoginPage = () => {
         body: JSON.stringify({
           usernameOrEmail: formData.usernameOrEmail,
           password: formData.password,
-          ...(formData.tenantId
-            ? { tenantId: formData.tenantId, loginType: 'admin' }
-            : { loginType: 'admin' }),
+          tenantId: formData.tenantId,
+          loginType: 'admin',
         }),
       })
       if (response.error) {
@@ -168,14 +167,14 @@ const AdminLoginPage = () => {
       // 2FA açıksa token gelmez; mfaToken ile 2. adıma geç
       if (response.data?.mfaRequired && response.data?.mfaToken) {
         setMfaToken(response.data.mfaToken)
-        setPendingTenantId(formData.tenantId ?? '')
+        setPendingTenantId(formData.tenantId)
         setMfaCode('')
         setGeneralError('')
         setStep('mfa')
         return
       }
 
-      applyLoginSuccess(response.data, formData.tenantId ?? '')
+      applyLoginSuccess(response.data, formData.tenantId)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setGeneralError(`Hata: ${message}`)
@@ -332,20 +331,25 @@ const AdminLoginPage = () => {
                   )}
                 </div>
 
-                {/* Tenant Field */}
+                {/* Tenant Field — zorunlu (panel her zaman tek tenant'ı yönetir) */}
                 <div className="space-y-2">
-                  <Label htmlFor="tenantId">Tenant ID (opsiyonel)</Label>
+                  <Label htmlFor="tenantId">Tenant ID</Label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="tenantId"
-                      placeholder="Tenant ID (ör. tenant1, basedb)"
+                      placeholder="Tenant ID (ör. tenant1)"
                       {...register('tenantId')}
                       className="pl-10"
                       disabled={isSubmitting}
                       autoComplete="organization"
                     />
                   </div>
+                  {errors.tenantId && (
+                    <p className="text-sm text-destructive">
+                      {errors.tenantId.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* Password Field */}

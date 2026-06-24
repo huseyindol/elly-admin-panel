@@ -27,7 +27,10 @@ export const LoginSchema = z.object({
     .string()
     .min(1, { message: 'Şifre gereklidir.' })
     .min(6, { message: 'Şifre en az 6 karakter olmalıdır.' }),
-  tenantId: z.string().optional().describe('Tenant ID (ör. tenant1, basedb)'),
+  tenantId: z
+    .string()
+    .min(1, { message: 'Tenant ID gereklidir.' })
+    .describe('Tenant ID (ör. tenant1)'),
 })
 
 // Request body for creating user
