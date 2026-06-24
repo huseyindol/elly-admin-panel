@@ -11,6 +11,7 @@ import {
 import { useAdminTheme, useDebounce } from '@/app/_hooks'
 import {
   useAssignRoles,
+  useCreateUser,
   useDeleteUser,
   useRoles,
   useSetUserStatus,
@@ -21,6 +22,7 @@ import { usePermission } from '@/hooks/usePermission'
 import type { AdminRole, AdminUser } from '@/types/user-management'
 import { redirect } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
 type Tab = 'admin' | 'tenant'
@@ -81,19 +83,57 @@ export default function UsersPage() {
  * Backend: GET /api/v1/users?audience=panel — SUPER_ADMIN / ADMIN / EDITOR / VIEWER.
  * TENANT rolündeki kullanıcılar bu sekmede ASLA görünmez.
  */
+interface CreateAdminFormData {
+  username: string
+  email: string
+  password: string
+  firstName: string
+  lastName: string
+}
+
 function AdminUsersTab() {
   const { isDarkMode } = useAdminTheme()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
   const [selectedRoleIds, setSelectedRoleIds] = useState<AdminRole[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createRoles, setCreateRoles] = useState<AdminRole[]>([])
 
   const { data: usersData, isLoading, isError, error } = useUsers('panel')
   const { data: rolesData } = useRoles()
   const { data: profileData } = useUserProfile()
   const assignRoles = useAssignRoles()
   const deleteUser = useDeleteUser()
+  const createUser = useCreateUser()
   const currentUserId = profileData?.data?.id
+
+  const createForm = useForm<CreateAdminFormData>({
+    defaultValues: {
+      username: '',
+      email: '',
+      password: '',
+      firstName: '',
+      lastName: '',
+    },
+  })
+
+  const handleCreate = (data: CreateAdminFormData) => {
+    createUser.mutate(
+      {
+        ...data,
+        roleIds:
+          createRoles.length > 0 ? createRoles.map(r => r.id) : undefined,
+      },
+      {
+        onSuccess: () => {
+          setCreateOpen(false)
+          createForm.reset()
+          setCreateRoles([])
+        },
+      },
+    )
+  }
 
   const debouncedSearch = useDebounce(searchQuery, 300)
   const users = usersData?.data ?? []
@@ -219,14 +259,30 @@ function AdminUsersTab() {
     },
   ]
 
+  const inputClass = `w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors ${
+    isDarkMode
+      ? 'border border-slate-700/50 bg-slate-800/50 text-white placeholder-slate-500 focus:border-violet-500'
+      : 'border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:border-violet-500'
+  }`
+  const labelClass = `block text-sm font-medium mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`
+
   return (
     <>
-      <div className="max-w-md">
-        <SearchInput
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="Kullanıcı ara..."
-        />
+      <div className="flex items-center justify-between gap-4">
+        <div className="max-w-md flex-1">
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Kullanıcı ara..."
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setCreateOpen(true)}
+          className="whitespace-nowrap rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow"
+        >
+          + Yeni Admin Ekle
+        </button>
       </div>
 
       {isError ? (
@@ -254,6 +310,117 @@ function AdminUsersTab() {
           }}
         />
       )}
+
+      {/* Create Admin Modal */}
+      <Modal
+        isOpen={createOpen}
+        onClose={() => {
+          setCreateOpen(false)
+          createForm.reset()
+          setCreateRoles([])
+        }}
+        title="Yeni Admin Kullanıcısı"
+        size="lg"
+      >
+        <form
+          onSubmit={createForm.handleSubmit(handleCreate)}
+          className="space-y-4"
+        >
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>Ad</label>
+              <input
+                {...createForm.register('firstName')}
+                className={inputClass}
+                placeholder="Ad"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Soyad</label>
+              <input
+                {...createForm.register('lastName')}
+                className={inputClass}
+                placeholder="Soyad"
+              />
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Kullanıcı Adı *</label>
+            <input
+              {...createForm.register('username', { required: true })}
+              className={inputClass}
+              placeholder="kullanici_adi"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>E-posta *</label>
+            <input
+              type="email"
+              {...createForm.register('email', { required: true })}
+              className={inputClass}
+              placeholder="ornek@email.com"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Şifre *</label>
+            <input
+              type="password"
+              {...createForm.register('password', { required: true })}
+              className={inputClass}
+              placeholder="En az 8 karakter, büyük/küçük harf + rakam"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>
+              Roller (boş bırakılırsa ADMIN atanır)
+            </label>
+            <DualListbox
+              available={allRoles}
+              selected={createRoles}
+              onChange={setCreateRoles}
+              label=""
+              getItemLabel={r => r.name}
+              getItemSubLabel={r => r.description}
+              emptyLeftText="Tüm roller seçili"
+              emptyRightText="Default: ADMIN"
+            />
+          </div>
+          <div
+            className={`rounded-lg p-3 text-xs ${isDarkMode ? 'bg-blue-500/10 text-blue-300' : 'bg-blue-50 text-blue-700'}`}
+          >
+            ℹ️ Kullanıcı oluşturulduktan sonra panel domain'inden doğrulama
+            e-postası gönderilir. TENANT rolü bu ekrandan atanamaz (tenant
+            kullanıcısı public register ile oluşur).
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setCreateOpen(false)
+                createForm.reset()
+                setCreateRoles([])
+              }}
+              className={`rounded-xl px-4 py-2.5 text-sm font-medium ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-gray-500 hover:bg-gray-100'}`}
+            >
+              İptal
+            </button>
+            <button
+              type="submit"
+              disabled={createUser.isPending}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+            >
+              {createUser.isPending ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Oluşturuluyor...
+                </>
+              ) : (
+                'Oluştur'
+              )}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       <Modal
         isOpen={!!selectedUser}

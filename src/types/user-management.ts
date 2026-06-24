@@ -54,6 +54,17 @@ export interface UpdateProfileRequest {
   email: string
 }
 
+/** POST /api/v1/users request body — SUPER_ADMIN tarafından admin user yaratma */
+export interface CreateUserRequest {
+  username: string
+  email: string
+  password: string
+  firstName?: string
+  lastName?: string
+  /** Atanacak rol ID'leri. Boşsa backend ADMIN default'unu atar. */
+  roleIds?: number[]
+}
+
 // Response type aliases
 export type AdminUserListResponse = BaseResponse<AdminUser[]>
 export type AdminUserResponse = BaseResponse<AdminUser>

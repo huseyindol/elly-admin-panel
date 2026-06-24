@@ -4,6 +4,7 @@ import type {
   AdminUserListResponse,
   AdminUserResponse,
   AssignRolesRequest,
+  CreateUserRequest,
   UpdateProfileRequest,
   UserProfileResponse,
 } from '@/types/user-management'
@@ -31,6 +32,19 @@ export const getUserByIdService = async (id: number) => {
   })
   if (!response.result) {
     throw new Error(response.message ?? 'Kullanıcı yüklenemedi')
+  }
+  return response
+}
+
+// POST - Admin user yaratma (users:manage — SUPER_ADMIN). roleIds verilmezse backend ADMIN default'unu atar.
+export const createUserService = async (data: CreateUserRequest) => {
+  const response: AdminUserResponse = await fetcher('/api/v1/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.result) {
+    throw new Error(response.message ?? 'Kullanıcı oluşturulamadı')
   }
   return response
 }

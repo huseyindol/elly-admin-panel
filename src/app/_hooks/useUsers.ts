@@ -2,6 +2,7 @@
 
 import {
   assignRolesService,
+  createUserService,
   deleteUserService,
   getRolesService,
   getUserProfileService,
@@ -12,6 +13,7 @@ import {
 } from '@/app/_services/users.services'
 import type {
   AssignRolesRequest,
+  CreateUserRequest,
   UpdateProfileRequest,
 } from '@/types/user-management'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -58,6 +60,21 @@ export function useUpdateUserProfile() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Profil güncellenemedi')
+    },
+  })
+}
+
+/** Admin user yaratma — POST /api/v1/users (users:manage). Backend ADMIN default rolünü atar. */
+export function useCreateUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: CreateUserRequest) => createUserService(data),
+    onSuccess: () => {
+      toast.success('Kullanıcı oluşturuldu — doğrulama e-postası gönderildi')
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Kullanıcı oluşturulamadı')
     },
   })
 }
