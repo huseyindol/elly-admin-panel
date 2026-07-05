@@ -15,11 +15,16 @@ import {
   useDeleteUser,
   useRoles,
   useSetUserStatus,
+  useUpdateUser,
   useUserProfile,
   useUsers,
 } from '@/app/_hooks/useUsers'
 import { usePermission } from '@/hooks/usePermission'
-import type { AdminRole, AdminUser } from '@/types/user-management'
+import type {
+  AdminRole,
+  AdminUpdateUserRequest,
+  AdminUser,
+} from '@/types/user-management'
 import { redirect } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -106,6 +111,7 @@ function AdminUsersTab() {
   const assignRoles = useAssignRoles()
   const deleteUser = useDeleteUser()
   const createUser = useCreateUser()
+  const updateUser = useUpdateUser()
   const currentUserId = profileData?.data?.id
 
   const createForm = useForm<CreateAdminFormData>({
@@ -153,20 +159,21 @@ function AdminUsersTab() {
     setSelectedRoleIds(allRoles.filter(r => user.roles.includes(r.name)))
   }
 
-  const handleAssignRoles = () => {
+  // Alanlar + roller tek modal'da kaydedilir: önce profil update, sonra rol ataması.
+  // Hata olursa hook toast'ları gösterir, modal açık kalır (kullanıcı düzeltip tekrar dener).
+  const handleSaveUser = async (data: AdminUpdateUserRequest) => {
     if (!selectedUser) return
-    assignRoles.mutate(
-      {
+    try {
+      await updateUser.mutateAsync({ userId: selectedUser.id, data })
+      await assignRoles.mutateAsync({
         userId: selectedUser.id,
         data: { roleIds: selectedRoleIds.map(r => r.id) },
-      },
-      {
-        onSuccess: () => {
-          setSelectedUser(null)
-          setSelectedRoleIds([])
-        },
-      },
-    )
+      })
+      setSelectedUser(null)
+      setSelectedRoleIds([])
+    } catch {
+      // toast'lar hook'larda
+    }
   }
 
   const handleDeleteUser = () => {
@@ -422,68 +429,21 @@ function AdminUsersTab() {
         </form>
       </Modal>
 
-      <Modal
-        isOpen={!!selectedUser}
+      {/* Edit Modal — alanlar + roller */}
+      <UserEditModal
+        user={selectedUser}
         onClose={() => {
           setSelectedUser(null)
           setSelectedRoleIds([])
         }}
-        title={`Rol Ata — ${selectedUser?.firstName ?? ''} ${selectedUser?.lastName ?? ''}`}
-        size="lg"
-      >
-        <div className="space-y-4">
-          <p
-            className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}
-          >
-            <strong>@{selectedUser?.username}</strong> kullanıcısına atanacak
-            rolleri seçin.
-          </p>
-          <DualListbox
-            available={allRoles}
-            selected={selectedRoleIds}
-            onChange={setSelectedRoleIds}
-            label="Roller"
-            getItemLabel={r => r.name}
-            getItemSubLabel={r => r.description}
-            emptyLeftText="Tüm roller atanmış"
-            emptyRightText="Rol seçin"
-          />
-          <div
-            className={`rounded-lg p-3 text-xs ${isDarkMode ? 'bg-amber-500/10 text-amber-300' : 'bg-amber-50 text-amber-700'}`}
-          >
-            ⚠️ Kaydedildiğinde kullanıcının <strong>tüm rolleri</strong>{' '}
-            yukarıdaki seçimle değiştirilir. TENANT rolü panel rol atama
-            ekranında atanamaz.
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedUser(null)
-                setSelectedRoleIds([])
-              }}
-              className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-gray-500 hover:bg-gray-100'}`}
-            >
-              İptal
-            </button>
-            <button
-              type="button"
-              onClick={handleAssignRoles}
-              disabled={assignRoles.isPending}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/30 disabled:opacity-50"
-            >
-              {assignRoles.isPending ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Kaydediliyor...
-                </>
-              ) : (
-                'Rolleri Kaydet'
-              )}
-            </button>
-          </div>
-        </div>
-      </Modal>
+        onSave={handleSaveUser}
+        isPending={updateUser.isPending || assignRoles.isPending}
+        roles={{
+          all: allRoles,
+          selected: selectedRoleIds,
+          onChange: setSelectedRoleIds,
+        }}
+      />
 
       {/* Delete Confirm */}
       <DestructiveConfirmDialog
@@ -509,12 +469,24 @@ function TenantUsersTab() {
   const { isDarkMode } = useAdminTheme()
   const [searchQuery, setSearchQuery] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
+  const [editTarget, setEditTarget] = useState<AdminUser | null>(null)
 
   const { data: usersData, isLoading, isError, error } = useUsers('tenant')
   const { data: profileData } = useUserProfile()
   const deleteUser = useDeleteUser()
   const setUserStatus = useSetUserStatus()
+  const updateUser = useUpdateUser()
   const currentUserId = profileData?.data?.id
+
+  const handleSaveUser = async (data: AdminUpdateUserRequest) => {
+    if (!editTarget) return
+    try {
+      await updateUser.mutateAsync({ userId: editTarget.id, data })
+      setEditTarget(null)
+    } catch {
+      // toast hook'ta
+    }
+  }
 
   const debouncedSearch = useDebounce(searchQuery, 300)
   const users = usersData?.data ?? []
@@ -623,6 +595,7 @@ function TenantUsersTab() {
           keyExtractor={u => String(u.id)}
           emptyMessage="Tenant kullanıcısı bulunamadı"
           actions={{
+            onEdit: u => setEditTarget(u),
             onDelete: u => {
               if (currentUserId === u.id) {
                 toast.error('Kendi hesabınızı silemezsiniz')
@@ -633,6 +606,14 @@ function TenantUsersTab() {
           }}
         />
       )}
+
+      {/* Edit Modal — sadece alanlar (tenant kullanıcısına rol atanmaz) */}
+      <UserEditModal
+        user={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSave={handleSaveUser}
+        isPending={updateUser.isPending}
+      />
 
       <DestructiveConfirmDialog
         isOpen={!!deleteTarget}
@@ -645,5 +626,185 @@ function TenantUsersTab() {
         isLoading={deleteUser.isPending}
       />
     </>
+  )
+}
+
+/* ───────────────────── Ortak: Kullanıcı Düzenleme Modal'ı ─────────────────────
+ * Panel sekmesi roles prop'uyla rol bölümünü de gösterir; tenant sekmesi yalnız alanlar.
+ * newPassword boş bırakılırsa şifre değişmez; doluysa admin şifre sıfırlaması yapılır
+ * (backend eski şifre sormaz, kullanıcının açık oturumları sonlanır).
+ */
+interface UserEditFormData {
+  username: string
+  email: string
+  firstName: string
+  lastName: string
+  newPassword: string
+}
+
+function UserEditModal({
+  user,
+  onClose,
+  onSave,
+  isPending,
+  roles,
+}: {
+  user: AdminUser | null
+  onClose: () => void
+  onSave: (data: AdminUpdateUserRequest) => void
+  isPending: boolean
+  roles?: {
+    all: AdminRole[]
+    selected: AdminRole[]
+    onChange: (roles: AdminRole[]) => void
+  }
+}) {
+  const { isDarkMode } = useAdminTheme()
+  const form = useForm<UserEditFormData>({
+    defaultValues: {
+      username: '',
+      email: '',
+      firstName: '',
+      lastName: '',
+      newPassword: '',
+    },
+  })
+
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName ?? '',
+        lastName: user.lastName ?? '',
+        newPassword: '',
+      })
+    }
+  }, [user, form])
+
+  const submit = (d: UserEditFormData) => {
+    onSave({
+      username: d.username.trim() || undefined,
+      email: d.email.trim() || undefined,
+      firstName: d.firstName,
+      lastName: d.lastName,
+      newPassword: d.newPassword.trim() || undefined,
+    })
+  }
+
+  const inputClass = `w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors ${
+    isDarkMode
+      ? 'border border-slate-700/50 bg-slate-800/50 text-white placeholder-slate-500 focus:border-violet-500'
+      : 'border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:border-violet-500'
+  }`
+  const labelClass = `block text-sm font-medium mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`
+
+  return (
+    <Modal
+      isOpen={!!user}
+      onClose={onClose}
+      title={`Düzenle — @${user?.username ?? ''}`}
+      size="lg"
+    >
+      <form onSubmit={form.handleSubmit(submit)} className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelClass}>Ad</label>
+            <input
+              {...form.register('firstName')}
+              className={inputClass}
+              placeholder="Ad"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Soyad</label>
+            <input
+              {...form.register('lastName')}
+              className={inputClass}
+              placeholder="Soyad"
+            />
+          </div>
+        </div>
+        <div>
+          <label className={labelClass}>Kullanıcı Adı</label>
+          <input
+            {...form.register('username')}
+            className={inputClass}
+            placeholder="kullanici_adi"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>E-posta</label>
+          <input
+            type="email"
+            {...form.register('email')}
+            className={inputClass}
+            placeholder="ornek@email.com"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>
+            Yeni Şifre (boş bırakılırsa değişmez)
+          </label>
+          <input
+            type="password"
+            {...form.register('newPassword')}
+            className={inputClass}
+            placeholder="En az 8 karakter, büyük/küçük harf + rakam"
+            autoComplete="new-password"
+          />
+        </div>
+        {roles && (
+          <div>
+            <label className={labelClass}>Roller</label>
+            <DualListbox
+              available={roles.all}
+              selected={roles.selected}
+              onChange={roles.onChange}
+              label=""
+              getItemLabel={r => r.name}
+              getItemSubLabel={r => r.description}
+              emptyLeftText="Tüm roller atanmış"
+              emptyRightText="Rol seçin"
+            />
+            <p
+              className={`mt-2 rounded-lg p-3 text-xs ${isDarkMode ? 'bg-amber-500/10 text-amber-300' : 'bg-amber-50 text-amber-700'}`}
+            >
+              ⚠️ Kaydedildiğinde kullanıcının <strong>tüm rolleri</strong>{' '}
+              yukarıdaki seçimle değiştirilir.
+            </p>
+          </div>
+        )}
+        <div
+          className={`rounded-lg p-3 text-xs ${isDarkMode ? 'bg-blue-500/10 text-blue-300' : 'bg-blue-50 text-blue-700'}`}
+        >
+          ℹ️ Şifre sıfırlanırsa kullanıcının açık oturumları sonlanır ve yeni
+          şifreyle giriş yapması gerekir.
+        </div>
+        <div className="flex justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className={`rounded-xl px-4 py-2.5 text-sm font-medium ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-gray-500 hover:bg-gray-100'}`}
+          >
+            İptal
+          </button>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+          >
+            {isPending ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Kaydediliyor...
+              </>
+            ) : (
+              'Kaydet'
+            )}
+          </button>
+        </div>
+      </form>
+    </Modal>
   )
 }

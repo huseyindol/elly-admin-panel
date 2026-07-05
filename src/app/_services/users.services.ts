@@ -1,6 +1,7 @@
 import { BaseResponse } from '@/types/BaseResponse'
 import type {
   AdminRoleListResponse,
+  AdminUpdateUserRequest,
   AdminUserListResponse,
   AdminUserResponse,
   AssignRolesRequest,
@@ -45,6 +46,23 @@ export const createUserService = async (data: CreateUserRequest) => {
   })
   if (!response.result) {
     throw new Error(response.message ?? 'Kullanıcı oluşturulamadı')
+  }
+  return response
+}
+
+// PUT - Kullanıcı güncelle (users:manage). Yalnız dolu alanlar uygulanır; newPassword
+// dolu ise admin şifre sıfırlaması yapılır (kullanıcının açık oturumları sonlanır).
+export const updateUserService = async (
+  id: number,
+  data: AdminUpdateUserRequest,
+) => {
+  const response: AdminUserResponse = await fetcher(`/api/v1/users/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.result) {
+    throw new Error(response.message ?? 'Kullanıcı güncellenemedi')
   }
   return response
 }

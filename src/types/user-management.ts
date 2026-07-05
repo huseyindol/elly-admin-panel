@@ -65,6 +65,17 @@ export interface CreateUserRequest {
   roleIds?: number[]
 }
 
+/** PUT /api/v1/users/{id} request body — admin'in başka kullanıcıyı güncellemesi.
+ *  Tüm alanlar opsiyonel; yalnız dolu gönderilenler uygulanır. */
+export interface AdminUpdateUserRequest {
+  username?: string
+  email?: string
+  firstName?: string
+  lastName?: string
+  /** Dolu gönderilirse admin şifre sıfırlaması — kullanıcının açık oturumları sonlanır. */
+  newPassword?: string
+}
+
 // Response type aliases
 export type AdminUserListResponse = BaseResponse<AdminUser[]>
 export type AdminUserResponse = BaseResponse<AdminUser>

@@ -9,9 +9,11 @@ import {
   getUsersService,
   setUserStatusService,
   updateUserProfileService,
+  updateUserService,
   type UsersAudience,
 } from '@/app/_services/users.services'
 import type {
+  AdminUpdateUserRequest,
   AssignRolesRequest,
   CreateUserRequest,
   UpdateProfileRequest,
@@ -75,6 +77,27 @@ export function useCreateUser() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Kullanıcı oluşturulamadı')
+    },
+  })
+}
+
+/** Kullanıcı güncelle — PUT /api/v1/users/{id} (users:manage). newPassword dolu ise şifre sıfırlanır. */
+export function useUpdateUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      userId,
+      data,
+    }: {
+      userId: number
+      data: AdminUpdateUserRequest
+    }) => updateUserService(userId, data),
+    onSuccess: () => {
+      toast.success('Kullanıcı güncellendi')
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Kullanıcı güncellenemedi')
     },
   })
 }
