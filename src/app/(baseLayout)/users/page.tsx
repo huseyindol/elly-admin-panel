@@ -20,6 +20,7 @@ import {
   useUsers,
 } from '@/app/_hooks/useUsers'
 import { usePermission } from '@/hooks/usePermission'
+import { useMyRoleLevel } from '@/utils/chat-role'
 import type {
   AdminRole,
   AdminUpdateUserRequest,
@@ -34,14 +35,16 @@ type Tab = 'admin' | 'tenant'
 
 export default function UsersPage() {
   const { isDarkMode } = useAdminTheme()
-  const { isSuperAdmin } = usePermission()
+  const { isSuperAdmin, hasPermission } = usePermission()
   const [activeTab, setActiveTab] = useState<Tab>('admin')
 
+  // Sidebar ile aynı kural: users:manage (SUPER_ADMIN + ADMIN). Sayfa gate'i menü
+  // görünürlüğünden farklı olursa kullanıcı menüyü görüp 403'e düşer — o drift buydu.
   useEffect(() => {
-    if (!isSuperAdmin()) {
+    if (!isSuperAdmin() && !hasPermission('users:manage')) {
       redirect('/403')
     }
-  }, [isSuperAdmin])
+  }, [isSuperAdmin, hasPermission])
 
   return (
     <div className="space-y-6 p-6">
@@ -144,8 +147,18 @@ function AdminUsersTab() {
 
   const debouncedSearch = useDebounce(searchQuery, 300)
   const users = usersData?.data ?? []
-  // Rol atama dropdown'unda yalnız panel rolleri çıksın — TENANT atanmasın.
-  const allRoles = (rolesData?.data ?? []).filter(r => r.name !== 'TENANT')
+  const myLevel = useMyRoleLevel()
+  // Rol seçeneklerinde: TENANT asla (panel rolü değil) + kendi seviyenin ÜZERİ asla
+  // (backend hiyerarşi guard'ı zaten reddeder; yetkisiz seçenek UI'da hiç görünmesin).
+  const ROLE_LEVELS: Record<string, number> = {
+    SUPER_ADMIN: 4,
+    ADMIN: 3,
+    EDITOR: 2,
+    VIEWER: 1,
+  }
+  const allRoles = (rolesData?.data ?? []).filter(
+    r => r.name !== 'TENANT' && (ROLE_LEVELS[r.name] ?? 1) <= myLevel,
+  )
 
   const filteredUsers = users.filter(
     u =>
