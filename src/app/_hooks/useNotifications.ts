@@ -92,3 +92,44 @@ export function useNotificationsRealtime() {
     qc.setQueryData(notificationKeys.unreadCount(), wsUnreadCount)
   }, [wsUnreadCount, qc])
 }
+
+/**
+ * Tarayıcı bildirimi (Web Notifications API). WS'ten yeni bildirim düştüğünde,
+ * sekme görünür + odaklı DEĞİLSE native bildirim gösterir (bakıyorsa header
+ * rozeti yeterli). İzin, panel açıldığında bir kez istenir; kullanıcı reddederse
+ * sessizce devre dışı kalır. Tıklama: pencereye odaklan + bildirimin link'ine git.
+ */
+export function useBrowserNotifications() {
+  const notificationSeq = useChatWsStore(s => s.notificationSeq)
+  const notificationSignal = useChatWsStore(s => s.notificationSignal)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {})
+    }
+  }, [])
+
+  useEffect(() => {
+    if (notificationSeq === 0 || !notificationSignal) return
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+    if (Notification.permission !== 'granted') return
+    if (document.visibilityState === 'visible' && document.hasFocus()) return
+
+    const n = notificationSignal
+    try {
+      const notif = new Notification(n.title || 'Bildirim', {
+        body: n.message,
+        tag: `elly-notification-${n.id}`, // aynı bildirim mükerrer gösterilmez
+        icon: '/favicon.ico',
+      })
+      notif.onclick = () => {
+        window.focus()
+        if (n.link) window.location.assign(n.link)
+        notif.close()
+      }
+    } catch {
+      // bazı tarayıcılar (örn. mobil) Notification constructor'ını desteklemez — sessiz geç
+    }
+  }, [notificationSeq, notificationSignal])
+}

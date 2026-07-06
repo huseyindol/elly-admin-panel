@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Bell, CheckCheck, Trash2 } from 'lucide-react'
 import { useAdminTheme } from '../_hooks'
 import {
+  useBrowserNotifications,
   useNotificationList,
   useNotificationMutations,
   useNotificationsRealtime,
@@ -35,6 +36,8 @@ export function NotificationBell() {
 
   // WS → query köprüsü (canlı güncelleme)
   useNotificationsRealtime()
+  // Sekme odakta değilken native tarayıcı bildirimi göster
+  useBrowserNotifications()
 
   const { data: unreadCount = 0 } = useUnreadCount()
   const { data: page, isLoading } = useNotificationList(10)
