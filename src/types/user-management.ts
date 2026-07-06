@@ -54,15 +54,18 @@ export interface UpdateProfileRequest {
   email: string
 }
 
-/** POST /api/v1/users request body — SUPER_ADMIN tarafından admin user yaratma */
+/** POST /api/v1/users request body — panel'den kullanıcı yaratma.
+ *  audience='panel' (default): roleIds/ADMIN default + panel domain doğrulama maili.
+ *  audience='tenant': TENANT rolü otomatik + o tenant'ın kendi domain'inden mail. */
 export interface CreateUserRequest {
   username: string
   email: string
   password: string
   firstName?: string
   lastName?: string
-  /** Atanacak rol ID'leri. Boşsa backend ADMIN default'unu atar. */
+  /** Atanacak rol ID'leri (yalnız audience='panel'). Boşsa backend ADMIN default'unu atar. */
   roleIds?: number[]
+  audience?: 'panel' | 'tenant'
 }
 
 /** PUT /api/v1/users/{id} request body — admin'in başka kullanıcıyı güncellemesi.

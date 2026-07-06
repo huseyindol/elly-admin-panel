@@ -189,12 +189,6 @@ const menuGroups: MenuGroup[] = [
         permission: `${MODULES.USERS}:manage`,
       },
       {
-        icon: Icons.Database,
-        label: 'Tenant Ekle',
-        href: '/tenants',
-        permission: `${MODULES.USERS}:manage`,
-      },
-      {
         icon: Icons.Activity,
         label: 'RabbitMQ',
         href: '/infrastructure/rabbitmq',
