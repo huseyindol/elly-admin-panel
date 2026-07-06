@@ -6,6 +6,7 @@ import {
   getMembersService,
   removeMemberService,
   addMemberService,
+  addMemberByEmailService,
 } from '@/app/_services/chat.services'
 import { chatKeys } from '@/app/_hooks/useChatGroupAccess'
 import { useMyRoleLevel, canInvite } from '@/utils/chat-role'
@@ -28,7 +29,7 @@ interface Props {
 export function ChatMemberList({ groupId }: Props) {
   const { isDarkMode } = useAdminTheme()
   const [members, setMembers] = useState<ChatMember[]>([])
-  const [inviteUserId, setInviteUserId] = useState('')
+  const [inviteValue, setInviteValue] = useState('')
   const [inviting, setInviting] = useState(false)
   const myLevel = useMyRoleLevel()
   const tenantId = useChatWsStore(s => s.activeGroupTenantId)
@@ -46,14 +47,20 @@ export function ChatMemberList({ groupId }: Props) {
     void queryClient.invalidateQueries({ queryKey: chatKeys.access(groupId) })
   }
 
+  // Tek input iki modu destekler: '@' içeriyorsa e-posta ile, değilse userId ile davet.
   const handleInvite = async () => {
-    const userId = Number(inviteUserId)
-    if (!userId) return
+    const value = inviteValue.trim()
+    if (!value) return
+    const isEmail = value.includes('@')
+    const userId = Number(value)
+    if (!isEmail && !userId) return
     setInviting(true)
     try {
-      const member = await addMemberService(groupId, userId, tenantId)
+      const member = isEmail
+        ? await addMemberByEmailService(groupId, value, tenantId)
+        : await addMemberService(groupId, userId, tenantId)
       setMembers(prev => [...prev, member])
-      setInviteUserId('')
+      setInviteValue('')
       void queryClient.invalidateQueries({ queryKey: chatKeys.access(groupId) })
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Davet başarısız')
@@ -143,15 +150,15 @@ export function ChatMemberList({ groupId }: Props) {
             className={`mb-2 text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
           >
             {myLevel < 4
-              ? 'Kendi rol seviyenizden düşük kullanıcıları davet edebilirsiniz.'
+              ? 'Kendi seviyenizde ve altındaki kullanıcıları davet edebilirsiniz.'
               : 'SUPER_ADMIN olarak herkesi davet edebilirsiniz.'}
           </p>
           <div className="flex gap-2">
             <input
-              type="number"
-              placeholder="Kullanıcı ID"
-              value={inviteUserId}
-              onChange={e => setInviteUserId(e.target.value)}
+              type="text"
+              placeholder="Kullanıcı ID veya e-posta"
+              value={inviteValue}
+              onChange={e => setInviteValue(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleInvite()}
               className={`min-w-0 flex-1 rounded-lg border px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-violet-500/30 ${
                 isDarkMode
@@ -162,7 +169,7 @@ export function ChatMemberList({ groupId }: Props) {
             <button
               type="button"
               onClick={handleInvite}
-              disabled={inviting || !inviteUserId}
+              disabled={inviting || !inviteValue.trim()}
               className="shrink-0 rounded-lg bg-violet-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-violet-600 disabled:opacity-50"
             >
               {inviting ? '...' : 'Davet'}

@@ -146,8 +146,9 @@ export function visibilityLabel(level: number): string {
   return labels[level] ?? 'Bilinmiyor'
 }
 
-/** Backend kuralı: requesterLevel < 4 ise targetLevel < requesterLevel olmalı */
+/** Backend kuralı: requesterLevel < 4 ise targetLevel <= requesterLevel olmalı
+ *  (kendi seviyesi ve altı davet edilebilir; SUPER_ADMIN herkesi). */
 export function canInvite(myLevel: RoleLevel, targetLevel: RoleLevel): boolean {
   if (myLevel >= 4) return true
-  return targetLevel < myLevel
+  return targetLevel <= myLevel
 }

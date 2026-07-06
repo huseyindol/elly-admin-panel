@@ -171,6 +171,25 @@ export const addMemberService = async (
   return res.data
 }
 
+// E-posta ile davet — e-posta grubun tenant DB'sinde aranır; userId davetiyle aynı
+// kurallara (hiyerarşi, mükerrer üyelik) tabidir. Bulunamazsa backend 404 döner.
+export const addMemberByEmailService = async (
+  groupId: string,
+  email: string,
+  tenantId?: string | null,
+): Promise<ChatMember> => {
+  const res: BaseResponse<ChatMember> = await fetcher(
+    `${chatBase(tenantId)}/groups/${groupId}/members/by-email`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    },
+  )
+  if (!res.result) throw new Error(res.message ?? 'Üye eklenemedi')
+  return res.data
+}
+
 export const removeMemberService = async (
   groupId: string,
   userId: number,
