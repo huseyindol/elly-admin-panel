@@ -12,6 +12,9 @@ interface AssetTableProps {
   data: AssetResponse[]
   isLoading: boolean
   onDelete: (asset: AssetResponse) => void
+  // Toplu seçim (opsiyonel — verilirse checkbox kolonu gösterilir)
+  selectedIds?: Set<number>
+  onToggleSelect?: (id: number) => void
   // Pagination
   page: number
   pageSize: number
@@ -25,6 +28,8 @@ export function AssetTable({
   data,
   isLoading,
   onDelete,
+  selectedIds,
+  onToggleSelect,
   page,
   pageSize,
   totalPages,
@@ -34,7 +39,28 @@ export function AssetTable({
 }: AssetTableProps) {
   const { isDarkMode } = useAdminTheme()
 
+  const selectionEnabled = !!selectedIds && !!onToggleSelect
+
   const columns: Column<AssetResponse>[] = [
+    ...(selectionEnabled
+      ? [
+          {
+            key: 'select',
+            header: 'Seç',
+            width: '48px',
+            render: (item: AssetResponse) => (
+              <input
+                type="checkbox"
+                checked={selectedIds!.has(item.id)}
+                onChange={() => onToggleSelect!(item.id)}
+                onClick={e => e.stopPropagation()}
+                className="h-4 w-4 cursor-pointer accent-violet-500"
+                aria-label={`${item.name} seç`}
+              />
+            ),
+          } satisfies Column<AssetResponse>,
+        ]
+      : []),
     {
       key: 'id',
       header: 'ID',

@@ -9,6 +9,7 @@ import {
 import { useAdminTheme } from '@/app/_hooks'
 import {
   AssetResponse,
+  bulkDeleteAssetsService,
   deleteAssetService,
   getAssetByIdService,
   getAssetsPagedService,
@@ -37,6 +38,9 @@ export default function AssetsPage() {
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
   const [deleteTarget, setDeleteTarget] = useState<AssetResponse | null>(null)
+  // Toplu seçim — sayfalar arası korunur (id'ler global)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
 
   // Fetch sub-folders
   const subFoldersQuery = useQuery({
@@ -91,6 +95,37 @@ export default function AssetsPage() {
     },
     enabled: isSearchingById,
   })
+
+  // Bulk delete mutation — backend her id'yi bağımsız siler, başarısızları raporlar
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: number[]) => bulkDeleteAssetsService(ids),
+    onSuccess: result => {
+      if (result.failedIds.length > 0) {
+        toast.warning(
+          `${result.deletedCount} asset silindi, ${result.failedIds.length} silinemedi (ID: ${result.failedIds.join(', ')})`,
+        )
+      } else {
+        toast.success(`${result.deletedCount} asset silindi.`)
+      }
+      queryClient.invalidateQueries({ queryKey: ['assets'] })
+      setSelectedIds(new Set())
+      setBulkConfirmOpen(false)
+    },
+    onError: (error: unknown) => {
+      toast.error(
+        error instanceof Error ? error.message : 'Toplu silme başarısız.',
+      )
+    },
+  })
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -225,17 +260,69 @@ export default function AssetsPage() {
           isDarkMode ? 'bg-slate-800' : 'bg-white'
         }`}
       >
-        <h2
-          className={`mb-4 text-xl font-semibold ${
-            isDarkMode ? 'text-white' : 'text-gray-800'
-          }`}
-        >
-          Asset Listesi
-        </h2>
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <h2
+            className={`text-xl font-semibold ${
+              isDarkMode ? 'text-white' : 'text-gray-800'
+            }`}
+          >
+            Asset Listesi
+          </h2>
+          {/* Toplu işlem çubuğu */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                setSelectedIds(prev => {
+                  const next = new Set(prev)
+                  const pageIds = getTableData().map(a => a.id)
+                  const allSelected = pageIds.every(id => next.has(id))
+                  // Sayfadakilerin hepsi seçiliyse kaldır, değilse hepsini ekle
+                  pageIds.forEach(id =>
+                    allSelected ? next.delete(id) : next.add(id),
+                  )
+                  return next
+                })
+              }
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                isDarkMode
+                  ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Sayfadakileri Seç
+            </button>
+            {selectedIds.size > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds(new Set())}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                    isDarkMode
+                      ? 'text-slate-400 hover:bg-slate-700'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                >
+                  Temizle
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBulkConfirmOpen(true)}
+                  disabled={bulkDeleteMutation.isPending}
+                  className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-rose-700 disabled:opacity-50"
+                >
+                  Seçilenleri Sil ({selectedIds.size})
+                </button>
+              </>
+            )}
+          </div>
+        </div>
         <AssetTable
           data={getTableData()}
           isLoading={isLoading}
           onDelete={setDeleteTarget}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
           page={paginationInfo.page}
           pageSize={pageSize}
           totalPages={paginationInfo.totalPages}
@@ -263,6 +350,18 @@ export default function AssetsPage() {
         title="Asset Sil"
         message={`"${deleteTarget?.name}" adlı asseti silmek istediğinize emin misiniz?`}
         confirmText="Sil"
+        cancelText="İptal"
+        variant="danger"
+      />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={bulkConfirmOpen}
+        onClose={() => setBulkConfirmOpen(false)}
+        onConfirm={() => bulkDeleteMutation.mutate([...selectedIds])}
+        title="Toplu Asset Silme"
+        message={`Seçili ${selectedIds.size} asset kalıcı olarak silinecek (dosyalar dahil). Bu işlem geri alınamaz. Emin misiniz?`}
+        confirmText={`Evet, ${selectedIds.size} Asseti Sil`}
         cancelText="İptal"
         variant="danger"
       />

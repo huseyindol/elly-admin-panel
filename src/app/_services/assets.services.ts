@@ -249,7 +249,6 @@ export const deleteAssetService = async (id: string | number) => {
     const response: BaseResponse<null> = await fetcher(`/api/v1/assets/${id}`, {
       method: 'DELETE',
     })
-    console.log('Delete asset:', response)
     if (!response.result) {
       throw new Error('Error delete asset', { cause: response.message })
     }
@@ -258,4 +257,25 @@ export const deleteAssetService = async (id: string | number) => {
     console.error('Error delete asset:', error)
     throw error
   }
+}
+
+export interface BulkDeleteResult {
+  deletedCount: number
+  failedIds: number[]
+}
+
+// POST - Toplu asset silme. Her id backend'de bağımsız silinir; başarısızlar failedIds'te döner.
+export const bulkDeleteAssetsService = async (ids: number[]) => {
+  const response: BaseResponse<BulkDeleteResult> = await fetcher(
+    '/api/v1/assets/bulk-delete',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    },
+  )
+  if (!response.result) {
+    throw new Error(response.message ?? 'Toplu silme başarısız')
+  }
+  return response.data
 }
