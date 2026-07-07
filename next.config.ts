@@ -25,6 +25,16 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     ppr: false,
+    // Router Cache: dynamic sayfaların RSC payload'ı client'ta cache'lenir —
+    // ziyaret edilen sayfalar arası geçiş sunucuya gitmeden ANINDA olur.
+    // Sayfalar root layout'un cookies() okuması (auth/WS hydration) nedeniyle
+    // bilinçli olarak dynamic'tir; VERİ tazeliği zaten TanStack Query (staleTime)
+    // + WS'te olduğundan shell cache'i güvenlidir. Login/logout router.refresh /
+    // tam yönlendirme yaptığı için auth geçişleri cache'e takılmaz.
+    staleTimes: {
+      dynamic: 60, // saniye — dynamic sayfa payload'ı yeniden kullanım süresi
+      static: 300,
+    },
   },
 
   // Force metadata to be in head for all bots
