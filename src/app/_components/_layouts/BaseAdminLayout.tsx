@@ -1,5 +1,6 @@
 'use client'
 import { Header, Sidebar } from '@/app/_components'
+import { CallLayer } from '@/app/_components/call/CallLayer'
 import { useAdminTheme, useSidebarCollapsed } from '@/app/_hooks'
 import { useChatConnection } from '@/hooks/use-chat-connection'
 import { useState } from 'react'
@@ -59,6 +60,8 @@ export default function BaseAdminLayout({
         position="top-right"
         theme={isDarkMode ? 'dark' : 'light'}
       />
+      {/* WebRTC görüntülü görüşme: gelen çağrı zili + görüşme penceresi (her sayfada) */}
+      <CallLayer />
     </div>
   )
 }

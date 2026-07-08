@@ -15,6 +15,7 @@ import type {
   ChatWsError,
 } from '@/types/chat'
 import type { AppNotification } from '@/types/notification'
+import type { CallSignal } from '@/types/call'
 
 interface ChatWsState {
   client: Client | null
@@ -48,6 +49,9 @@ interface ChatWsState {
   notificationSeq: number
   /** WS'ten gelen okunmamış bildirim sayısı (kaynak-doğruluk) */
   notificationUnreadCount: number | null
+  /** WebRTC sinyali (WS /user/queue/rtc) — useCallSignalBridge call-store'a köprüler */
+  rtcSignal: CallSignal | null
+  rtcSeq: number
   /** groupId → okunmamış mesaj sayısı (sidebar badge için) */
   unreadCounts: Record<string, number>
   /** Aktif TC grubunun banlı anahtarları (s:<sessionId> / v:<visitorId>) */
@@ -114,6 +118,8 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
   notificationSignal: null,
   notificationSeq: 0,
   notificationUnreadCount: null,
+  rtcSignal: null,
+  rtcSeq: 0,
   unreadCounts: {},
   bannedKeys: new Set<string>(),
 
@@ -267,6 +273,15 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
             try {
               const data = JSON.parse(msg.body) as { count: number }
               set({ notificationUnreadCount: data.count })
+            } catch {
+              // ignore parse errors
+            }
+          }),
+          // WebRTC sinyalleşme — aynı bağlantı; useCallSignalBridge call-store'a iletir
+          client.subscribe('/user/queue/rtc', msg => {
+            try {
+              const sig: CallSignal = JSON.parse(msg.body)
+              set(s => ({ rtcSignal: sig, rtcSeq: s.rtcSeq + 1 }))
             } catch {
               // ignore parse errors
             }

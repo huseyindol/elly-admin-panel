@@ -9,10 +9,17 @@ import {
   addMemberByEmailService,
 } from '@/app/_services/chat.services'
 import { chatKeys } from '@/app/_hooks/useChatGroupAccess'
-import { useMyRoleLevel, canInvite } from '@/utils/chat-role'
+import {
+  useMyRoleLevel,
+  canInvite,
+  canCall,
+  getMyUserId,
+} from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
 import { useChatWsStore } from '@/stores/chat-ws-store'
+import { useCallStore } from '@/stores/call-store'
 import { PermissionGate } from '@/components/PermissionGate'
+import { Video } from 'lucide-react'
 import type { ChatMember, RoleLevel } from '@/types/chat'
 
 const ROLE_LEVELS: Record<string, RoleLevel> = {
@@ -33,6 +40,8 @@ export function ChatMemberList({ groupId }: Props) {
   const [inviting, setInviting] = useState(false)
   const myLevel = useMyRoleLevel()
   const tenantId = useChatWsStore(s => s.activeGroupTenantId)
+  const startCall = useCallStore(s => s.startCall)
+  const [myUserId, setMyUserId] = useState<number | null>(null)
   const queryClient = useQueryClient()
 
   useEffect(() => {
@@ -40,6 +49,10 @@ export function ChatMemberList({ groupId }: Props) {
       .then(setMembers)
       .catch(() => {})
   }, [groupId, tenantId])
+
+  useEffect(() => {
+    getMyUserId().then(setMyUserId)
+  }, [])
 
   const handleRemove = async (userId: number) => {
     await removeMemberService(groupId, userId, tenantId)
@@ -119,6 +132,25 @@ export function ChatMemberList({ groupId }: Props) {
                     </span>
                   )}
                 </div>
+                {/* Görüntülü ara — kendisi hariç + hiyerarşi uygunsa. Online kontrolü
+                    backend'de (offline ise UNAVAILABLE döner); presence snapshot'ı sayfa
+                    açılışında dolu olmadığından UI'da online şartı aranmaz. */}
+                {member.userId !== myUserId &&
+                  canCall(myLevel, memberLevel as RoleLevel) && (
+                    <button
+                      type="button"
+                      onClick={() => startCall(member.userId, member.username)}
+                      title="Görüntülü ara"
+                      aria-label={`${member.username} görüntülü ara`}
+                      className={`ml-2 shrink-0 rounded-lg p-1.5 transition-colors ${
+                        isDarkMode
+                          ? 'text-emerald-400 hover:bg-emerald-500/10'
+                          : 'text-emerald-600 hover:bg-emerald-50'
+                      }`}
+                    >
+                      <Video className="h-4 w-4" />
+                    </button>
+                  )}
                 <PermissionGate permission="chat:manage">
                   {member.role !== 'OWNER' &&
                     canInvite(myLevel, memberLevel as RoleLevel) && (

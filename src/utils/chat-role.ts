@@ -152,3 +152,6 @@ export function canInvite(myLevel: RoleLevel, targetLevel: RoleLevel): boolean {
   if (myLevel >= 4) return true
   return targetLevel <= myLevel
 }
+
+/** Görüntülü arama hiyerarşisi = davet kuralı (kendi seviyesi ve altı; SUPER_ADMIN herkesi). */
+export const canCall = canInvite
