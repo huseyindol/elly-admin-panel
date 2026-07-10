@@ -77,6 +77,15 @@ export const useCallStore = create<CallState>((set, get) => ({
       toast.info('Zaten bir görüşmedesiniz')
       return
     }
+    // Paylaşılan chat WS bağlı değilse sinyal gönderilemez (sessiz "Aranıyor…"
+    // takılması yerine net uyarı). Dev'de eski sekme /user/queue/rtc'ye abone
+    // olmamış olabilir → sayfa yenileme çözer.
+    if (!useChatWsStore.getState().client?.connected) {
+      toast.error(
+        'Sohbet bağlantısı kurulamadı — sayfayı yenileyip tekrar deneyin',
+      )
+      return
+    }
     set({
       ...IDLE,
       phase: 'outgoing',
