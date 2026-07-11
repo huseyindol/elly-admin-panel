@@ -1,7 +1,25 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { useCallStore } from '@/stores/call-store'
+
+/** getUserMedia hatasını kullanıcıya anlaşılır Türkçe mesaja çevirir. */
+function mediaErrorMessage(err: unknown): string {
+  const name = (err as { name?: string })?.name
+  switch (name) {
+    case 'NotAllowedError':
+      return 'Kamera/mikrofon izni reddedildi — adres çubuğundaki kamera simgesinden izin verin.'
+    case 'NotFoundError':
+      return 'Kamera veya mikrofon bulunamadı.'
+    case 'NotReadableError':
+      return 'Kamera/mikrofon başka bir uygulama tarafından kullanılıyor.'
+    case 'OverconstrainedError':
+      return 'Kamera/mikrofon istenen ayarı desteklemiyor.'
+    default:
+      return 'Kamera/mikrofon açılamadı.'
+  }
+}
 
 /** ICE sunucuları — env'den (NEXT_PUBLIC_ICE_SERVERS JSON); yoksa public STUN. */
 function iceServers(): RTCIceServer[] {
@@ -43,6 +61,15 @@ export function useWebRTCCall() {
   // Kurulum / yıkım — phase='active'
   useEffect(() => {
     if (phase !== 'active') return
+    // getUserMedia yalnız güvenli bağlamda (HTTPS veya localhost) tanımlıdır. LAN IP'si
+    // üzerinden http:// açıldıysa navigator.mediaDevices undefined olur → net uyarı ver.
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error(
+        'Görüntülü görüşme için HTTPS veya localhost gerekir (güvenli bağlam).',
+      )
+      useCallStore.getState().hangup()
+      return
+    }
     let cancelled = false
     remoteReady.current = false
     pendingIce.current = []
@@ -81,6 +108,7 @@ export function useWebRTCCall() {
       })
       .catch(err => {
         console.error('getUserMedia başarısız', err)
+        toast.error(mediaErrorMessage(err))
         useCallStore.getState().hangup()
       })
 
