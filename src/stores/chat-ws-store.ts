@@ -321,6 +321,16 @@ export const useChatWsStore = create<ChatWsState>((set, get) => ({
                   // ignore parse errors
                 }
               }),
+              // WebRTC sinyalleşme — ESAS yol topic-tabanlı (user-queue bu projede
+              // teslim etmiyor; ChatMembershipNotifier deseni). /user/queue/rtc yedek.
+              client.subscribe(`/topic/user/${userId}/rtc`, msg => {
+                try {
+                  const sig: CallSignal = JSON.parse(msg.body)
+                  set(s => ({ rtcSignal: sig, rtcSeq: s.rtcSeq + 1 }))
+                } catch {
+                  // ignore parse errors
+                }
+              }),
             ]
 
             set(s => ({ globalSubs: [...s.globalSubs, ...legacySubs] }))
