@@ -40,8 +40,13 @@ export function CallWindow() {
   }, [remoteStream])
   useEffect(() => {
     if (phase !== 'active') return
-    setSeconds(0)
-    const t = setInterval(() => setSeconds(s => s + 1), 1000)
+    // setState'i effect'te senkron çağırmamak için geçen süreyi başlangıç zamanından
+    // hesapla (react-hooks/set-state-in-effect). CallWindow her çağrıda taze mount olur.
+    const start = Date.now()
+    const t = setInterval(
+      () => setSeconds(Math.floor((Date.now() - start) / 1000)),
+      1000,
+    )
     return () => clearInterval(t)
   }, [phase])
 
