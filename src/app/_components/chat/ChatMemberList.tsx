@@ -9,12 +9,7 @@ import {
   addMemberByEmailService,
 } from '@/app/_services/chat.services'
 import { chatKeys } from '@/app/_hooks/useChatGroupAccess'
-import {
-  useMyRoleLevel,
-  canInvite,
-  canCall,
-  getMyUserId,
-} from '@/utils/chat-role'
+import { useMyRoleLevel, canInvite, getMyUserId } from '@/utils/chat-role'
 import { useAdminTheme } from '@/app/_hooks'
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import { useCallStore } from '@/stores/call-store'
@@ -132,25 +127,26 @@ export function ChatMemberList({ groupId }: Props) {
                     </span>
                   )}
                 </div>
-                {/* Görüntülü ara — kendisi hariç + hiyerarşi uygunsa. Online kontrolü
-                    backend'de (offline ise UNAVAILABLE döner); presence snapshot'ı sayfa
-                    açılışında dolu olmadığından UI'da online şartı aranmaz. */}
-                {member.userId !== myUserId &&
-                  canCall(myLevel, memberLevel as RoleLevel) && (
-                    <button
-                      type="button"
-                      onClick={() => startCall(member.userId, member.username)}
-                      title="Görüntülü ara"
-                      aria-label={`${member.username} görüntülü ara`}
-                      className={`ml-2 shrink-0 rounded-lg p-1.5 transition-colors ${
-                        isDarkMode
-                          ? 'text-emerald-400 hover:bg-emerald-500/10'
-                          : 'text-emerald-600 hover:bg-emerald-50'
-                      }`}
-                    >
-                      <Video className="h-4 w-4" />
-                    </button>
-                  )}
+                {/* Görüntülü ara — kendisi hariç herkese. Aynı grubun üyesi oldukları için
+                    hiyerarşi aranmaz (admin→superadmin dahil); backend groupId üyeliğini
+                    doğrular. Online kontrolü backend'de (offline ise UNAVAILABLE döner). */}
+                {member.userId !== myUserId && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      startCall(member.userId, member.username, groupId)
+                    }
+                    title="Görüntülü ara"
+                    aria-label={`${member.username} görüntülü ara`}
+                    className={`ml-2 shrink-0 rounded-lg p-1.5 transition-colors ${
+                      isDarkMode
+                        ? 'text-emerald-400 hover:bg-emerald-500/10'
+                        : 'text-emerald-600 hover:bg-emerald-50'
+                    }`}
+                  >
+                    <Video className="h-4 w-4" />
+                  </button>
+                )}
                 <PermissionGate permission="chat:manage">
                   {member.role !== 'OWNER' &&
                     canInvite(myLevel, memberLevel as RoleLevel) && (

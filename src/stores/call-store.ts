@@ -28,7 +28,7 @@ interface CallState {
   } | null
   iceSeq: number
 
-  startCall: (calleeUserId: number, peerName: string) => void
+  startCall: (calleeUserId: number, peerName: string, groupId?: string) => void
   answer: () => void
   reject: () => void
   cancel: () => void
@@ -72,7 +72,7 @@ const IDLE = {
 export const useCallStore = create<CallState>((set, get) => ({
   ...IDLE,
 
-  startCall: (calleeUserId, peerName) => {
+  startCall: (calleeUserId, peerName, groupId) => {
     if (get().phase !== 'idle') {
       toast.info('Zaten bir görüşmedesiniz')
       return
@@ -93,7 +93,7 @@ export const useCallStore = create<CallState>((set, get) => ({
       peerUserId: calleeUserId,
       peerName,
     })
-    publish('/app/rtc/call', { calleeUserId })
+    publish('/app/rtc/call', { calleeUserId, groupId })
   },
 
   answer: () => {
