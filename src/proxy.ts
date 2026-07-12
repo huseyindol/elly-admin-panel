@@ -75,9 +75,11 @@ export async function proxy(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'origin-when-cross-origin')
 
   // Permissions Policy (limit browser features)
+  // camera/microphone: WebRTC görüntülü görüşme için KENDİ origin'ine (self) izinli;
+  // cross-origin iframe'lere kapalı. () olursa getUserMedia "Permission denied" atar.
   response.headers.set(
     'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+    'camera=(self), microphone=(self), geolocation=(), interest-cohort=()',
   )
 
   // Content Security Policy
