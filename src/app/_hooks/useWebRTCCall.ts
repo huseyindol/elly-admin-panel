@@ -90,27 +90,38 @@ export function useWebRTCCall() {
       if (e.streams[0]) setRemoteStream(e.streams[0])
     }
 
-    navigator.mediaDevices
-      .getUserMedia({ video: true, audio: true })
-      .then(async stream => {
-        if (cancelled) {
-          stream.getTracks().forEach(t => t.stop())
+    void (async () => {
+      // Önce kamera+mikrofon; olmazsa sese düş (kamera bloklu ama mik açık olabilir).
+      let stream: MediaStream
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        })
+      } catch (videoErr) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          toast.warning('Kamera açılamadı — sesli devam ediliyor.')
+        } catch {
+          console.error('getUserMedia başarısız', videoErr)
+          toast.error(mediaErrorMessage(videoErr))
+          useCallStore.getState().hangup()
           return
         }
-        localRef.current = stream
-        setLocalStream(stream)
-        stream.getTracks().forEach(t => pc.addTrack(t, stream))
-        if (isCaller) {
-          const offer = await pc.createOffer()
-          await pc.setLocalDescription(offer)
-          if (offer.sdp) sendSdp('offer', offer.sdp)
-        }
-      })
-      .catch(err => {
-        console.error('getUserMedia başarısız', err)
-        toast.error(mediaErrorMessage(err))
-        useCallStore.getState().hangup()
-      })
+      }
+      if (cancelled) {
+        stream.getTracks().forEach(t => t.stop())
+        return
+      }
+      localRef.current = stream
+      setLocalStream(stream)
+      stream.getTracks().forEach(t => pc.addTrack(t, stream))
+      if (isCaller) {
+        const offer = await pc.createOffer()
+        await pc.setLocalDescription(offer)
+        if (offer.sdp) sendSdp('offer', offer.sdp)
+      }
+    })()
 
     return () => {
       cancelled = true
