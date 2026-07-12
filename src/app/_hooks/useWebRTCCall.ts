@@ -54,6 +54,9 @@ export function useWebRTCCall() {
   const localRef = useRef<MediaStream | null>(null)
   const pendingIce = useRef<RTCIceCandidateInit[]>([])
   const remoteReady = useRef(false)
+  // Yerel medya (getUserMedia + addTrack) tamamlanınca resolve olur. Answer üretmeden ÖNCE
+  // beklenir → aranan'ın kendi track'leri answer'a dahil olur (tek yönlü video bug'ı önlenir).
+  const localReadyRef = useRef<Promise<void> | null>(null)
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
@@ -90,7 +93,7 @@ export function useWebRTCCall() {
       if (e.streams[0]) setRemoteStream(e.streams[0])
     }
 
-    void (async () => {
+    localReadyRef.current = (async () => {
       // Önce kamera+mikrofon; olmazsa sese düş (kamera bloklu ama mik açık olabilir).
       let stream: MediaStream
       try {
@@ -143,6 +146,8 @@ export function useWebRTCCall() {
     const sig = useCallStore.getState().sdpSignal
     if (!pc || !sig) return
     ;(async () => {
+      // Yerel track'ler eklenene kadar bekle → createAnswer onları içersin (tek yönlü video fix).
+      await localReadyRef.current
       await pc.setRemoteDescription({
         type: sig.sdpType as RTCSdpType,
         sdp: sig.sdp,
