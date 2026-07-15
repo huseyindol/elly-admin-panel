@@ -1,17 +1,18 @@
 # Kullanıcı Yönetimi — Panel Entegrasyon Kılavuzu
 
-Elly CMS'de iki ayrı kullanıcı tipi ve iki ayrı DB vardır:
+Elly CMS'de iki kullanıcı tipi vardır; **her ikisi de kendi tenant DB'sinde yaşar**
+(basedb KALDIRILDI — tamamen tenant-scoped mimari; tenant JWT `tenantId` claim'inden çözülür):
 
 | Tip                         | DB                        | Login Türü            | Kullanım                  |
 | --------------------------- | ------------------------- | --------------------- | ------------------------- |
-| **Panel admin**             | `basedb`                  | `loginType: "admin"`  | CMS panelini yönetenler   |
+| **Panel admin**             | kendi tenant DB'si (`tenant1`, ...) | `loginType: "admin"`  | CMS panelini yönetenler (SUPER_ADMIN/ADMIN/EDITOR/VIEWER) |
 | **Tenant site kullanıcısı** | `tenant1`, `tenant2`, ... | `loginType: "tenant"` | Sitenin son kullanıcıları |
 
 ---
 
 ## 1. Kimlik Doğrulama (Auth)
 
-### Panel Admin Girişi → basedb
+### Panel Admin Girişi → kendi tenant DB'si
 
 ```http
 POST /api/auth/login
@@ -20,6 +21,7 @@ Content-Type: application/json
 {
   "usernameOrEmail": "huseyindol",
   "password": "112233",
+  "tenantId": "tenant1",
   "loginType": "admin"
 }
 ```
@@ -73,11 +75,12 @@ Content-Type: application/json
 }
 ```
 
-> `tenantId` verilmezse kullanıcı basedb'ye kaydedilir.
+> `tenantId` ZORUNLUDUR — verilmezse istek `TENANT_REQUIRED` ile reddedilir (basedb fallback'i yok).
+> Register her zaman TENANT rolü atar; admin kullanıcı yalnız panelden `POST /api/v1/users` ile oluşturulur.
 
 ---
 
-## 2. Panel Admin Kullanıcılarını Yönetme (basedb)
+## 2. Panel Admin Kullanıcılarını Yönetme (kendi tenant DB'sinde)
 
 **Gerekli:** `Authorization: Bearer {admin_token}` + `users:manage` yetkisi
 
@@ -237,9 +240,10 @@ Authorization: Bearer {admin_token}
 
 ---
 
-## 4. Rol Yönetimi (basedb — Admin Kullanıcıları için)
+## 4. Rol Yönetimi
 
-> Roller basedb'de tutulur. Tenant kullanıcıları için rol atama şu an desteklenmiyor.
+> Roller her tenant'ın KENDİ DB'sinde tutulur (basedb yok). Panel rolleri: SUPER_ADMIN/ADMIN/EDITOR/VIEWER;
+> tenant-site kullanıcıları izinsiz "tag" rolü TENANT taşır (panel rolleriyle karışmaz).
 
 ### Tüm Rolleri Listele
 
@@ -364,9 +368,9 @@ Authorization: Bearer {admin_token}
 ### Panel'de yeni admin ekle
 
 ```
-1. POST /api/auth/register   → { username, email, password }   (tenantId yok → basedb)
-2. GET  /api/v1/users        → yeni kullanıcının id'sini bul
-3. PUT  /api/v1/roles/users/{id}/roles  → { "roleIds": [2] }  (ADMIN rolü ver)
+1. POST /api/v1/users  (SUPER_ADMIN yetkisiyle)
+   → { username, email, password, audience: "panel", roleIds: [2] }
+   Register ile admin OLUŞTURULAMAZ (register her zaman TENANT rolü atar).
 ```
 
 ### Panel'den tenant1'e yeni site kullanıcısı ekle

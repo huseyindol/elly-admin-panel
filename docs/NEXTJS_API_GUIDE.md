@@ -6,9 +6,9 @@ Base URL: `http://localhost:8080`
 
 ## Authentication
 
-> **Kullanıcı Depolama Mimarisi:**
+> **Kullanıcı Depolama Mimarisi (basedb KALDIRILDI — tamamen tenant-scoped):**
 >
-> - **Admin kullanıcılar** → `basedb`'de tutulur. `loginSource: "admin"` token ile `/auth/...` ve `/user/...` endpoint'leri her zaman basedb'ye gider.
+> - **Admin kullanıcılar** → kendi `tenantX` DB'sinde tutulur. `loginSource: "admin"` token ile tüm endpoint'ler JWT `tenantId` claim'indeki tenant DB'sine gider.
 > - **Tenant kullanıcılar** → kendi `tenantX` DB'lerinde tutulur. `loginSource: "tenant"` token ile tüm endpoint'ler (auth dahil) tenantX'e gider.
 >
 > **JWT Claim'leri:** Her access token şu bilgileri içerir:
@@ -127,25 +127,10 @@ Mevcut token'ın claim'lerini çözer. Token geçerliliğini ve içeriğini kont
 
 ---
 
-### OAuth2 Login (Google / Facebook / GitHub)
+### OAuth2 Login — KALDIRILDI
 
-Sosyal giriş akışı redirect tabanlıdır.
-
-**Başlatma:** Kullanıcıyı şu URL'ye yönlendir:
-
-```
-GET /oauth2/authorize/{provider}?redirect_uri=<callback-url>
-```
-
-`provider`: `google`, `facebook`, `github`, `x`
-
-**Callback:** Başarılı girişten sonra `redirect_uri`'ye şu query param'larla dönülür:
-
-```
-<callback-url>?token=...&refreshToken=...&userId=...&username=...&email=...
-```
-
-Token'da `loginSource: "admin"` bulunur (OAuth2 kullanıcıları admin akışını kullanır).
+Sosyal giriş (Google / Facebook / GitHub / X) projeden tamamen kaldırıldı (backend commit `7e160df`).
+`/oauth2/**` endpoint'leri artık yok; giriş yalnız username/email + şifre (+ opsiyonel MFA) iledir.
 
 ---
 

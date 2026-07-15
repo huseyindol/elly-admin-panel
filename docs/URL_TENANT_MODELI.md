@@ -39,8 +39,11 @@ backend (`elly`) commit `5e94674`.
 
 ## 2. Endpoint kalıbı
 
-| Bağlam | AC / basedb | TC / hedef tenant |
-|--------|-------------|-------------------|
+> Not (AC=TC): basedb kaldırıldı. Soldaki "varsayılan" yollar artık admin'in **kendi tenant DB'sinde**
+> çalışır (JWT `tenantId` claim'i); sağdaki `{tid}` yolları başka bir tenant hedeflemek içindir.
+
+| Bağlam | Varsayılan (kendi tenant'ı) | TC / hedef tenant |
+|--------|-----------------------------|-------------------|
 | Chat REST | `/api/v1/chat/...` | `/api/v1/chat/tenant/{tid}/...` |
 | Storage kota | `/api/v1/storage/quota` | `/api/v1/storage/tenant/{tid}/quota` |
 | WebSocket (send/typing/read) | `/app/chat/{groupId}/...` | `/app/tenant-chat/{tid}/{groupId}/...` |
@@ -57,8 +60,8 @@ sorusunu yanıtlar.
 - URL-tenant kalıbı backend'de **yalnız `loginSource = admin`** kimliğiyle çalışır.
   Tenant kullanıcısı URL'ye başka bir tenant yazarak oraya **sıçrayamaz**.
 - Bilinmeyen tenant → `400 Bad Request`.
-- Admin kimliği her zaman basedb'den yüklenir; veri işlemleri URL'deki tenant
-  DB'sinde olur → kimlik ve veri ayrışması net.
+- Admin kimliği **kendi tenant DB'sinden** yüklenir (JWT `tenantId` claim'i; basedb yok);
+  veri işlemleri URL'deki tenant DB'sinde olur → kimlik ve veri ayrışması net.
 
 ---
 
