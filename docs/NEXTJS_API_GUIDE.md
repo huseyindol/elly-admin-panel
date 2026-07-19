@@ -127,10 +127,12 @@ Mevcut token'ın claim'lerini çözer. Token geçerliliğini ve içeriğini kont
 
 ---
 
-### OAuth2 Login — KALDIRILDI
+### OAuth2 / Sosyal Giriş
 
-Sosyal giriş (Google / Facebook / GitHub / X) projeden tamamen kaldırıldı (backend commit `7e160df`).
-`/oauth2/**` endpoint'leri artık yok; giriş yalnız username/email + şifre (+ opsiyonel MFA) iledir.
+Panel için sosyal giriş YOKTUR (bilinçli karar) — panel şifre + MFA ile girer.
+Tenant SİTEDE ise Google/GitHub sosyal kayıt/giriş Tem 2026'da yeniden eklendi:
+`POST /api/v1/public/{tid}/auth/social/{provider}` (code takası backend'de).
+Detay: backend `docs/OAUTH2_SETUP.md`.
 
 ---
 
