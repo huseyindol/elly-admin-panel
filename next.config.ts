@@ -9,7 +9,13 @@ const withBundleAnalyzer = bundleAnalyzer({
 })
 
 const nextConfig = {
-  output: 'standalone' as const,
+  // Vercel kendi output file tracing'ini yapar ve build sonunda
+  // `.next/next-server.js.nft.json` dosyasını bekler. Next 16.3 ile
+  // `output: 'standalone'` + adapter kombinasyonunda bu dosya artık
+  // üretilmiyor, deploy `onBuildComplete` adımında ENOENT ile patlıyor
+  // (vercel/next.js#96646). Standalone çıktısı Vercel'de zaten gereksiz;
+  // sadece self-host/Docker build'leri için açık tutuluyor.
+  output: process.env.VERCEL ? undefined : ('standalone' as const),
 
   // Server-side terminal logging
   logging: {
