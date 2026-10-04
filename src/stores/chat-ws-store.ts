@@ -593,8 +593,7 @@ function emitMembershipJoined(
   event: ChatMembershipEvent,
   set: (
     partial:
-      | Partial<ChatWsState>
-      | ((state: ChatWsState) => Partial<ChatWsState>),
+      Partial<ChatWsState> | ((state: ChatWsState) => Partial<ChatWsState>),
   ) => void,
 ) {
   set(s => ({
@@ -607,8 +606,7 @@ function emitMembershipRemoved(
   event: ChatMembershipEvent,
   set: (
     partial:
-      | Partial<ChatWsState>
-      | ((state: ChatWsState) => Partial<ChatWsState>),
+      Partial<ChatWsState> | ((state: ChatWsState) => Partial<ChatWsState>),
   ) => void,
 ) {
   set(s => ({
@@ -621,8 +619,7 @@ function emitChatError(
   err: ChatWsError,
   set: (
     partial:
-      | Partial<ChatWsState>
-      | ((state: ChatWsState) => Partial<ChatWsState>),
+      Partial<ChatWsState> | ((state: ChatWsState) => Partial<ChatWsState>),
   ) => void,
 ) {
   set(s => ({
@@ -635,8 +632,7 @@ function dispatchMembershipEvent(
   event: ChatMembershipEvent,
   set: (
     partial:
-      | Partial<ChatWsState>
-      | ((state: ChatWsState) => Partial<ChatWsState>),
+      Partial<ChatWsState> | ((state: ChatWsState) => Partial<ChatWsState>),
   ) => void,
 ) {
   if (event.action === 'JOINED') {
@@ -657,8 +653,7 @@ function attachActiveGroupSubs(
   tenantId: string | null,
   set: (
     partial:
-      | Partial<ChatWsState>
-      | ((state: ChatWsState) => Partial<ChatWsState>),
+      Partial<ChatWsState> | ((state: ChatWsState) => Partial<ChatWsState>),
   ) => void,
 ) {
   const subs: StompSubscription[] = []

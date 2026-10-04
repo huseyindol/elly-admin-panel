@@ -185,9 +185,7 @@ export default function EditComponentPage() {
         name: component.name,
         description: component.description || '',
         type: (component.type as string).toUpperCase() as
-          | 'BANNER'
-          | 'WIDGET'
-          | 'FORM',
+          'BANNER' | 'WIDGET' | 'FORM',
         content: component.content || '',
         orderIndex: component.orderIndex,
         status: component.status,
