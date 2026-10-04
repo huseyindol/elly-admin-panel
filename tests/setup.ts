@@ -9,35 +9,35 @@ afterEach(() => {
 })
 
 // Mock Next.js router
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    pathname: '/',
+    query: {},
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+  notFound: vi.fn(),
+}))
+
+// Mock next/link
+vi.mock('next/link', () => ({
+  default: ({
+    children,
+    href,
+  }: {
+    children: React.ReactNode
+    href: string
+  }) => {
+    return React.createElement('a', { href }, children)
+  },
+}))
+
 beforeAll(() => {
-  // Mock next/navigation
-  vi.mock('next/navigation', () => ({
-    useRouter: () => ({
-      push: vi.fn(),
-      replace: vi.fn(),
-      prefetch: vi.fn(),
-      back: vi.fn(),
-      pathname: '/',
-      query: {},
-    }),
-    usePathname: () => '/',
-    useSearchParams: () => new URLSearchParams(),
-    notFound: vi.fn(),
-  }))
-
-  // Mock next/link
-  vi.mock('next/link', () => ({
-    default: ({
-      children,
-      href,
-    }: {
-      children: React.ReactNode
-      href: string
-    }) => {
-      return React.createElement('a', { href }, children)
-    },
-  }))
-
   // Mock environment variables
   vi.stubEnv('NODE_ENV', 'test')
   vi.stubEnv('NEXT_PUBLIC_HOST', 'http://localhost:3000')
