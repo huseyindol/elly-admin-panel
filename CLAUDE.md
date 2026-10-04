@@ -1,4 +1,4 @@
-# nextjs-approute-project — Claude Rehberi
+# elly-admin — Claude Rehberi
 
 ## Proje
 
@@ -103,11 +103,12 @@ LLM kodlama hatalarını azaltmak için dört ilke her zaman aktiftir: **Düşü
 - Subscription kovaları: `globalSubs` (presence + groups/new + groups/deleted + per-user groups/joined), `activeGroupSubs` (typing + read), `allGroupSubs` (her grup için mesaj sub'ı)
 - Sinyaller one-shot: `newGroupSignal`, `deletedGroupSignal`, `invitedGroupSignal` — sidebar tüketince `null`'a çeker
 - WS topic'leri:
+  - `/topic/presence` — kullanıcı durumları
   - `/topic/groups/new` — yeni grup yayını
-  - `/topic/groups/deleted` — `msg.body = groupId`
-  - `/topic/user/{userId}/groups/joined` — kişisel davet
-  - `/topic/group/{id}` — mesajlar (allGroupSubs)
-  - `/topic/group/{id}/typing` ve `/read` (activeGroupSubs)
+  - `/topic/groups/deleted` — silinen grup (`msg.body = groupId`)
+  - `/topic/user/{userId}/*` — kişisel eventler (`groups/joined`, `groups/removed`, `membership`, `rtc`)
+  - `/topic/tenant/{tenantId}/group/{groupId}` — grup mesajları (allGroupSubs)
+  - `/topic/tenant/{tenantId}/group/{groupId}/typing` ve `/read` — yazıyor / okundu sinyalleri (activeGroupSubs)
 
 ## Agent Teams Koordinasyonu
 
