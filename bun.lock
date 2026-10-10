@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "nextjs-approute-project",
+      "name": "huseyindolcom",
       "dependencies": {
         "@google/generative-ai": "^0.24.1",
         "@hookform/resolvers": "^5.9.1",

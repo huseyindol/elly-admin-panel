@@ -1,4 +1,4 @@
-# PR Checklist — nextjs-approute-project
+# PR Checklist — huseyindolcom
 
 ## Kod Kalitesi
 

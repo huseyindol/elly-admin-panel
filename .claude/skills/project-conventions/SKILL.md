@@ -1,6 +1,6 @@
 ---
 name: project-conventions
-description: Code style, naming conventions, and architectural patterns for the nextjs-approute-project. Apply automatically when writing or reviewing any code in this project.
+description: Code style, naming conventions, and architectural patterns for the huseyindolcom. Apply automatically when writing or reviewing any code in this project.
 user-invocable: false
 ---
 

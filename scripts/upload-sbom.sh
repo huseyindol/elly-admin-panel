@@ -16,7 +16,7 @@ fi
 
 DTRACK_URL="${DTRACK_URL:-http://localhost:8081}"
 API_KEY="${1:-${DTRACK_API_KEY}}"
-PROJECT_NAME="${2:-nextjs-approute-project}"
+PROJECT_NAME="${2:-huseyindolcom}"
 PROJECT_VERSION="${3:-0.1.0}"
 BOM_FILE="$PROJECT_DIR/bom.json"
 

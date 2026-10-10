@@ -167,7 +167,7 @@ SENTRY_DSN // Monitoring (optional)
 ## 📁 Dosya Yapısı
 
 ```
-nextjs-approute-project/
+huseyindolcom/
 ├── src/
 │   ├── app/
 │   │   ├── error.tsx                    ✨ NEW - Route error handler
