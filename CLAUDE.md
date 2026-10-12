@@ -39,6 +39,8 @@ Huseyin DOL'un modern portföy ve CMS sitesi. Next.js 16 App Router, React 19, T
 
 LLM kodlama hatalarını azaltmak için dört ilke her zaman aktiftir: **Düşün → Sor, Basit tut, Cerrahi değiş, Hedef-odaklı ilerle**. Detay için [`.claude/skills/karpathy-guidelines/SKILL.md`](./.claude/skills/karpathy-guidelines/SKILL.md) (Cursor karşılığı `.cursor/rules/karpathy-guidelines.mdc`).
 
+**Ponytail** (lazy senior dev modu) da aktiftir: işi tam çözen en küçük değişiklik, gereksiz soyutlama/bağımlılık yok. Detay [`.claude/skills/ponytail/SKILL.md`](./.claude/skills/ponytail/SKILL.md) · diff review için `/ponytail-review` (Cursor: `.cursor/rules/ponytail.mdc`, Antigravity: `.agents/rules/ponytail.md`).
+
 ## Kodlama Kuralları
 
 - TypeScript strict mode — `any` kullanma
