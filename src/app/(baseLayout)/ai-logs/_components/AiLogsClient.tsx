@@ -148,7 +148,9 @@ export function AiLogsClient() {
                 : ''
             }`}
           >
-            {log.parsedOutput || log.responseText || log.errorMessage || '-'}
+            {log.status === 'ERROR'
+              ? log.errorMessage || log.responseText || '-'
+              : log.parsedOutput || log.responseText || '-'}
           </span>
         ),
       },
