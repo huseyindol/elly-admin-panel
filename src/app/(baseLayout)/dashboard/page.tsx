@@ -1,6 +1,7 @@
 'use client'
 
 import { Icons, StatsGrid, type StatData } from '@/app/_components'
+import { AiUsageWidget } from '@/app/_components/ai/AiUsageWidget'
 import { StorageUsageWidget } from '@/app/_components/storage/StorageUsageWidget'
 import { useAdminTheme } from '@/app/_hooks'
 import { getAssetsPagedService } from '@/app/_services/assets.services'
@@ -200,6 +201,9 @@ export default function DashboardPage() {
 
       {/* Depolama kullanımı — oturum tenant'ının kotası (salt-okunur) */}
       <StorageUsageWidget />
+
+      {/* AI kullanım ve kota durumu — aylık token + günlük istek + tahmini maliyet */}
+      <AiUsageWidget />
 
       {/* Lists — yalnızca yetkili olunan bölümler */}
       {(canEmails || canPosts) && (

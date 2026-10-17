@@ -95,9 +95,60 @@ export const getAiLogByIdService = async (id: number) => {
   return unwrapOrThrow(response, 'AI log detayı alınamadı')
 }
 
+export interface AiQuota {
+  tenantId: string
+  monthlyTokenLimit: number
+  monthlyTokensUsed: number
+  monthlyTokensRemaining: number
+  monthlyTokenUsedPercent: number
+  dailyRequestLimit: number
+  dailyRequestsUsed: number
+  dailyRequestsRemaining: number
+  dailyRequestUsedPercent: number
+  dailyTokensUsed: number
+  monthlyInputTokens: number
+  monthlyOutputTokens: number
+  monthlyThoughtTokens: number
+  monthlyCachedTokens: number
+  monthlyEstimatedCostUsd: number
+  totalEstimatedCostUsd: number
+}
+
+export interface AiQuotaLimitPayload {
+  monthlyTokenLimit?: number
+  dailyRequestLimit?: number
+}
+
+const quotaPath = (tenantId?: string | null) =>
+  tenantId ? `${BASE}/tenant/${tenantId}/quota` : `${BASE}/quota`
+
 export const getAiStatsService = async () => {
   const response: BaseResponse<AiUsageStats> = await fetcher(`${BASE}/stats`, {
     method: 'GET',
   })
   return unwrapOrThrow(response, 'AI kullanım istatistikleri alınamadı')
+}
+
+export const getAiQuotaService = async (
+  tenantId?: string | null,
+): Promise<AiQuota> => {
+  const response: BaseResponse<AiQuota> = await fetcher(quotaPath(tenantId), {
+    method: 'GET',
+  })
+  return unwrapOrThrow(response, 'AI kota bilgisi alınamadı')
+}
+
+export const updateAiQuotaLimitService = async (
+  payload: AiQuotaLimitPayload,
+  tenantId?: string | null,
+): Promise<AiQuota> => {
+  const response: BaseResponse<AiQuota> = await fetcher(
+    `${quotaPath(tenantId)}/limit`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+  )
+  return unwrapOrThrow(response, 'AI kota limiti güncellenemedi')
 }

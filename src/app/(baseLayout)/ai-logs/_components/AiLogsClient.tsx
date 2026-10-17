@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Column, DataTable } from '@/app/_components'
+import { AiUsageWidget } from '@/app/_components/ai/AiUsageWidget'
 import { useAdminTheme } from '@/app/_hooks'
 import { useAiLogs, useAiStats } from '@/app/_hooks/useAiLogs'
 import type { AiLogStatus, AiUsageLog } from '@/app/_services/ai-logs.services'
@@ -237,6 +238,9 @@ export function AiLogsClient() {
 
   return (
     <div className="space-y-6">
+      {/* AI Kota & Limit Kartı */}
+      <AiUsageWidget showManagement />
+
       {/* Özet İstatistik Kartları */}
       {stats && (
         <section className="space-y-4">
