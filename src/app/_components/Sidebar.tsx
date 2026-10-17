@@ -195,6 +195,11 @@ const menuGroups: MenuGroup[] = [
         permission: `${MODULES.RABBIT}:read`,
       },
       {
+        icon: Icons.BarChart,
+        label: 'AI Logları',
+        href: '/ai-logs',
+      },
+      {
         icon: Icons.Settings,
         label: 'Ayarlar',
         href: '/settings',
