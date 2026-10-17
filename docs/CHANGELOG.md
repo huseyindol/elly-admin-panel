@@ -19,6 +19,7 @@ Kayıt formatı:
 
 ### Changed
 
+- **AI içerik üretimi backend'e taşındı (`/api/v1/ai/*`)** — `generate-field.ts` ve `generate-article.ts` Server Action'ları doğrudan Google SDK yerine `fetcher` ile `elly-backend` `/api/v1/ai/{slug,seo,description,alt-text,blog-info,article}` endpoint'lerini çağırır. `src/lib/gemini.ts`, `@google/generative-ai` paketi ve `GEMINI_API_KEY` env tanımı admin'den kaldırıldı.
 - **URL-Tenant modeli** — Admin'in TC chat ve depolama kotası çağrıları artık
   hedef tenant'ı **URL path'inde** taşır (`/api/v1/chat/tenant/{tid}`,
   `/api/v1/storage/tenant/{tid}/quota`); kimlik admin'in kendi JWT'sinde.

@@ -1,14 +1,40 @@
 'use server'
 
-import { getGeminiModel } from '@/lib/gemini'
 import { logger } from '@/lib/logger'
+import { BaseResponse } from '@/types/BaseResponse'
+import { fetcher } from '@/utils/services/fetcher'
 
-function sanitizeApiKeyError(err: unknown): string {
-  const msg = err instanceof Error ? err.message : String(err)
-  if (msg.includes('API_KEY_INVALID') || msg.includes('API key')) {
-    return 'Gemini API anahtarı geçersiz veya eksik.'
+interface BackendErrorResponse {
+  result?: boolean
+  message?: string
+}
+
+async function postAiEndpoint<T>(
+  path: string,
+  body: Record<string, unknown>,
+): Promise<{ success: boolean; data?: T; error?: string }> {
+  try {
+    const res = await fetcher<BaseResponse<T> & BackendErrorResponse>(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+
+    if (!res?.result || !res.data) {
+      return {
+        success: false,
+        error: res?.message || 'AI üretimi sırasında bir hata oluştu.',
+      }
+    }
+    return { success: true, data: res.data }
+  } catch (err) {
+    logger.error(`[postAiEndpoint] ${path} hatası`, err)
+    const msg = err instanceof Error ? err.message : ''
+    return {
+      success: false,
+      error: msg || 'AI servisine bağlanırken bir hata oluştu.',
+    }
   }
-  return msg
 }
 
 // ─── Slug ────────────────────────────────────────────────────────────────────
@@ -16,34 +42,13 @@ function sanitizeApiKeyError(err: unknown): string {
 export async function generateSlugAction(
   title: string,
 ): Promise<{ success: boolean; slug?: string; error?: string }> {
-  try {
-    logger.info('[generateSlugAction] Slug üretiliyor', { title })
-    const model = getGeminiModel()
-    const result = await model.generateContent(
-      `Aşağıdaki Türkçe başlıktan SEO dostu bir URL slug'ı oluştur.
-Kurallar:
-- Sadece küçük harf, rakam ve tire (-) kullan
-- Türkçe karakterleri dönüştür (ş→s, ğ→g, ü→u, ö→o, ı→i, ç→c)
-- Boşlukları tire ile değiştir
-- Ardışık tireleri tekleştir
-- Maksimum 80 karakter
-- Sadece slug'ı döndür, başka hiçbir şey yazma
-
-Başlık: ${title}`,
-    )
-    const slug = result.response
-      .text()
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-    logger.info('[generateSlugAction] Tamamlandı', { slug })
-    return { success: true, slug }
-  } catch (err) {
-    logger.error('[generateSlugAction] Hata', err)
-    return { success: false, error: sanitizeApiKeyError(err) }
+  const res = await postAiEndpoint<{ slug: string }>('/api/v1/ai/slug', {
+    title,
+  })
+  if (!res.success || !res.data?.slug) {
+    return { success: false, error: res.error ?? 'Slug oluşturulamadı' }
   }
+  return { success: true, slug: res.data.slug }
 }
 
 // ─── SEO Fields ───────────────────────────────────────────────────────────────
@@ -59,36 +64,13 @@ export async function generateSeoFieldsAction(title: string): Promise<{
   data?: GeneratedSeoFields
   error?: string
 }> {
-  try {
-    logger.info('[generateSeoFieldsAction] SEO alanları üretiliyor', { title })
-    const model = getGeminiModel()
-    const result = await model.generateContent(
-      `Aşağıdaki başlık için SEO meta verilerini Türkçe olarak oluştur.
-Başlık: "${title}"
-
-Tam olarak şu JSON formatında yanıt ver (başka hiçbir şey yazma):
-{
-  "seoTitle": "max 60 karakter SEO başlığı",
-  "seoDescription": "max 155 karakter meta açıklaması, kullanıcıyı tıklamaya teşvik edecek",
-  "seoKeywords": "anahtar1, anahtar2, anahtar3, anahtar4, anahtar5"
-}`,
-    )
-
-    const raw = result.response
-      .text()
-      .trim()
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim()
-
-    const parsed: GeneratedSeoFields = JSON.parse(raw)
-    logger.info('[generateSeoFieldsAction] Tamamlandı')
-    return { success: true, data: parsed }
-  } catch (err) {
-    logger.error('[generateSeoFieldsAction] Hata', err)
-    return { success: false, error: sanitizeApiKeyError(err) }
+  const res = await postAiEndpoint<GeneratedSeoFields>('/api/v1/ai/seo', {
+    title,
+  })
+  if (!res.success || !res.data) {
+    return { success: false, error: res.error ?? 'SEO alanları oluşturulamadı' }
   }
+  return { success: true, data: res.data }
 }
 
 // ─── Alt Text ────────────────────────────────────────────────────────────────
@@ -96,26 +78,13 @@ Tam olarak şu JSON formatında yanıt ver (başka hiçbir şey yazma):
 export async function generateAltTextAction(
   title: string,
 ): Promise<{ success: boolean; altText?: string; error?: string }> {
-  try {
-    logger.info('[generateAltTextAction] Alt metin üretiliyor', { title })
-    const model = getGeminiModel()
-    const result = await model.generateContent(
-      `Aşağıdaki başlık için bir banner görselinin SEO dostu alt metnini yaz.
-Başlık: "${title}"
-
-Kurallar:
-- Maksimum 10 kelime
-- Görseli kısaca açıkla, anahtar kelime içersin
-- Türkçe yaz
-- Sadece alt metni döndür, başka hiçbir şey yazma`,
-    )
-    const altText = result.response.text().trim()
-    logger.info('[generateAltTextAction] Tamamlandı')
-    return { success: true, altText }
-  } catch (err) {
-    logger.error('[generateAltTextAction] Hata', err)
-    return { success: false, error: sanitizeApiKeyError(err) }
+  const res = await postAiEndpoint<{ altText: string }>('/api/v1/ai/alt-text', {
+    title,
+  })
+  if (!res.success || !res.data?.altText) {
+    return { success: false, error: res.error ?? 'Alt metin oluşturulamadı' }
   }
+  return { success: true, altText: res.data.altText }
 }
 
 // ─── Blog Info (description + category + readingTime + image prompt) ────────
@@ -127,15 +96,6 @@ export interface GeneratedBlogInfo {
   imagePrompt: string
 }
 
-function stripHtmlForPrompt(html: string, maxLen = 4000): string {
-  return html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;|&amp;|&lt;|&gt;|&quot;|&#39;/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, maxLen)
-}
-
 export async function generateBlogInfoAction(
   title: string,
   content: string,
@@ -144,79 +104,34 @@ export async function generateBlogInfoAction(
   data?: GeneratedBlogInfo
   error?: string
 }> {
-  try {
-    const plainContent = stripHtmlForPrompt(content)
-    if (!title.trim() || !plainContent) {
-      return { success: false, error: 'Başlık ve içerik gerekli' }
-    }
-
-    logger.info('[generateBlogInfoAction] Blog meta üretiliyor', {
-      title,
-      contentLen: plainContent.length,
-    })
-    const model = getGeminiModel()
-    const result = await model.generateContent(
-      `Aşağıdaki blog yazısının başlığı ve içeriğine göre meta bilgileri üret.
-
-Başlık: "${title}"
-İçerik:
-"""
-${plainContent}
-"""
-
-Çıktı kuralları:
-- description: İçeriği özetleyen, kullanıcıyı meraklandıran, tek cümlelik Türkçe özet. Maksimum 180 karakter. Soru cümlesi olabilir.
-- category: İçeriğin ait olduğu kısa Türkçe kategori adı (1-3 kelime). Örnek: "Backend Güvenlik", "Frontend", "DevOps", "Yapay Zeka", "Veritabanı", "Mobil".
-- readingTime: İçeriği yaklaşık 200 kelime/dk hızla okuma süresi. Format: "X dk okuma" (örn: "4 dk okuma").
-- imagePrompt: İçeriği temsil eden, fotogerçekçi bir kapak görseli için kısa İNGİLİZCE görsel prompt'u. Maksimum 14 kelime, kişisel veya marka isimleri içermesin, "blog cover, modern, professional" gibi stilistik ipuçları içerebilir.
-
-Tam olarak şu JSON formatında yanıt ver, başka hiçbir şey yazma:
-{
-  "description": "...",
-  "category": "...",
-  "readingTime": "X dk okuma",
-  "imagePrompt": "..."
-}`,
-    )
-
-    const raw = result.response
-      .text()
-      .trim()
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim()
-
-    const parsed: GeneratedBlogInfo = JSON.parse(raw)
-    logger.info('[generateBlogInfoAction] Tamamlandı')
-    return { success: true, data: parsed }
-  } catch (err) {
-    logger.error('[generateBlogInfoAction] Hata', err)
-    return { success: false, error: sanitizeApiKeyError(err) }
+  if (!title.trim() || !content.replace(/<[^>]+>/g, '').trim()) {
+    return { success: false, error: 'Başlık ve içerik gerekli' }
   }
+  const res = await postAiEndpoint<GeneratedBlogInfo>('/api/v1/ai/blog-info', {
+    title,
+    content,
+  })
+  if (!res.success || !res.data) {
+    return {
+      success: false,
+      error: res.error ?? 'Blog bilgileri oluşturulamadı',
+    }
+  }
+  return { success: true, data: res.data }
 }
+
+// ─── Description ─────────────────────────────────────────────────────────────
 
 export async function generateDescriptionAction(
   name: string,
   context?: string,
 ): Promise<{ success: boolean; description?: string; error?: string }> {
-  try {
-    logger.info('[generateDescriptionAction] Açıklama üretiliyor', { name })
-    const model = getGeminiModel()
-    const result = await model.generateContent(
-      `Aşağıdaki ${context ?? 'içerik'} adı için kısa ve açıklayıcı bir Türkçe açıklama yaz.
-Ad: "${name}"
-
-Kurallar:
-- Maksimum 2 cümle
-- Türkçe yaz
-- Sadece açıklamayı döndür, başka hiçbir şey yazma`,
-    )
-    const description = result.response.text().trim()
-    logger.info('[generateDescriptionAction] Tamamlandı')
-    return { success: true, description }
-  } catch (err) {
-    logger.error('[generateDescriptionAction] Hata', err)
-    return { success: false, error: sanitizeApiKeyError(err) }
+  const res = await postAiEndpoint<{ description: string }>(
+    '/api/v1/ai/description',
+    { name, context },
+  )
+  if (!res.success || !res.data?.description) {
+    return { success: false, error: res.error ?? 'Açıklama oluşturulamadı' }
   }
+  return { success: true, description: res.data.description }
 }

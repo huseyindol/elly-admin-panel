@@ -6,17 +6,16 @@ user-invocable: false
 
 ## Gemini AI Entegrasyon Referansı
 
-Bu projede AI üretimi Gemini API + Server Actions ile yapılır.
+Bu projede AI üretimi `elly-backend` üzerindeki `/api/v1/ai/*` endpoint'leri (Google Gemini Interactions API `gemini-3.8-flash`) + Next.js Server Actions ile yapılır. API anahtarı (`GEMINI_API_KEY`) yalnız `elly-backend` tarafında tutulur.
 
 ### Mevcut AI Altyapı
 
-| Dosya                                     | İşlev                                                 |
-| ----------------------------------------- | ----------------------------------------------------- |
-| `src/lib/gemini.ts`                       | Gemini client (model: `gemini-2.0-flash`)             |
-| `src/actions/generate-field.ts`           | Tekil alan üretimi (slug, SEO, alt text, description) |
-| `src/actions/generate-article.ts`         | 3-aşamalı makale pipeline                             |
-| `src/components/ui/AiFieldButton.tsx`     | Inline AI buton komponenti                            |
-| `src/components/posts/AiArticlePanel.tsx` | Makale üretim paneli                                  |
+| Dosya                                     | İşlev                                                                       |
+| ----------------------------------------- | --------------------------------------------------------------------------- |
+| `src/actions/generate-field.ts`           | Tekil alan üretimi (`/api/v1/ai/{slug,seo,alt-text,blog-info,description}`) |
+| `src/actions/generate-article.ts`         | 3-aşamalı makale pipeline (`/api/v1/ai/article`)                            |
+| `src/components/ui/AiFieldButton.tsx`     | Inline AI buton komponenti                                                  |
+| `src/components/posts/AiArticlePanel.tsx` | Makale üretim paneli                                                        |
 
 ### Yeni AI Action Ekleme Paterni
 
@@ -24,8 +23,9 @@ Bu projede AI üretimi Gemini API + Server Actions ile yapılır.
 // src/actions/generate-{feature}.ts
 'use server'
 
-import { geminiModel } from '@/lib/gemini'
 import { logger } from '@/lib/logger'
+import { BaseResponse } from '@/types/BaseResponse'
+import { fetcher } from '@/utils/services/fetcher'
 
 export async function generate{Feature}Action(input: InputType): Promise<{
   success: boolean
@@ -33,15 +33,17 @@ export async function generate{Feature}Action(input: InputType): Promise<{
   error?: string
 }> {
   try {
-    const prompt = `...`  // Türkçe prompt, rolü ve kuralları belirt
-    const result = await geminiModel.generateContent(prompt)
-    const text = result.response.text()
-
-    // Parse & validate output
-    return { success: true, data: parsedOutput }
+    const res = await fetcher<BaseResponse<OutputType>>('/api/v1/ai/{feature}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    })
+    if (!res?.result || !res.data) {
+      return { success: false, error: res?.message || 'Üretim sırasında bir hata oluştu.' }
+    }
+    return { success: true, data: res.data }
   } catch (error) {
     logger.error('generate-{feature} failed', error)
-    // ASLA ham hata mesajı dönme — API key sızabilir
     return { success: false, error: 'Üretim sırasında bir hata oluştu.' }
   }
 }
@@ -49,23 +51,19 @@ export async function generate{Feature}Action(input: InputType): Promise<{
 
 ### Kurallar
 
-1. **Server Action olarak yaz** — `'use server'` zorunlu, API key client'a gitmez
-2. **Hata sanitizasyonu** — `catch` bloğunda ham error mesajını kullanıcıya dönme
-3. **Logger kullan** — `console.log` yasak, `logger.error()` kullan
-4. **Türkçe prompt** — İçerik Türkçe üretilecekse prompt'ta belirt
-5. **Yapılandırılmış çıktı** — JSON istiyorsan prompt'ta format belirt, `JSON.parse` ile ayrıştır
-6. **AiFieldButton** — Tekil alan üretimi için `<AiFieldButton onClick={handler} loading={loading} />` kullan
-7. **Panel component** — Çok aşamalı üretim için ayrı panel bileşeni oluştur (`AiArticlePanel` referans)
+1. **Backend üzerinden çağır** — AI istekleri `fetcher('/api/v1/ai/...', ...)` ile `elly-backend`'e gider; client veya frontend sunucusunda Gemini API key tutulmaz.
+2. **Hata sanitizasyonu** — `catch` bloğunda ham error mesajını sızdırma.
+3. **Logger kullan** — `console.log` yasak, `logger.error()` kullan.
+4. **AiFieldButton** — Tekil alan üretimi için `<AiFieldButton onClick={handler} loading={loading} />` kullan.
+5. **Panel component** — Çok aşamalı üretim için ayrı panel bileşeni oluştur (`AiArticlePanel` referans).
 
-### 3-Aşamalı Pipeline Pattern
+### 3-Aşamalı Pipeline Pattern (Backend `AiService.generateArticle`)
 
-Büyük içerik üretimlerinde kullan:
+Büyük içerik üretimlerinde backend 3 aşamalı pipeline çalıştırır:
 
-1. **Planlama Agent** — Konu → yapılandırılmış outline (JSON)
-2. **Üretim Agent** — Outline → tam içerik (HTML/text)
+1. **Planlama Agent** — Konu → yapılandırılmış outline
+2. **Üretim Agent** — Outline → tam içerik (HTML)
 3. **Temizlik Agent** — Ham çıktı → sanitize edilmiş çıktı (XSS-safe, heading hiyerarşisi)
-
-Her aşama ayrı `generateContent` çağrısı. Aşamalar arası veriyi server-side tut.
 
 ### İzin Verilen HTML Tag'leri (Makale)
 
