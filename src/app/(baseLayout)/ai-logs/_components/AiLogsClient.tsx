@@ -79,27 +79,52 @@ export function AiLogsClient() {
       {
         key: 'action',
         header: 'Endpoint / İşlem',
-        width: '190px',
-        render: log => (
-          <div className="flex flex-col">
-            <span
-              className={`inline-flex w-fit rounded-md px-2 py-0.5 font-mono text-xs ${
-                isDarkMode
-                  ? 'bg-slate-800 text-violet-300'
-                  : 'bg-violet-50 text-violet-700'
-              }`}
-            >
-              {log.action}
-            </span>
-            <span
-              className={`mt-0.5 font-mono text-[11px] ${
-                isDarkMode ? 'text-slate-500' : 'text-gray-400'
-              }`}
-            >
-              {log.endpoint}
-            </span>
-          </div>
-        ),
+        width: '210px',
+        render: log => {
+          const isErr = log.status === 'ERROR'
+          return (
+            <div className="flex flex-col">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span
+                  className={`inline-flex w-fit rounded-md px-2 py-0.5 font-mono text-xs ${
+                    isDarkMode
+                      ? 'bg-slate-800 text-violet-300'
+                      : 'bg-violet-50 text-violet-700'
+                  }`}
+                >
+                  {log.action}
+                </span>
+                {isErr && (
+                  <span
+                    className={`inline-flex rounded-full px-1.5 py-0.5 font-mono text-[10px] font-semibold ${
+                      isDarkMode
+                        ? 'bg-rose-500/20 text-rose-300'
+                        : 'bg-rose-100 text-rose-700'
+                    }`}
+                  >
+                    {log.errorCode || 'HATA'}
+                  </span>
+                )}
+              </div>
+              <span
+                className={`mt-0.5 font-mono text-[11px] ${
+                  isDarkMode ? 'text-slate-500' : 'text-gray-400'
+                }`}
+              >
+                {log.endpoint}
+              </span>
+              {isErr && log.errorMessage && (
+                <span
+                  className={`mt-0.5 line-clamp-2 text-[11px] ${
+                    isDarkMode ? 'text-rose-300' : 'text-rose-600'
+                  }`}
+                >
+                  {log.errorMessage}
+                </span>
+              )}
+            </div>
+          )
+        },
       },
       {
         key: 'userInput',
@@ -114,7 +139,15 @@ export function AiLogsClient() {
         key: 'response',
         header: 'Sonuç (Önizleme)',
         render: log => (
-          <span className="block max-w-xs truncate text-xs">
+          <span
+            className={`block max-w-xs truncate text-xs ${
+              log.status === 'ERROR'
+                ? isDarkMode
+                  ? 'text-rose-300'
+                  : 'text-rose-600'
+                : ''
+            }`}
+          >
             {log.parsedOutput || log.responseText || log.errorMessage || '-'}
           </span>
         ),

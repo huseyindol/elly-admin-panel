@@ -158,7 +158,15 @@ export const fetcher = async <T>(
     return null as T
   }
 
-  return response.json() as Promise<T>
+  try {
+    return (await response.json()) as T
+  } catch {
+    throw new Error(
+      !response.ok
+        ? `Sunucu hatası (HTTP ${response.status}). Lütfen daha sonra tekrar deneyin.`
+        : 'Sunucudan geçersiz yanıt alındı.',
+    )
+  }
 }
 
 /**
