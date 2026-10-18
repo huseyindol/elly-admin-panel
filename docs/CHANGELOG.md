@@ -35,6 +35,7 @@ Kayıt formatı:
 
 ### Added
 
+- **Post Canlı Site Önizlemesi (`PostPreviewModal.tsx`)** — `/posts/new` ve `/posts/[id]/edit` ekranlarında girilen başlık, slug, kapak görseli, kategori, açıklama, yazar, yayın tarihi, okuma süresi ve HTML içeriğin `elly-tenant` (`/makaleler/[slug]`) üzerindeki gerçek görünümünü **Masaüstü (`Desktop`)** ve **Mobil Web (`390px`)** çerçevelerinde, **Açık / Koyu** tema geçişiyle kaydetmeden önce birebir inceleme ve okuma imkânı eklendi.
 - **Chat Ban (TC)** — Tenant Chat sohbetinde GUEST/VISITOR banla/ban kaldır:
   - `chat.services.ts` — `banUserService` / `unbanUserService` / `listBansService` (URL-tenant: `/api/v1/chat/tenant/{tid}`)
   - `types/chat.ts` — `ChatMessage.sessionId`, `DtoChatBan`, `ChatBanEvent`; `utils/chat-role.ts` — `banKey`

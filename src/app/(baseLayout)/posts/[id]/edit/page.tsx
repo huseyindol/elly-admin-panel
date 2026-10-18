@@ -12,8 +12,10 @@ import {
   generateSlugAction,
 } from '@/actions/generate-field'
 import AiArticlePanel from '@/components/posts/AiArticlePanel'
+import PostPreviewModal from '@/components/posts/PostPreviewModal'
 import AiFieldButton from '@/components/ui/AiFieldButton'
 import { useMyEmail, useMyUsername } from '@/stores/user-store'
+import { Eye } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 const RichTextEditor = dynamic(() => import('@/components/ui/RichTextEditor'), {
@@ -39,6 +41,7 @@ export default function EditPostPage() {
   const [showSeo, setShowSeo] = useState(false)
   const [showBlog, setShowBlog] = useState(false)
   const [useAi, setUseAi] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
   const [slugLoading, setSlugLoading] = useState(false)
   const [seoLoading, setSeoLoading] = useState(false)
   const [blogLoading, setBlogLoading] = useState(false)
@@ -77,8 +80,9 @@ export default function EditPostPage() {
     },
   })
 
-  const title = useWatch({ control, name: 'title' })
-  const content = useWatch({ control, name: 'content' })
+  const watchedValues = useWatch({ control })
+  const title = watchedValues.title ?? ''
+  const content = watchedValues.content ?? ''
 
   const hasContent = useMemo(() => {
     const stripped = (content ?? '').replace(/<[^>]+>/g, '').trim()
@@ -281,15 +285,29 @@ export default function EditPostPage() {
       </div>
 
       {/* Page Header */}
-      <div>
-        <h1
-          className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1
+            className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+          >
+            Post Düzenle
+          </h1>
+          <p className={isDarkMode ? 'text-slate-400' : 'text-gray-500'}>
+            Post bilgilerini güncelleyin
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowPreview(true)}
+          className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
+            isDarkMode
+              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+          }`}
         >
-          Post Düzenle
-        </h1>
-        <p className={isDarkMode ? 'text-slate-400' : 'text-gray-500'}>
-          Post bilgilerini güncelleyin
-        </p>
+          <Eye className="h-4 w-4" />
+          <span>Canlı Önizleme (Mobil / Web)</span>
+        </button>
       </div>
 
       {/* Error Message */}
@@ -374,25 +392,39 @@ export default function EditPostPage() {
             {/* Content Section */}
             <div>
               {/* Content Header with AI toggle */}
-              <div className="mb-2 flex items-center justify-between">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <label className={labelClass} style={{ marginBottom: 0 }}>
                   İçerik
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setUseAi(prev => !prev)}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                    useAi
-                      ? isDarkMode
-                        ? 'bg-violet-600 text-white'
-                        : 'bg-violet-600 text-white'
-                      : isDarkMode
-                        ? 'border border-slate-700 bg-slate-800 text-slate-300 hover:border-violet-500 hover:text-violet-400'
-                        : 'border border-gray-200 bg-white text-gray-600 hover:border-violet-400 hover:text-violet-600'
-                  }`}
-                >
-                  ✨ AI ile Oluştur {useAi ? '(Açık)' : '(Kapalı)'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPreview(true)}
+                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isDarkMode
+                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                        : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    }`}
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>Önizleme</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUseAi(prev => !prev)}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                      useAi
+                        ? isDarkMode
+                          ? 'bg-violet-600 text-white'
+                          : 'bg-violet-600 text-white'
+                        : isDarkMode
+                          ? 'border border-slate-700 bg-slate-800 text-slate-300 hover:border-violet-500 hover:text-violet-400'
+                          : 'border border-gray-200 bg-white text-gray-600 hover:border-violet-400 hover:text-violet-600'
+                    }`}
+                  >
+                    ✨ AI ile Oluştur {useAi ? '(Açık)' : '(Kapalı)'}
+                  </button>
+                </div>
               </div>
 
               {/* AI Panel */}
@@ -725,6 +757,28 @@ export default function EditPostPage() {
           </button>
         </div>
       </form>
+
+      <PostPreviewModal
+        open={showPreview}
+        onClose={() => setShowPreview(false)}
+        post={{
+          title: watchedValues.title,
+          slug: watchedValues.slug,
+          content: watchedValues.content,
+          description: watchedValues.description,
+          category: watchedValues.category,
+          coverImage: watchedValues.coverImage,
+          publishedAt: watchedValues.publishedAt,
+          author:
+            watchedValues.author ||
+            postData?.data?.author ||
+            myUsername ||
+            myEmail ||
+            undefined,
+          readingTime: watchedValues.readingTime,
+        }}
+        defaultDark={isDarkMode}
+      />
     </div>
   )
 }
