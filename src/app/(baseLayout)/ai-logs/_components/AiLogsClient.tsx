@@ -19,9 +19,10 @@ const ACTION_OPTIONS = [
   { value: 'description', label: 'description (/ai/description)' },
   { value: 'alt-text', label: 'alt-text (/ai/alt-text)' },
   { value: 'blog-info', label: 'blog-info (/ai/blog-info)' },
-  { value: 'article:outline', label: 'article:outline (Adım 1)' },
-  { value: 'article:draft', label: 'article:draft (Adım 2)' },
-  { value: 'article:sanitize', label: 'article:sanitize (Adım 3)' },
+  { value: 'article', label: 'article (/ai/article)' },
+  { value: 'article:outline', label: 'article:outline (Eski Adım 1)' },
+  { value: 'article:draft', label: 'article:draft (Eski Adım 2)' },
+  { value: 'article:sanitize', label: 'article:sanitize (Eski Adım 3)' },
 ] as const
 
 export function AiLogsClient() {
