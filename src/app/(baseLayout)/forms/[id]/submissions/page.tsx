@@ -1,15 +1,18 @@
 'use client'
 
-import { useAdminTheme } from '@/app/_hooks'
+import { useAdminTheme, usePermissions } from '@/app/_hooks'
 import {
+  cleanupFormSubmissionsService,
+  exportFormSubmissionsService,
   getFormByIdService,
   getFormSubmissionsPagedService,
 } from '@/app/_services/forms.services'
-import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { ChevronLeft, ChevronRight, Download, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { use, useMemo } from 'react'
+import { use, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { formatPayloadValue } from './_components/formatPayloadValue'
 
 interface PageProps {
@@ -23,6 +26,14 @@ export default function FormSubmissionsPage({ params }: PageProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { isDarkMode } = useAdminTheme()
+  const { canDelete } = usePermissions({ canDelete: 'forms:delete' })
+  const queryClient = useQueryClient()
+
+  const [exportFrom, setExportFrom] = useState('')
+  const [exportTo, setExportTo] = useState('')
+  const [isExporting, setIsExporting] = useState(false)
+  const [retentionDays, setRetentionDays] = useState(365)
+  const [isCleaning, setIsCleaning] = useState(false)
 
   const page = Math.max(0, Number(searchParams.get('page') ?? '0'))
 
@@ -65,6 +76,52 @@ export default function FormSubmissionsPage({ params }: PageProps) {
     router.push(qs ? `?${qs}` : window.location.pathname)
   }
 
+  const handleExportCsv = async () => {
+    try {
+      setIsExporting(true)
+      const data = await exportFormSubmissionsService(
+        id,
+        exportFrom || undefined,
+        exportTo || undefined,
+      )
+      const blob = new Blob([data.csvContent], {
+        type: 'text/csv;charset=utf-8;',
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = data.fileName || `form_${id}_submissions.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      toast.success(`${data.count} yanıt CSV olarak indirildi.`)
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'CSV dışa aktarma başarısız oldu.',
+      )
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const handleCleanupOld = async () => {
+    try {
+      setIsCleaning(true)
+      const res = await cleanupFormSubmissionsService(id, retentionDays)
+      toast.success(
+        `KVKK temizliği tamamlandı (${res.retentionDays} günden eski ${res.deletedCount} kayıt silindi).`,
+      )
+      queryClient.invalidateQueries({ queryKey: ['form-submissions', id] })
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'KVKK temizliği başarısız oldu.',
+      )
+    } finally {
+      setIsCleaning(false)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       {/* Breadcrumb */}
@@ -97,21 +154,90 @@ export default function FormSubmissionsPage({ params }: PageProps) {
       </div>
 
       {/* Header */}
-      <div className="flex flex-col gap-1">
-        <h1
-          className={`text-2xl font-bold ${
-            isDarkMode ? 'text-white' : 'text-gray-900'
-          }`}
-        >
-          {form?.title ?? 'Yanıtlar'}
-        </h1>
-        <p
-          className={`text-sm ${
-            isDarkMode ? 'text-slate-400' : 'text-gray-500'
-          }`}
-        >
-          {totalElements} yanıt
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1
+            className={`text-2xl font-bold ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}
+          >
+            {form?.title ?? 'Yanıtlar'}
+          </h1>
+          <p
+            className={`text-sm ${
+              isDarkMode ? 'text-slate-400' : 'text-gray-500'
+            }`}
+          >
+            {totalElements} yanıt
+          </p>
+        </div>
+
+        {/* B5: CSV Export & KVKK Cleanup */}
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="date"
+            aria-label="Başlangıç tarihi"
+            value={exportFrom}
+            onChange={e => setExportFrom(e.target.value)}
+            className={`rounded-lg border px-2.5 py-1.5 text-xs ${
+              isDarkMode
+                ? 'border-slate-700 bg-slate-800 text-slate-200'
+                : 'border-gray-200 bg-white text-gray-700'
+            }`}
+          />
+          <input
+            type="date"
+            aria-label="Bitiş tarihi"
+            value={exportTo}
+            onChange={e => setExportTo(e.target.value)}
+            className={`rounded-lg border px-2.5 py-1.5 text-xs ${
+              isDarkMode
+                ? 'border-slate-700 bg-slate-800 text-slate-200'
+                : 'border-gray-200 bg-white text-gray-700'
+            }`}
+          />
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={isExporting}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-violet-500 disabled:opacity-50"
+          >
+            <Download className="h-3.5 w-3.5" />
+            {isExporting ? 'İndiriliyor...' : 'CSV İndir'}
+          </button>
+
+          {canDelete && (
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                min={1}
+                aria-label="KVKK saklama süresi (gün)"
+                value={retentionDays}
+                onChange={e =>
+                  setRetentionDays(Math.max(1, Number(e.target.value) || 365))
+                }
+                className={`w-16 rounded-lg border px-2 py-1.5 text-xs ${
+                  isDarkMode
+                    ? 'border-slate-700 bg-slate-800 text-slate-200'
+                    : 'border-gray-200 bg-white text-gray-700'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={handleCleanupOld}
+                disabled={isCleaning}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+                  isDarkMode
+                    ? 'border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
+                    : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                }`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {isCleaning ? 'Temizleniyor...' : 'KVKK Temizle'}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* States */}

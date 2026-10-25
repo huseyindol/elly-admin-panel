@@ -21,7 +21,7 @@ function mediaErrorMessage(err: unknown): string {
   }
 }
 
-/** ICE sunucuları — env'den (NEXT_PUBLIC_ICE_SERVERS JSON); yoksa public STUN. */
+/** ICE sunucuları — env'den (NEXT_PUBLIC_ICE_SERVERS JSON veya NEXT_PUBLIC_TURN_*); yoksa public STUN. */
 function iceServers(): RTCIceServer[] {
   const raw = process.env.NEXT_PUBLIC_ICE_SERVERS
   if (raw) {
@@ -31,7 +31,19 @@ function iceServers(): RTCIceServer[] {
       // düşer → default
     }
   }
-  return [{ urls: 'stun:stun.l.google.com:19302' }]
+  const servers: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }]
+  const turnUrl = process.env.NEXT_PUBLIC_TURN_URL
+  if (turnUrl) {
+    servers.push({
+      urls: turnUrl
+        .split(',')
+        .map(u => u.trim())
+        .filter(Boolean),
+      username: process.env.NEXT_PUBLIC_TURN_USERNAME || undefined,
+      credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL || undefined,
+    })
+  }
+  return servers
 }
 
 /**

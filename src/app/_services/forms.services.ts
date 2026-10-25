@@ -276,3 +276,43 @@ export const getFormSubmissionCountService = async (formId: string) => {
     throw error
   }
 }
+
+export interface FormSubmissionExportData {
+  fileName: string
+  count: number
+  csvContent: string
+}
+
+export interface FormSubmissionCleanupResult {
+  deletedCount: number
+  retentionDays: number
+}
+
+// GET - Form yanıtlarını CSV olarak dışa aktar (tarih filtreli)
+export const exportFormSubmissionsService = async (
+  formId: string,
+  from?: string,
+  to?: string,
+) => {
+  const params = new URLSearchParams()
+  if (from) params.set('from', from)
+  if (to) params.set('to', to)
+  const qs = params.toString()
+  const response = await fetcher<BaseResponse<FormSubmissionExportData>>(
+    `/api/v1/forms/${formId}/submissions/export${qs ? `?${qs}` : ''}`,
+    { method: 'GET' },
+  )
+  return unwrapOrThrow(response, 'Form yanıtları dışa aktarılamadı')
+}
+
+// DELETE - KVKK/GDPR kapsamında eski yanıtları temizle
+export const cleanupFormSubmissionsService = async (
+  formId: string,
+  retentionDays = 365,
+) => {
+  const response = await fetcher<BaseResponse<FormSubmissionCleanupResult>>(
+    `/api/v1/forms/${formId}/submissions/cleanup?retentionDays=${retentionDays}`,
+    { method: 'DELETE' },
+  )
+  return unwrapOrThrow(response, 'Eski form yanıtları temizlenemedi')
+}
