@@ -13,6 +13,7 @@ const OPTIONS: Array<{ label: string; value: EmailLogStatus | 'ALL' }> = [
   { label: 'Pending', value: 'PENDING' },
   { label: 'Sent', value: 'SENT' },
   { label: 'Failed', value: 'FAILED' },
+  { label: 'Kota Aşıldı', value: 'QUOTA_EXCEEDED' },
 ]
 
 export function StatusFilter({ value, onChange }: StatusFilterProps) {

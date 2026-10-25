@@ -38,6 +38,7 @@ export default function NewMailAccountPage() {
       isPrimary: false,
       active: true,
       tenantId: '',
+      dailyLimit: 500,
     },
   })
 
@@ -285,6 +286,29 @@ export default function NewMailAccountPage() {
                 className={`mt-1 text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
               >
                 Hangi tenant'a ait olduğunu belirtir
+              </p>
+            </div>
+
+            {/* Daily Limit */}
+            <div>
+              <label htmlFor="dailyLimit" className={labelClass}>
+                Günlük Gönderim Kotası
+              </label>
+              <input
+                id="dailyLimit"
+                type="number"
+                {...register('dailyLimit', { valueAsNumber: true })}
+                className={inputClass}
+                placeholder="500"
+              />
+              {errors.dailyLimit && (
+                <p className={errorClass}>{errors.dailyLimit.message}</p>
+              )}
+              <p
+                className={`mt-1 text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
+              >
+                Bu hesaptan bir günde gönderilebilecek maksimum e-posta sayısı
+                (varsayılan: 500)
               </p>
             </div>
 

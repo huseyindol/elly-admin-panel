@@ -46,7 +46,9 @@ export function EmailLogDetailSheet({ log, isOpen, onClose }: Props) {
         </div>
 
         <section className="space-y-2 text-sm">
-          <KV k="Alıcı" v={log.recipient} dark={isDarkMode} mono />
+          <KV k="Alıcı (TO)" v={log.recipient} dark={isDarkMode} mono />
+          {log.cc && <KV k="CC" v={log.cc} dark={isDarkMode} mono />}
+          {log.bcc && <KV k="BCC" v={log.bcc} dark={isDarkMode} mono />}
           <KV k="Konu" v={log.subject} dark={isDarkMode} />
           <KV k="Template" v={log.templateName} dark={isDarkMode} mono />
           <KV

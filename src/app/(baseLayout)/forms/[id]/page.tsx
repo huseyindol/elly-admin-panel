@@ -3,6 +3,7 @@
 import { Icons } from '@/app/_components'
 import { StepManager } from '@/app/_components/forms'
 import { useActiveMailAccounts, useAdminTheme } from '@/app/_hooks'
+import { useEmailTemplates } from '@/app/_hooks/useEmailTemplates'
 import {
   getFormByIdService,
   updateFormService,
@@ -66,6 +67,11 @@ export default function EditFormPage({ params }: PageProps) {
   const { isDarkMode } = useAdminTheme()
   const { data: activeMailAccountsData, isLoading: isMailAccountsLoading } =
     useActiveMailAccounts()
+  const { data: emailTemplatesData } = useEmailTemplates(0, 100)
+  const customTemplates = useMemo(
+    () => (emailTemplatesData?.content ?? []).filter(t => t.active),
+    [emailTemplatesData],
+  )
 
   const [fields, setFields] = useState<Field[]>([])
   const [steps, setSteps] = useState<Step[]>([])
@@ -113,6 +119,9 @@ export default function EditFormPage({ params }: PageProps) {
         },
         senderMailAccountId: form.senderMailAccountId,
         recipientEmail: form.recipientEmail,
+        ccEmails: form.ccEmails ?? '',
+        bccEmails: form.bccEmails ?? '',
+        notificationTemplateKey: form.notificationTemplateKey ?? '',
         notificationSubject: form.notificationSubject ?? undefined,
         notificationEnabled: form.notificationEnabled,
       })
@@ -581,20 +590,91 @@ export default function EditFormPage({ params }: PageProps) {
               {/* Recipient Email */}
               <div>
                 <label htmlFor="recipientEmail" className={labelClass}>
-                  Alıcı E-posta *
+                  Alıcı E-posta (TO) *
                 </label>
                 <input
                   id="recipientEmail"
-                  type="email"
+                  type="text"
                   {...register('recipientEmail')}
                   className={inputClass}
-                  placeholder="notifications@firma.com"
+                  placeholder="notifications@firma.com, destek@firma.com"
                 />
                 {errors.recipientEmail && (
                   <p className="mt-1 text-xs text-rose-400">
                     {errors.recipientEmail.message}
                   </p>
                 )}
+                <p
+                  className={`mt-1 text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
+                >
+                  Birden fazla alıcı için adresleri virgül ile ayırın
+                </p>
+              </div>
+
+              {/* CC & BCC Emails */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="ccEmails" className={labelClass}>
+                    CC Alıcıları (opsiyonel)
+                  </label>
+                  <input
+                    id="ccEmails"
+                    type="text"
+                    {...register('ccEmails')}
+                    className={inputClass}
+                    placeholder="yonetim@firma.com"
+                  />
+                  {errors.ccEmails && (
+                    <p className="mt-1 text-xs text-rose-400">
+                      {errors.ccEmails.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="bccEmails" className={labelClass}>
+                    BCC Alıcıları (opsiyonel)
+                  </label>
+                  <input
+                    id="bccEmails"
+                    type="text"
+                    {...register('bccEmails')}
+                    className={inputClass}
+                    placeholder="arsiv@firma.com"
+                  />
+                  {errors.bccEmails && (
+                    <p className="mt-1 text-xs text-rose-400">
+                      {errors.bccEmails.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Notification Template Key */}
+              <div>
+                <label htmlFor="notificationTemplateKey" className={labelClass}>
+                  E-posta Şablonu (opsiyonel)
+                </label>
+                <select
+                  id="notificationTemplateKey"
+                  {...register('notificationTemplateKey')}
+                  className={inputClass}
+                >
+                  <option value="">
+                    Varsayılan Şablon (form-notification)
+                  </option>
+                  {customTemplates.map(tpl => (
+                    <option key={tpl.templateKey} value={tpl.templateKey}>
+                      {tpl.templateKey} — {tpl.subject}
+                    </option>
+                  ))}
+                </select>
+                <p
+                  className={`mt-1 text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
+                >
+                  Özel şablon seçilmezse standart form bildirim şablonu
+                  kullanılır
+                </p>
               </div>
 
               {/* Notification Subject */}

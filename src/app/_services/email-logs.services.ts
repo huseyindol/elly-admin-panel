@@ -1,6 +1,6 @@
 import { unwrapOrThrow } from '@/lib/api/api-error'
 import type { BaseResponse } from '@/types/BaseResponse'
-import type { EmailLog, EmailLogStatus, Page } from '@/types/cms'
+import type { EmailLog, EmailLogStatus, EmailStats, Page } from '@/types/cms'
 import { fetcher } from '@/utils/services/fetcher'
 
 const BASE = '/api/v1/emails'
@@ -38,4 +38,11 @@ export const getEmailTemplatesClasspathService = async () => {
     method: 'GET',
   })
   return unwrapOrThrow(response, 'Template listesi alınamadı')
+}
+
+export const getEmailStatsService = async () => {
+  const response: BaseResponse<EmailStats> = await fetcher(`${BASE}/stats`, {
+    method: 'GET',
+  })
+  return unwrapOrThrow(response, 'Email istatistikleri alınamadı')
 }

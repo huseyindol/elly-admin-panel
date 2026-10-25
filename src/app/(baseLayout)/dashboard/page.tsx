@@ -33,6 +33,7 @@ const EMAIL_STATUS_LABEL: Record<EmailLogStatus, string> = {
   SENT: 'Gönderildi',
   FAILED: 'Başarısız',
   PENDING: 'Beklemede',
+  QUOTA_EXCEEDED: 'Kota Aşıldı',
 }
 
 export default function DashboardPage() {

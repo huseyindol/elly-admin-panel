@@ -96,6 +96,11 @@ export const SchemaDefinitionSchema = z.object({
 // Create/Update Form Schema
 // ============================================
 
+const COMMA_EMAIL_REGEX =
+  /^\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(\s*,\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})*\s*$/
+const OPTIONAL_COMMA_EMAIL_REGEX =
+  /^$|^\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(\s*,\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})*\s*$/
+
 export const CreateFormSchema = z.object({
   title: z
     .string()
@@ -108,7 +113,30 @@ export const CreateFormSchema = z.object({
     .number()
     .int()
     .positive('Bir gönderici hesap seçmelisiniz'),
-  recipientEmail: z.string().email('Geçerli bir e-posta adresi girin'),
+  recipientEmail: z
+    .string()
+    .max(1000, 'Alıcı e-posta 1000 karakteri geçemez')
+    .regex(
+      COMMA_EMAIL_REGEX,
+      'Geçerli e-posta adresi girin (birden fazla adres için virgül kullanın)',
+    ),
+  ccEmails: z
+    .string()
+    .max(1000, 'CC e-posta 1000 karakteri geçemez')
+    .regex(
+      OPTIONAL_COMMA_EMAIL_REGEX,
+      'Geçerli CC e-posta adresi girin (birden fazla adres için virgül kullanın)',
+    )
+    .optional(),
+  bccEmails: z
+    .string()
+    .max(1000, 'BCC e-posta 1000 karakteri geçemez')
+    .regex(
+      OPTIONAL_COMMA_EMAIL_REGEX,
+      'Geçerli BCC e-posta adresi girin (birden fazla adres için virgül kullanın)',
+    )
+    .optional(),
+  notificationTemplateKey: z.string().max(100).optional(),
   notificationSubject: z.string().max(255).optional(),
   notificationEnabled: z.boolean().default(true),
 })

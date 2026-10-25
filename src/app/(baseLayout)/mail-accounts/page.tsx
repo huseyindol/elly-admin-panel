@@ -252,6 +252,28 @@ export default function MailAccountsPage() {
                   >
                     {account.smtpUsername}
                   </p>
+                  <div className="mt-2 flex items-center justify-between text-xs">
+                    <span
+                      className={
+                        isDarkMode ? 'text-slate-400' : 'text-gray-500'
+                      }
+                    >
+                      Günlük Kota
+                    </span>
+                    <span
+                      className={`font-mono font-medium ${
+                        (account.dailySentCount ?? 0) >=
+                        (account.dailyLimit ?? 500)
+                          ? 'text-orange-400'
+                          : isDarkMode
+                            ? 'text-slate-300'
+                            : 'text-gray-700'
+                      }`}
+                    >
+                      {account.dailySentCount ?? 0} /{' '}
+                      {account.dailyLimit ?? 500}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Actions */}

@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { ApiError } from '@/lib/api/api-error'
 import {
   getEmailLogsService,
+  getEmailStatsService,
   retryEmailLogService,
   type EmailLogListParams,
 } from '../_services/email-logs.services'
@@ -13,12 +14,21 @@ export const emailLogsKeys = {
   all: ['email-logs'] as const,
   list: (params: EmailLogListParams) =>
     [...emailLogsKeys.all, 'list', params] as const,
+  stats: () => [...emailLogsKeys.all, 'stats'] as const,
 }
 
 export function useEmailLogs(params: EmailLogListParams = {}) {
   return useQuery({
     queryKey: emailLogsKeys.list(params),
     queryFn: () => getEmailLogsService(params),
+    staleTime: 30_000,
+  })
+}
+
+export function useEmailStats() {
+  return useQuery({
+    queryKey: emailLogsKeys.stats(),
+    queryFn: () => getEmailStatsService(),
     staleTime: 30_000,
   })
 }

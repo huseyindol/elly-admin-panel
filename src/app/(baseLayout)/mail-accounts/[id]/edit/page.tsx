@@ -56,6 +56,7 @@ export default function EditMailAccountPage() {
       isPrimary: false,
       active: true,
       tenantId: '',
+      dailyLimit: 500,
     },
   })
 
@@ -74,6 +75,7 @@ export default function EditMailAccountPage() {
         isPrimary: account.isPrimary,
         active: account.active,
         tenantId: account.tenantId ?? '',
+        dailyLimit: account.dailyLimit ?? 500,
       })
     }
   }, [accountData, reset])
@@ -89,6 +91,7 @@ export default function EditMailAccountPage() {
         isPrimary: data.isPrimary,
         active: data.active,
         tenantId: data.tenantId || undefined,
+        dailyLimit: data.dailyLimit ?? 500,
       }
       if (data.smtpPassword && data.smtpPassword.trim() !== '') {
         requestData.smtpPassword = data.smtpPassword
@@ -387,6 +390,29 @@ export default function EditMailAccountPage() {
                 className={`mt-1 text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
               >
                 Hangi tenant'a ait olduğunu belirtir
+              </p>
+            </div>
+
+            {/* Daily Limit */}
+            <div>
+              <label htmlFor="dailyLimit" className={labelClass}>
+                Günlük Gönderim Kotası
+              </label>
+              <input
+                id="dailyLimit"
+                type="number"
+                {...register('dailyLimit', { valueAsNumber: true })}
+                className={inputClass}
+                placeholder="500"
+              />
+              {errors.dailyLimit && (
+                <p className={errorClass}>{errors.dailyLimit.message}</p>
+              )}
+              <p
+                className={`mt-1 text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}
+              >
+                Bugün gönderilen: {accountData?.data?.dailySentCount ?? 0} /{' '}
+                {accountData?.data?.dailyLimit ?? 500}
               </p>
             </div>
 

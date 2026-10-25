@@ -49,11 +49,13 @@ export interface EmailTemplatePreviewResponse {
 
 // ========== Email Logs (v3 retry) ==========
 
-export type EmailLogStatus = 'PENDING' | 'SENT' | 'FAILED'
+export type EmailLogStatus = 'PENDING' | 'SENT' | 'FAILED' | 'QUOTA_EXCEEDED'
 
 export interface EmailLog {
   id: number
   recipient: string
+  cc?: string | null
+  bcc?: string | null
   subject: string
   templateName: string
   status: EmailLogStatus
@@ -61,6 +63,15 @@ export interface EmailLog {
   errorMessage?: string | null
   createdAt: string
   sentAt: string | null
+}
+
+export interface EmailStats {
+  totalCount: number
+  sentCount: number
+  pendingCount: number
+  failedCount: number
+  quotaExceededCount: number
+  failedLast24hCount: number
 }
 
 // ========== RabbitMQ Admin ==========

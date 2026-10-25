@@ -9,6 +9,8 @@ export interface MailAccount {
   isPrimary: boolean
   active: boolean
   tenantId: string | null
+  dailyLimit?: number
+  dailySentCount?: number
   createdAt: string
   updatedAt: string
   // smtpPassword: hiçbir zaman response'da dönmez
@@ -26,4 +28,5 @@ export interface MailAccountRequest {
   isPrimary?: boolean
   active?: boolean
   tenantId?: string
+  dailyLimit?: number
 }

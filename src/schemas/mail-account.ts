@@ -14,6 +14,12 @@ export const MailAccountSchema = z.object({
   isPrimary: z.boolean().default(false),
   active: z.boolean().default(true),
   tenantId: z.string().optional(),
+  dailyLimit: z
+    .number()
+    .int('Günlük kota tam sayı olmalıdır')
+    .min(1, 'Günlük kota en az 1 olmalıdır')
+    .max(100000, 'Günlük kota en fazla 100.000 olabilir')
+    .default(500),
 })
 
 export const CreateMailAccountSchema = MailAccountSchema.extend({

@@ -94,11 +94,14 @@ export interface FormSchema {
   schema: FormSchemaDefinition
   active: boolean
 
-  // Mail+Form v2 fields
+  // Mail+Form v2/v3 fields
   senderMailAccountId: number
   senderMailAccountName: string
   senderFromAddress: string
   recipientEmail: string
+  ccEmails?: string | null
+  bccEmails?: string | null
+  notificationTemplateKey?: string | null
   notificationSubject: string | null
   notificationEnabled: boolean
 

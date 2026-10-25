@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Column, DataTable } from '@/app/_components'
 import { useAdminTheme } from '@/app/_hooks'
-import { useEmailLogs } from '@/app/_hooks/useEmailLogs'
+import { useEmailLogs, useEmailStats } from '@/app/_hooks/useEmailLogs'
 import { formatRelativeTime } from '@/app/_utils/dateUtils'
 import type { EmailLog, EmailLogStatus } from '@/types/cms'
 import { EmailLogDetailSheet } from './EmailLogDetailSheet'
@@ -20,7 +20,12 @@ export function EmailLogsClient() {
   const searchParams = useSearchParams()
 
   const rawStatus = searchParams.get('status') as EmailLogStatus | null
-  const validStatuses: EmailLogStatus[] = ['PENDING', 'SENT', 'FAILED']
+  const validStatuses: EmailLogStatus[] = [
+    'PENDING',
+    'SENT',
+    'FAILED',
+    'QUOTA_EXCEEDED',
+  ]
   const status =
     rawStatus && validStatuses.includes(rawStatus) ? rawStatus : undefined
   const page = Math.max(0, Number(searchParams.get('page') ?? '0'))
@@ -30,6 +35,7 @@ export function EmailLogsClient() {
     page,
     size: DEFAULT_SIZE,
   })
+  const { data: stats } = useEmailStats()
 
   const [selected, setSelected] = useState<EmailLog | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -155,6 +161,68 @@ export function EmailLogsClient() {
 
   return (
     <div className="space-y-4">
+      {stats && (
+        <div className="space-y-3">
+          {stats.failedLast24hCount > 0 && (
+            <div
+              className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm ${
+                isDarkMode
+                  ? 'border-rose-500/40 bg-rose-500/10 text-rose-200'
+                  : 'border-rose-200 bg-rose-50 text-rose-800'
+              }`}
+            >
+              <span>
+                ⚠ Son 24 saatte <strong>{stats.failedLast24hCount}</strong>{' '}
+                e-posta gönderimi başarısız oldu veya kota sınırına takıldı.
+              </span>
+              <button
+                type="button"
+                onClick={() => handleStatusChange('FAILED')}
+                className="rounded-lg bg-rose-500/20 px-2.5 py-1 text-xs font-semibold hover:bg-rose-500/30"
+              >
+                Hataları Filtrele
+              </button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {[
+              { label: 'Toplam', value: stats.totalCount, tone: 'slate' },
+              { label: 'Gönderilen', value: stats.sentCount, tone: 'emerald' },
+              { label: 'Bekleyen', value: stats.pendingCount, tone: 'amber' },
+              { label: 'Başarısız', value: stats.failedCount, tone: 'rose' },
+              {
+                label: 'Kota Aşıldı',
+                value: stats.quotaExceededCount,
+                tone: 'orange',
+              },
+            ].map(item => (
+              <div
+                key={item.label}
+                className={`rounded-xl border px-4 py-3 ${
+                  isDarkMode
+                    ? 'border-slate-800 bg-slate-900/60'
+                    : 'border-gray-200 bg-white'
+                }`}
+              >
+                <div
+                  className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}
+                >
+                  {item.label}
+                </div>
+                <div
+                  className={`mt-1 text-lg font-bold tabular-nums ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}
+                >
+                  {item.value}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <StatusFilter value={status ?? 'ALL'} onChange={handleStatusChange} />
         <span

@@ -30,6 +30,11 @@ export function EmailLogStatusBadge({ status, size = 'sm' }: Props) {
       light: 'bg-rose-50 text-rose-700',
       label: 'Failed',
     },
+    QUOTA_EXCEEDED: {
+      dark: 'bg-orange-500/20 text-orange-300',
+      light: 'bg-orange-50 text-orange-700',
+      label: 'Kota Aşıldı',
+    },
   }
 
   const p = palette[status]
