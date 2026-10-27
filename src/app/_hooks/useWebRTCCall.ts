@@ -76,15 +76,6 @@ export function useWebRTCCall() {
   // Kurulum / yıkım — phase='active'
   useEffect(() => {
     if (phase !== 'active') return
-    // getUserMedia yalnız güvenli bağlamda (HTTPS veya localhost) tanımlıdır. LAN IP'si
-    // üzerinden http:// açıldıysa navigator.mediaDevices undefined olur → net uyarı ver.
-    if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error(
-        'Görüntülü görüşme için HTTPS veya localhost gerekir (güvenli bağlam).',
-      )
-      useCallStore.getState().hangup()
-      return
-    }
     let cancelled = false
     remoteReady.current = false
     pendingIce.current = []
@@ -102,35 +93,81 @@ export function useWebRTCCall() {
       }
     }
     pc.ontrack = e => {
-      if (e.streams[0]) setRemoteStream(e.streams[0])
+      if (e.streams[0]) {
+        setRemoteStream(e.streams[0])
+      } else if (e.track) {
+        setRemoteStream(prev => {
+          const next = prev
+            ? new MediaStream(prev.getTracks())
+            : new MediaStream()
+          next.addTrack(e.track)
+          return next
+        })
+      }
     }
 
     localReadyRef.current = (async () => {
-      // Önce kamera+mikrofon; olmazsa sese düş (kamera bloklu ama mik açık olabilir).
-      let stream: MediaStream
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        })
-      } catch (videoErr) {
+      let stream: MediaStream | null = null
+      if (
+        typeof navigator !== 'undefined' &&
+        navigator.mediaDevices?.getUserMedia
+      ) {
+        // Önce kamera+mikrofon; olmazsa sese, o da olmazsa yalnız görüntüye veya recvonly moduna düş.
         try {
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-          toast.warning('Kamera açılamadı — sesli devam ediliyor.')
-        } catch {
-          console.error('getUserMedia başarısız', videoErr)
-          toast.error(mediaErrorMessage(videoErr))
-          useCallStore.getState().hangup()
-          return
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          })
+        } catch (videoErr) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+            toast.warning('Kamera açılamadı — sesli devam ediliyor.')
+          } catch {
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+              })
+              toast.warning(
+                'Mikrofon açılamadı — yalnız görüntü ile devam ediliyor.',
+              )
+            } catch {
+              toast.warning(
+                `${mediaErrorMessage(videoErr)} Karşı tarafın ses/görüntüsü alınacak.`,
+              )
+            }
+          }
         }
+      } else {
+        toast.warning(
+          'Kamera/mikrofon erişimi yok — görüşmeye yalnız alıcı olarak devam ediliyor.',
+        )
       }
       if (cancelled) {
-        stream.getTracks().forEach(t => t.stop())
+        stream?.getTracks().forEach(t => t.stop())
         return
       }
-      localRef.current = stream
-      setLocalStream(stream)
-      stream.getTracks().forEach(t => pc.addTrack(t, stream))
+      if (stream) {
+        localRef.current = stream
+        setLocalStream(stream)
+        stream.getTracks().forEach(t => pc.addTrack(t, stream))
+        if (
+          isCaller &&
+          stream.getAudioTracks().length === 0 &&
+          typeof pc.addTransceiver === 'function'
+        ) {
+          pc.addTransceiver('audio', { direction: 'recvonly' })
+        }
+        if (
+          isCaller &&
+          stream.getVideoTracks().length === 0 &&
+          typeof pc.addTransceiver === 'function'
+        ) {
+          pc.addTransceiver('video', { direction: 'recvonly' })
+        }
+      } else if (isCaller && typeof pc.addTransceiver === 'function') {
+        pc.addTransceiver('audio', { direction: 'recvonly' })
+        pc.addTransceiver('video', { direction: 'recvonly' })
+      }
       if (isCaller) {
         const offer = await pc.createOffer()
         await pc.setLocalDescription(offer)

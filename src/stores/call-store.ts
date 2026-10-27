@@ -12,6 +12,7 @@ interface CallState {
   phase: CallPhase
   callId: string | null
   isCaller: boolean
+  answering: boolean
   ringAll: boolean
   peerUserId: number | null
   peerName: string | null
@@ -58,6 +59,7 @@ const IDLE = {
   phase: 'idle' as CallPhase,
   callId: null,
   isCaller: false,
+  answering: false,
   ringAll: false,
   peerUserId: null,
   peerName: null,
@@ -97,8 +99,9 @@ export const useCallStore = create<CallState>((set, get) => ({
   },
 
   answer: () => {
-    const { callId } = get()
-    if (!callId) return
+    const { callId, phase, answering } = get()
+    if (!callId || phase !== 'incoming' || answering) return
+    set({ answering: true })
     publish(`/app/rtc/${callId}/answer`)
     // phase='active' ANSWERED sinyaliyle set edilir
   },
@@ -136,11 +139,20 @@ export const useCallStore = create<CallState>((set, get) => ({
   },
 
   handleSignal: signal => {
+    if (
+      signal.callId &&
+      get().callId &&
+      signal.callId !== get().callId &&
+      signal.type !== 'INCOMING_CALL'
+    ) {
+      return
+    }
     switch (signal.type) {
       case 'INCOMING_CALL': {
+        if (!signal.callId || signal.callId === get().callId) return
         // Zaten bir görüşmedeyse yeni çağrıyı otomatik reddet (meşgul)
         if (get().phase !== 'idle') {
-          if (signal.callId) publish(`/app/rtc/${signal.callId}/reject`)
+          publish(`/app/rtc/${signal.callId}/reject`)
           return
         }
         set({
@@ -155,7 +167,7 @@ export const useCallStore = create<CallState>((set, get) => ({
         break
       }
       case 'RINGING':
-        if (get().phase === 'outgoing') {
+        if (get().phase === 'outgoing' && !get().callId) {
           set({
             callId: signal.callId,
             peerUserId: signal.peerUserId ?? get().peerUserId,
@@ -163,16 +175,30 @@ export const useCallStore = create<CallState>((set, get) => ({
           })
         }
         break
-      case 'ANSWERED':
-        set({
-          phase: 'active',
-          callId: signal.callId,
-          peerUserId: signal.peerUserId ?? get().peerUserId,
-          peerName: signal.peerDisplayName ?? get().peerName,
-        })
+      case 'ANSWERED': {
+        const { phase, answering } = get()
+        if (!signal.callId || phase === 'active') return
+        if (phase === 'outgoing' || (phase === 'incoming' && answering)) {
+          set({
+            phase: 'active',
+            callId: signal.callId,
+            peerUserId: signal.peerUserId ?? get().peerUserId,
+            peerName: signal.peerDisplayName ?? get().peerName,
+          })
+        } else if (phase === 'incoming') {
+          // Aynı hesap başka bir cihazda (örn. mobil uygulamada) çağrıyı cevapladı.
+          toast.info('Çağrı başka bir cihazınızda cevaplandı')
+          get().reset()
+        }
         break
+      }
       case 'SDP':
-        if (signal.sdpType && signal.sdp) {
+        if (
+          signal.sdpType &&
+          signal.sdp &&
+          (get().sdpSignal?.sdpType !== signal.sdpType ||
+            get().sdpSignal?.sdp !== signal.sdp)
+        ) {
           set(s => ({
             sdpSignal: { sdpType: signal.sdpType!, sdp: signal.sdp! },
             sdpSeq: s.sdpSeq + 1,
@@ -180,7 +206,10 @@ export const useCallStore = create<CallState>((set, get) => ({
         }
         break
       case 'ICE':
-        if (signal.candidate) {
+        if (
+          signal.candidate &&
+          get().iceSignal?.candidate !== signal.candidate
+        ) {
           set(s => ({
             iceSignal: {
               candidate: signal.candidate!,
@@ -192,31 +221,39 @@ export const useCallStore = create<CallState>((set, get) => ({
         }
         break
       case 'CALL_TAKEN':
+        if (get().phase === 'idle') return
         get().reset()
         break
       case 'REJECTED':
+        if (get().phase === 'idle') return
         toast.info('Çağrı reddedildi')
         get().reset()
         break
       case 'CANCELLED':
+        if (get().phase === 'idle') return
         get().reset()
         break
       case 'HANGUP':
+        if (get().phase === 'idle') return
         get().reset()
         break
       case 'TIMEOUT':
+        if (get().phase === 'idle') return
         toast.info('Cevap yok')
         get().reset()
         break
       case 'UNAVAILABLE':
+        if (get().phase === 'idle') return
         toast.warning(signal.reason ?? 'Kullanıcı müsait değil')
         get().reset()
         break
       case 'BUSY':
+        if (get().phase === 'idle') return
         toast.warning(signal.reason ?? 'Kullanıcı meşgul')
         get().reset()
         break
       case 'ERROR':
+        if (get().phase === 'idle') return
         toast.error(signal.reason ?? 'Çağrı hatası')
         get().reset()
         break
