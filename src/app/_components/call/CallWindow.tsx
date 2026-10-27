@@ -30,14 +30,41 @@ export function CallWindow() {
   const { localStream, remoteStream } = useWebRTCCall()
   const localVideo = useRef<HTMLVideoElement>(null)
   const remoteVideo = useRef<HTMLVideoElement>(null)
+  const remoteAudio = useRef<HTMLAudioElement>(null)
   const [seconds, setSeconds] = useState(0)
 
   useEffect(() => {
-    if (localVideo.current) localVideo.current.srcObject = localStream
-  }, [localStream])
+    const videoEl = localVideo.current
+    if (!videoEl) return
+    videoEl.srcObject = localStream
+    if (localStream) {
+      void videoEl.play().catch(() => {})
+    }
+  }, [localStream, phase])
   useEffect(() => {
-    if (remoteVideo.current) remoteVideo.current.srcObject = remoteStream
-  }, [remoteStream])
+    const videoEl = remoteVideo.current
+    if (videoEl) {
+      videoEl.srcObject = remoteStream
+      if (remoteStream) {
+        void videoEl.play().catch(() => {})
+      }
+    }
+    const audioEl = remoteAudio.current
+    if (audioEl) {
+      const audioTracks = remoteStream?.getAudioTracks() ?? []
+      if (audioTracks.length > 0) {
+        audioTracks.forEach(t => {
+          t.enabled = true
+        })
+        audioEl.srcObject = new MediaStream(audioTracks)
+        audioEl.muted = false
+        audioEl.volume = 1
+        void audioEl.play().catch(() => {})
+      } else {
+        audioEl.srcObject = null
+      }
+    }
+  }, [remoteStream, phase])
   useEffect(() => {
     if (phase !== 'active') return
     // setState'i effect'te senkron çağırmamak için geçen süreyi başlangıç zamanından
@@ -54,6 +81,7 @@ export function CallWindow() {
 
   return (
     <div className="fixed bottom-4 right-4 z-[90] w-80 overflow-hidden rounded-2xl bg-slate-900 shadow-2xl ring-1 ring-white/10">
+      <audio ref={remoteAudio} autoPlay className="hidden" />
       {/* Video alanı */}
       <div className="relative aspect-video bg-slate-950">
         {active ? (
@@ -61,6 +89,7 @@ export function CallWindow() {
             ref={remoteVideo}
             autoPlay
             playsInline
+            muted
             className="h-full w-full object-cover"
           />
         ) : (

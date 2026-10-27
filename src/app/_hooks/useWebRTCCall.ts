@@ -93,17 +93,21 @@ export function useWebRTCCall() {
       }
     }
     pc.ontrack = e => {
-      if (e.streams[0]) {
-        setRemoteStream(e.streams[0])
-      } else if (e.track) {
-        setRemoteStream(prev => {
-          const next = prev
-            ? new MediaStream(prev.getTracks())
-            : new MediaStream()
-          next.addTrack(e.track)
-          return next
-        })
+      if (e.track) {
+        e.track.enabled = true
       }
+      setRemoteStream(prev => {
+        const trackMap = new Map<string, MediaStreamTrack>()
+        prev?.getTracks().forEach(t => trackMap.set(t.id, t))
+        e.streams[0]?.getTracks().forEach(t => {
+          t.enabled = true
+          trackMap.set(t.id, t)
+        })
+        if (e.track) {
+          trackMap.set(e.track.id, e.track)
+        }
+        return new MediaStream(Array.from(trackMap.values()))
+      })
     }
 
     localReadyRef.current = (async () => {
