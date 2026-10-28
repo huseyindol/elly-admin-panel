@@ -108,7 +108,7 @@
     "vitest": "^5.0.3"
   },
   "overrides": {
-    "fast-uri": "^3.1.8",
+    "fast-uri": "^3.1.9",
     "dompurify": "^3.4.16",
     "postcss": "^8.5.23",
     "yaml": "^2.8.3",
