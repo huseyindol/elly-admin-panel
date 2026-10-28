@@ -119,7 +119,7 @@
     "websocket-driver": "^0.7.5",
     "esbuild": "^0.28.1",
     "js-yaml": "^4.3.2",
-    "nanoid": "^3.3.16",
+    "nanoid": "^3.3.18",
     "sharp": "^0.35.4",
     "@babel/core": "^7.29.6",
     "@humanfs/node": "^0.17.0",
