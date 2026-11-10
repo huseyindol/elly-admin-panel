@@ -154,6 +154,8 @@ export const Permissions = {
   FORMS_CREATE: 'forms:create',
   FORMS_UPDATE: 'forms:update',
   FORMS_DELETE: 'forms:delete',
+  // Form gönderimleri (PII) okuma / CSV export — backend v3'te forms:read'ten ayrıldı
+  FORMS_SUBMISSIONS_READ: 'forms:submissions:read',
 } as const
 
 export type Permission = (typeof Permissions)[keyof typeof Permissions]

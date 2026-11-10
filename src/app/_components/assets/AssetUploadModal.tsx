@@ -6,6 +6,7 @@ import {
   uploadAssetService,
   uploadMultiAssetsService,
 } from '@/app/_services/assets.services'
+import { UPLOAD_ALLOWED_EXTENSIONS } from '@/utils/constant/uploadConstant'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -141,6 +142,7 @@ export function AssetUploadModal({
             <input
               id="fileInput"
               type="file"
+              accept={UPLOAD_ALLOWED_EXTENSIONS}
               onChange={handleSingleFileChange}
               className={fileInputClasses}
             />
@@ -149,6 +151,7 @@ export function AssetUploadModal({
               id="fileInput"
               type="file"
               multiple
+              accept={UPLOAD_ALLOWED_EXTENSIONS}
               onChange={handleMultiFileChange}
               className={fileInputClasses}
             />

@@ -3,6 +3,9 @@ export enum BaseErrorCode {
   BAD_CREDENTIALS = 'Invalid username/email or password',
   ACCOUNT_DISABLED = 'User account is disabled',
   ACCOUNT_LOCKED = 'User account is locked',
+  // 429 — login brute-force kilidi (5 hatalı deneme/kullanıcı veya 30/IP → 15 dk).
+  // Kullanıcıya gösterilebilir Türkçe metin `message` alanında gelir.
+  TOO_MANY_REQUESTS = 'TOO_MANY_REQUESTS',
 }
 
 export interface BaseResponse<T> {

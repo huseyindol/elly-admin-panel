@@ -8,6 +8,7 @@ import {
 import { useChatWsStore } from '@/stores/chat-ws-store'
 import { useAdminTheme } from '@/app/_hooks'
 import { ApiError } from '@/lib/api/api-error'
+import { UPLOAD_ALLOWED_EXTENSIONS } from '@/utils/constant/uploadConstant'
 import { Send, Paperclip, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ChatMessageType } from '@/types/chat'
@@ -168,6 +169,7 @@ export function ChatInput({
         <input
           ref={fileInputRef}
           type="file"
+          accept={UPLOAD_ALLOWED_EXTENSIONS}
           className="sr-only"
           onChange={handleFileChange}
           disabled={disabled}

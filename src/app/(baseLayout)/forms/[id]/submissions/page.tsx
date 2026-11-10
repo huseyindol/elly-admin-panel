@@ -7,6 +7,7 @@ import {
   getFormByIdService,
   getFormSubmissionsPagedService,
 } from '@/app/_services/forms.services'
+import { Permissions } from '@/types/cms'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Download, Trash2 } from 'lucide-react'
 import Link from 'next/link'
@@ -26,7 +27,12 @@ export default function FormSubmissionsPage({ params }: PageProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { isDarkMode } = useAdminTheme()
-  const { canDelete } = usePermissions({ canDelete: 'forms:delete' })
+  // Submissions endpoint'leri (paged/export/count) backend'de forms:submissions:read ister;
+  // forms:read yalnızca form tanımı görüntüleme içindir.
+  const { canRead, canDelete } = usePermissions({
+    canRead: Permissions.FORMS_SUBMISSIONS_READ,
+    canDelete: Permissions.FORMS_DELETE,
+  })
   const queryClient = useQueryClient()
 
   const [exportFrom, setExportFrom] = useState('')
@@ -54,7 +60,7 @@ export default function FormSubmissionsPage({ params }: PageProps) {
     queryKey: ['form-submissions', id, page],
     queryFn: () =>
       getFormSubmissionsPagedService(id, page, PAGE_SIZE, 'submittedAt,desc'),
-    enabled: !!id,
+    enabled: !!id && canRead,
   })
 
   const form = formResponse?.data
@@ -173,74 +179,89 @@ export default function FormSubmissionsPage({ params }: PageProps) {
         </div>
 
         {/* B5: CSV Export & KVKK Cleanup */}
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="date"
-            aria-label="Başlangıç tarihi"
-            value={exportFrom}
-            onChange={e => setExportFrom(e.target.value)}
-            className={`rounded-lg border px-2.5 py-1.5 text-xs ${
-              isDarkMode
-                ? 'border-slate-700 bg-slate-800 text-slate-200'
-                : 'border-gray-200 bg-white text-gray-700'
-            }`}
-          />
-          <input
-            type="date"
-            aria-label="Bitiş tarihi"
-            value={exportTo}
-            onChange={e => setExportTo(e.target.value)}
-            className={`rounded-lg border px-2.5 py-1.5 text-xs ${
-              isDarkMode
-                ? 'border-slate-700 bg-slate-800 text-slate-200'
-                : 'border-gray-200 bg-white text-gray-700'
-            }`}
-          />
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            disabled={isExporting}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-violet-500 disabled:opacity-50"
-          >
-            <Download className="h-3.5 w-3.5" />
-            {isExporting ? 'İndiriliyor...' : 'CSV İndir'}
-          </button>
+        {canRead && (
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="date"
+              aria-label="Başlangıç tarihi"
+              value={exportFrom}
+              onChange={e => setExportFrom(e.target.value)}
+              className={`rounded-lg border px-2.5 py-1.5 text-xs ${
+                isDarkMode
+                  ? 'border-slate-700 bg-slate-800 text-slate-200'
+                  : 'border-gray-200 bg-white text-gray-700'
+              }`}
+            />
+            <input
+              type="date"
+              aria-label="Bitiş tarihi"
+              value={exportTo}
+              onChange={e => setExportTo(e.target.value)}
+              className={`rounded-lg border px-2.5 py-1.5 text-xs ${
+                isDarkMode
+                  ? 'border-slate-700 bg-slate-800 text-slate-200'
+                  : 'border-gray-200 bg-white text-gray-700'
+              }`}
+            />
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={isExporting}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-violet-500 disabled:opacity-50"
+            >
+              <Download className="h-3.5 w-3.5" />
+              {isExporting ? 'İndiriliyor...' : 'CSV İndir'}
+            </button>
 
-          {canDelete && (
-            <div className="flex items-center gap-1.5">
-              <input
-                type="number"
-                min={1}
-                aria-label="KVKK saklama süresi (gün)"
-                value={retentionDays}
-                onChange={e =>
-                  setRetentionDays(Math.max(1, Number(e.target.value) || 365))
-                }
-                className={`w-16 rounded-lg border px-2 py-1.5 text-xs ${
-                  isDarkMode
-                    ? 'border-slate-700 bg-slate-800 text-slate-200'
-                    : 'border-gray-200 bg-white text-gray-700'
-                }`}
-              />
-              <button
-                type="button"
-                onClick={handleCleanupOld}
-                disabled={isCleaning}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
-                  isDarkMode
-                    ? 'border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
-                    : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
-                }`}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                {isCleaning ? 'Temizleniyor...' : 'KVKK Temizle'}
-              </button>
-            </div>
-          )}
-        </div>
+            {canDelete && (
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  min={1}
+                  aria-label="KVKK saklama süresi (gün)"
+                  value={retentionDays}
+                  onChange={e =>
+                    setRetentionDays(Math.max(1, Number(e.target.value) || 365))
+                  }
+                  className={`w-16 rounded-lg border px-2 py-1.5 text-xs ${
+                    isDarkMode
+                      ? 'border-slate-700 bg-slate-800 text-slate-200'
+                      : 'border-gray-200 bg-white text-gray-700'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={handleCleanupOld}
+                  disabled={isCleaning}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+                    isDarkMode
+                      ? 'border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
+                      : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                  }`}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {isCleaning ? 'Temizleniyor...' : 'KVKK Temizle'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* States */}
+      {!canRead && (
+        <div
+          className={`rounded-xl border p-6 text-sm ${
+            isDarkMode
+              ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+              : 'border-amber-200 bg-amber-50 text-amber-700'
+          }`}
+        >
+          Bu formun yanıtlarını görüntüleme yetkiniz yok. Form gönderileri
+          &quot;forms:submissions:read&quot; izni gerektirir.
+        </div>
+      )}
+
       {isError && (
         <div
           className={`rounded-xl border p-6 text-sm ${
@@ -266,7 +287,7 @@ export default function FormSubmissionsPage({ params }: PageProps) {
         </div>
       )}
 
-      {!isLoading && !isError && submissions.length === 0 && (
+      {!isLoading && !isError && canRead && submissions.length === 0 && (
         <div
           className={`rounded-xl border border-dashed p-12 text-center text-sm ${
             isDarkMode

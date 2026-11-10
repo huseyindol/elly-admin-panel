@@ -1,6 +1,7 @@
 'use client'
 
 import { useAdminTheme } from '@/app/_hooks'
+import { IMAGE_UPLOAD_ALLOWED_EXTENSIONS } from '@/utils/constant/uploadConstant'
 import Image from 'next/image'
 import { useRef } from 'react'
 import { Icons } from './Icons'
@@ -129,7 +130,7 @@ export function ImageUploadBox({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={IMAGE_UPLOAD_ALLOWED_EXTENSIONS}
         onChange={handleFileChange}
         className="hidden"
       />

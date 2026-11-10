@@ -2,13 +2,18 @@
 
 import { Icons } from '@/app/_components'
 import { StepManager } from '@/app/_components/forms'
-import { useActiveMailAccounts, useAdminTheme } from '@/app/_hooks'
+import {
+  useActiveMailAccounts,
+  useAdminTheme,
+  usePermission,
+} from '@/app/_hooks'
 import { useEmailTemplates } from '@/app/_hooks/useEmailTemplates'
 import {
   getFormByIdService,
   updateFormService,
 } from '@/app/_services/forms.services'
 import { UpdateFormInput, UpdateFormSchema } from '@/schemas/form.schema'
+import { Permissions } from '@/types/cms'
 import type { Field, FieldOption, FieldType, Step } from '@/types/form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -65,6 +70,8 @@ export default function EditFormPage({ params }: PageProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { isDarkMode } = useAdminTheme()
+  // Yanıtlar (PII) backend'de ayrı izinle korunur — forms:read değildir
+  const canViewSubmissions = usePermission(Permissions.FORMS_SUBMISSIONS_READ)
   const { data: activeMailAccountsData, isLoading: isMailAccountsLoading } =
     useActiveMailAccounts()
   const { data: emailTemplatesData } = useEmailTemplates(0, 100)
@@ -295,16 +302,18 @@ export default function EditFormPage({ params }: PageProps) {
             Form ayarlarını ve alanlarını düzenleyin
           </p>
         </div>
-        <Link
-          href={`/forms/${id}/submissions`}
-          className={`inline-flex items-center gap-1.5 self-start rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors sm:self-end ${
-            isDarkMode
-              ? 'border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'
-              : 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-          }`}
-        >
-          Yanıtları Görüntüle
-        </Link>
+        {canViewSubmissions && (
+          <Link
+            href={`/forms/${id}/submissions`}
+            className={`inline-flex items-center gap-1.5 self-start rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors sm:self-end ${
+              isDarkMode
+                ? 'border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'
+                : 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            Yanıtları Görüntüle
+          </Link>
+        )}
       </div>
 
       <form

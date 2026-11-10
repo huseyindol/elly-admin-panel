@@ -7,7 +7,7 @@ import {
   SearchInput,
   StatusBadge,
 } from '@/app/_components'
-import { useAdminTheme, useDebounce } from '@/app/_hooks'
+import { useAdminTheme, useDebounce, usePermission } from '@/app/_hooks'
 import { ForceDeleteFormModal } from '@/app/_components/forms/ForceDeleteFormModal'
 import {
   ApiError,
@@ -15,6 +15,7 @@ import {
   forceDeleteFormService,
   getFormsService,
 } from '@/app/_services/forms.services'
+import { Permissions } from '@/types/cms'
 import type { FormSchema } from '@/types/form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
@@ -26,6 +27,8 @@ export default function FormsListPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { isDarkMode } = useAdminTheme()
+  // Yanıtlar (PII) backend'de ayrı izinle korunur — forms:read değildir
+  const canViewSubmissions = usePermission(Permissions.FORMS_SUBMISSIONS_READ)
   const [searchQuery, setSearchQuery] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<FormSchema | null>(null)
   const [forceDeleteTarget, setForceDeleteTarget] = useState<FormSchema | null>(
@@ -151,19 +154,26 @@ export default function FormsListPage() {
     {
       key: 'submissions',
       header: 'Yanıtlar',
-      render: form => (
-        <Link
-          href={`/forms/${form.id}/submissions`}
-          onClick={e => e.stopPropagation()}
-          className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
-            isDarkMode
-              ? 'text-violet-300 hover:bg-violet-500/10'
-              : 'text-violet-600 hover:bg-violet-50'
-          }`}
-        >
-          Görüntüle
-        </Link>
-      ),
+      render: form =>
+        canViewSubmissions ? (
+          <Link
+            href={`/forms/${form.id}/submissions`}
+            onClick={e => e.stopPropagation()}
+            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+              isDarkMode
+                ? 'text-violet-300 hover:bg-violet-500/10'
+                : 'text-violet-600 hover:bg-violet-50'
+            }`}
+          >
+            Görüntüle
+          </Link>
+        ) : (
+          <span
+            className={`text-xs ${isDarkMode ? 'text-slate-600' : 'text-gray-300'}`}
+          >
+            —
+          </span>
+        ),
     },
   ]
 

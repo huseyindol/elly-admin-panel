@@ -160,7 +160,14 @@ const AdminLoginPage = () => {
         }),
       })
       if (response.error) {
-        setGeneralError(response.error || 'Giriş yapılırken bir hata oluştu.')
+        // Backend hata gövdelerinde `error` HTTP reason phrase ("Too Many Requests"),
+        // `message` ise kullanıcıya gösterilebilir metindir (ör. 429 TOO_MANY_REQUESTS
+        // brute-force kilidi Türkçe açıklaması) — mesaj varsa ona öncelik ver.
+        setGeneralError(
+          response.message ||
+            response.error ||
+            'Giriş yapılırken bir hata oluştu.',
+        )
         return
       }
 
