@@ -8,6 +8,7 @@ import { PermissionGate } from '@/components/PermissionGate'
 import { usePermission } from '@/hooks/usePermission'
 import { usePermissionStore } from '@/stores/permission-store'
 import { useMyFullName, useMyUserCode, useUserStore } from '@/stores/user-store'
+import { logoutService } from '@/services/auth/logoutService'
 import { MODULES } from '@/types/permissions'
 import { useAdminTheme } from '../_hooks'
 import { Icons } from './Icons'
@@ -18,6 +19,9 @@ interface MenuItem {
   href: string
   /** Bu menü öğesinin görünmesi için gerekli permission (module:action) */
   permission?: string
+  /** Bu menü öğesinin görünmesi için gereken rollerden en az biri
+   *  (ör. ['ADMIN', 'SUPER_ADMIN'] — backend rol kısıtlı endpoint'ler için) */
+  roles?: string[]
 }
 
 interface MenuGroup {
@@ -198,6 +202,8 @@ const menuGroups: MenuGroup[] = [
         icon: Icons.BarChart,
         label: 'AI Logları',
         href: '/ai-logs',
+        // S8: /ai/logs, /ai/stats, /ai/quota yalnız ADMIN + SUPER_ADMIN
+        roles: ['ADMIN', 'SUPER_ADMIN'],
       },
       {
         icon: Icons.Settings,
@@ -228,6 +234,8 @@ function PermissionMenuItem({
   onClick: () => void
   isCollapsed: boolean
 }>) {
+  const { roles } = usePermission()
+
   const navLink = (
     <NavLink
       item={item}
@@ -237,6 +245,9 @@ function PermissionMenuItem({
       isCollapsed={isCollapsed}
     />
   )
+
+  // Rol kısıtlı öğe (ör. AI Logları) — gereken rollerden hiçbiri yoksa gizle
+  if (item.roles && !item.roles.some(r => roles.includes(r))) return null
 
   // permission tanımlı değilse (Dashboard, Ayarlar vb.) doğrudan göster
   if (!item.permission) return navLink
@@ -258,12 +269,13 @@ function MenuGroupSection({
   onClose: () => void
   isCollapsed: boolean
 }>) {
-  const { hasPermission, isSuperAdmin } = usePermission()
+  const { hasPermission, isSuperAdmin, roles } = usePermission()
 
-  // Gruptaki görünür öğe sayısını hesapla
+  // Gruptaki görünür öğe sayısını hesapla (rol kısıtlı öğeler rol yoksa gizli)
   const visibleItems = group.items.filter(
     item =>
-      !item.permission || isSuperAdmin() || hasPermission(item.permission),
+      (!item.roles || item.roles.some(r => roles.includes(r))) &&
+      (!item.permission || isSuperAdmin() || hasPermission(item.permission)),
   )
 
   // Hiçbir öğe görünmüyorsa grubu gizle
@@ -318,6 +330,12 @@ export function Sidebar({
   const queryClient = useQueryClient()
 
   const onLogout = () => {
+    // S4: Önce backend oturumunu iptal et (refresh revoke + tokenVersion++
+    // → tüm access token'lar anında ölür). Fire-and-forget: 401 dahil tüm
+    // hatalar logoutService içinde yutulur, local temizlik her durumda devam
+    // eder. keepalive sayesinde istek login yönlendirmesinden sonra da ulaşır.
+    logoutService()
+
     // In-memory state temizliği
     usePermissionStore.getState().clearPermissions()
     useUserStore.getState().clearUser()

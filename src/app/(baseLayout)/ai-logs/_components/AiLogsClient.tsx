@@ -8,6 +8,7 @@ import { useAdminTheme } from '@/app/_hooks'
 import { useAiLogs, useAiStats } from '@/app/_hooks/useAiLogs'
 import type { AiLogStatus, AiUsageLog } from '@/app/_services/ai-logs.services'
 import { formatRelativeTime } from '@/app/_utils/dateUtils'
+import { useMyRoleLevel } from '@/utils/chat-role'
 import { AiLogDetailSheet } from './AiLogDetailSheet'
 
 const DEFAULT_SIZE = 20
@@ -41,14 +42,21 @@ export function AiLogsClient() {
   const [selected, setSelected] = useState<AiUsageLog | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
 
-  const { data: stats } = useAiStats()
-  const { data, isLoading, isError, error } = useAiLogs({
-    action,
-    status,
-    q,
-    page,
-    size: DEFAULT_SIZE,
-  })
+  // S8: AI log/istatistik/kota endpoint'leri yalnız ADMIN(3) + SUPER_ADMIN(4)
+  const roleLevel = useMyRoleLevel()
+  const canView = roleLevel >= 3
+
+  const { data: stats } = useAiStats(canView)
+  const { data, isLoading, isError, error } = useAiLogs(
+    {
+      action,
+      status,
+      q,
+      page,
+      size: DEFAULT_SIZE,
+    },
+    canView,
+  )
 
   const handleRowClick = useCallback((log: AiUsageLog) => {
     setSelected(log)
@@ -236,6 +244,23 @@ export function AiLogsClient() {
     ],
     [isDarkMode],
   )
+
+  // S8: Yetkisiz rol (VIEWER/EDITOR) — sorgular devre dışı, erişim paneli göster
+  if (!canView) {
+    return (
+      <div
+        className={`rounded-xl p-4 text-sm ${
+          isDarkMode
+            ? 'border border-rose-500/40 bg-rose-500/10 text-rose-300'
+            : 'border border-rose-200 bg-rose-50 text-rose-700'
+        }`}
+      >
+        AI kullanım loglarını görüntüleme yetkiniz yok. Bu ekran yalnızca{' '}
+        <strong>Admin</strong> ve <strong>Süper Admin</strong> rollerine
+        açıktır.
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

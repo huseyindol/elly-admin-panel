@@ -109,6 +109,12 @@ Kayıt formatı:
 
 - `qrcode.react@4.2.0` eklendi — 2FA kurulum dialog'unda otpauth QR kodu render'ı için
 
+### Security
+
+- **Logout artık sunucu tarafını da iptal ediyor (S4)** — `src/services/auth/logoutService.ts` (yeni): `POST /api/v1/auth/logout` fetcher üzerinden Bearer ile çağrılır (`keepalive: true` — login yönlendirmesi isteği kesmez); backend refresh token'ı siler + `tokenVersion` artırır → tüm access token'lar anında geçersiz. `Sidebar` çıkış akışı: fire-and-forget backend iptali (401 dahil hatalar yutulur) → store/localStorage temizliği → `/api/auth/logout` → `/login`. (Backend `958b0d4`)
+- **AI logları/istatistikleri rol kısıtlandı (S8)** — `/ai/logs`, `/ai/stats`, `/ai/quota` backend'de yalnız ADMIN + SUPER_ADMIN: Sidebar "AI Logları" menü öğesi `roles: ['ADMIN','SUPER_ADMIN']` ile gizlendi (`MenuItem.roles` desteği eklendi); `/ai-logs` sayfası yetkisiz rolde erişim paneli gösteriyor; dashboard `AiUsageWidget` alt rollerde gizli. `useAiLogs`/`useAiStats`/`useAiQuota` `enabled` parametresi aldı — yetkisiz rolde istek hiç atılmaz (403 toast önlenir).
+- **changePassword oturum iptali (S10) uyumu** — panelde kendi şifresini değiştirme ekranı yok; şifre değişimi/admin sıfırlaması sonrası `tokenVersion` ölümünün üreteceği 401, mevcut fetcher akışıyla (tek uçuş refresh → başarısızsa cookie temizliği + `/login`) döngüsüz login'e düşer.
+
 ---
 
 ## [0.4.0] — 2026-04-23

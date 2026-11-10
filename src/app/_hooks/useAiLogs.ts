@@ -19,27 +19,32 @@ export const aiLogsKeys = {
     [...aiLogsKeys.all, 'quota', tenantId ?? ''] as const,
 }
 
-export function useAiLogs(params: AiLogListParams = {}) {
+/** S8: /ai/logs, /ai/stats, /ai/quota yalnız ADMIN + SUPER_ADMIN —
+ *  yetkisiz rolde sorguyu hiç başlatma (403 toast'u ve boş istek önlenir). */
+export function useAiLogs(params: AiLogListParams = {}, enabled = true) {
   return useQuery({
     queryKey: aiLogsKeys.list(params),
     queryFn: () => getAiLogsService(params),
     staleTime: 15_000,
+    enabled,
   })
 }
 
-export function useAiStats() {
+export function useAiStats(enabled = true) {
   return useQuery({
     queryKey: aiLogsKeys.stats(),
     queryFn: () => getAiStatsService(),
     staleTime: 15_000,
+    enabled,
   })
 }
 
-export function useAiQuota(tenantId?: string | null) {
+export function useAiQuota(tenantId?: string | null, enabled = true) {
   return useQuery({
     queryKey: aiLogsKeys.quota(tenantId),
     queryFn: () => getAiQuotaService(tenantId),
     staleTime: 15_000,
+    enabled,
   })
 }
 

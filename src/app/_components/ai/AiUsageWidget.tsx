@@ -29,14 +29,19 @@ export function AiUsageWidget({ showManagement = false }: AiUsageWidgetProps) {
   const [tenantId] = useState<string | null>(
     () => getGlobalCookies()[CookieEnum.TENANT_ID] || null,
   )
-  const { data: quota, isLoading, isError } = useAiQuota(tenantId)
-  const updateLimit = useUpdateAiQuotaLimit(tenantId)
   const roleLevel = useMyRoleLevel()
+  // S8: /ai/quota yalnız ADMIN(3) + SUPER_ADMIN(4) — alt rollerde widget gizli
+  const canView = roleLevel >= 3
   const canManage = roleLevel >= 4
+
+  const { data: quota, isLoading, isError } = useAiQuota(tenantId, canView)
+  const updateLimit = useUpdateAiQuotaLimit(tenantId)
 
   const [editing, setEditing] = useState(showManagement)
   const monthlyInputRef = useRef<HTMLInputElement>(null)
   const dailyInputRef = useRef<HTMLInputElement>(null)
+
+  if (!canView) return null
 
   const monthlyPct = Math.min(
     Math.max(quota?.monthlyTokenUsedPercent ?? 0, 0),
