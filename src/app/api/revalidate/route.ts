@@ -5,28 +5,34 @@ type RevalidateBody = {
   tag?: string
   path?: string
   type?: 'page' | 'layout'
-  secret?: string
 }
 
-function isAuthorized(
-  request: Request,
-  providedSecret?: string | null,
-): boolean {
-  const configuredSecret = process.env.NEXT_PUBLIC_REVALIDATE_SECRET
-  if (!configuredSecret) return true
+/**
+ * Timing-safe comparison: fixed iteration count and no early exit, so the
+ * response time does not leak the secret's length or content.
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  const len = Math.max(a.length, b.length)
+  let diff = a.length === b.length ? 0 : 1
+  for (let i = 0; i < len; i++) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0)
+  }
+  return diff === 0
+}
 
-  // Prefer Authorization header (Bearer <token>), fallback to body/query secret
+function isAuthorized(request: Request): boolean {
+  const configuredSecret = process.env.REVALIDATE_SECRET
+  // Fail-closed: without a configured server-only secret, never authorize.
+  if (!configuredSecret) return false
+
   const authHeader = request.headers.get('authorization') || ''
-  const bearer = authHeader.startsWith('Bearer ')
-    ? authHeader.slice(7)
-    : undefined
-  const token = bearer || providedSecret || undefined
-  return token === configuredSecret
+  if (!authHeader.startsWith('Bearer ')) return false
+  return timingSafeEqual(authHeader.slice(7), configuredSecret)
 }
 
 /**
  * Revalidate cache by tag or path
- * @description Revalidates Next.js cache using revalidateTag or revalidatePath. Requires authorization if secret is configured.
+ * @description Revalidates Next.js cache using revalidateTag or revalidatePath. Requires REVALIDATE_SECRET env and Authorization: Bearer <secret> header.
  * @body RevalidateRequest
  * @response RevalidateResponse:Successfully revalidated
  * @add 400:RevalidateErrorResponse:No tag or path provided
@@ -38,7 +44,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as RevalidateBody
 
-    if (!isAuthorized(request, body.secret ?? null)) {
+    if (!isAuthorized(request)) {
       return NextResponse.json(
         { ok: false, error: 'Unauthorized' },
         { status: 401 },
@@ -75,8 +81,8 @@ export async function POST(request: Request) {
 
 /**
  * Revalidate cache via query parameters
- * @description Simple GET endpoint for debugging - revalidates cache using query parameters
- * @params { tag?: string, path?: string, type?: string, secret?: string }
+ * @description Simple GET endpoint for debugging - revalidates cache using query parameters. Requires REVALIDATE_SECRET env and Authorization: Bearer <secret> header.
+ * @params { tag?: string, path?: string, type?: string }
  * @response RevalidateResponse:Successfully revalidated
  * @add 400:RevalidateErrorResponse:Bad request
  * @add 401:RevalidateErrorResponse:Unauthorized
@@ -89,9 +95,8 @@ export async function GET(request: Request) {
   const path = url.searchParams.get('path') || undefined
   const type =
     (url.searchParams.get('type') as 'page' | 'layout' | null) || undefined
-  const secret = url.searchParams.get('secret') || undefined
 
-  if (!isAuthorized(request, secret)) {
+  if (!isAuthorized(request)) {
     return NextResponse.json(
       { ok: false, error: 'Unauthorized' },
       { status: 401 },

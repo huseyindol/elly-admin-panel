@@ -1,11 +1,11 @@
 import { z } from 'zod'
 
 // Request body for revalidate operations
+// Authorization is header-based only: `Authorization: Bearer <REVALIDATE_SECRET>`
 export const RevalidateRequest = z.object({
   tag: z.string().optional().describe('Cache tag to revalidate'),
   path: z.string().optional().describe('Path to revalidate'),
   type: z.enum(['page', 'layout']).optional().describe('Type of revalidation'),
-  secret: z.string().optional().describe('Authorization secret'),
 })
 
 // Revalidate success response

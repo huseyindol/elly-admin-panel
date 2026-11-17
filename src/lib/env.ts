@@ -20,8 +20,8 @@ const envSchema = z.object({
   // API Configuration
   NEXT_PUBLIC_API: z.string().optional(),
 
-  // Revalidation
-  NEXT_PUBLIC_REVALIDATE_SECRET: z
+  // Revalidation (server-only; never expose with NEXT_PUBLIC_)
+  REVALIDATE_SECRET: z
     .string()
     .optional()
     .refine(val => !val || val === '' || val.length >= 6, {
@@ -148,9 +148,7 @@ export function printEnvInfo(): void {
   console.log('=================================')
   console.log(`NODE_ENV: ${env.NODE_ENV}`)
   console.log(`Base URL: ${getBaseUrl()}`)
-  console.log(
-    `Revalidation: ${env.NEXT_PUBLIC_REVALIDATE_SECRET ? 'OK' : 'NOT SET'}`,
-  )
+  console.log(`Revalidation: ${env.REVALIDATE_SECRET ? 'OK' : 'NOT SET'}`)
   console.log('=================================\n')
 }
 
